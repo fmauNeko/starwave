@@ -5,6 +5,7 @@ import { NecordModule } from 'necord';
 import { Config } from '../config/config.type';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { DiscordService } from './discord.service';
+import { PingCommand } from './ping/ping.command';
 import { PresenceModule } from './presence/presence.module';
 
 @Module({
@@ -26,6 +27,6 @@ import { PresenceModule } from './presence/presence.module';
     AuthorizationModule,
     PresenceModule,
   ],
-  providers: [DiscordService],
+  providers: [DiscordService, PingCommand],
 })
 export class DiscordModule {}
