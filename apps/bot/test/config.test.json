@@ -1,0 +1,18 @@
+{
+  "$schema": "../config.schema.json",
+  "discord": {
+    "devGuildIds": ["xxx"],
+    "guildsSettings": {
+      "xxx": {
+        "language": "en-US",
+        "roles": {
+          "admin": "xxx"
+        },
+        "theme": {
+          "accentColor": "#ffffff"
+        }
+      }
+    },
+    "token": "xxx"
+  }
+}

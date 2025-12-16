@@ -1,0 +1,19 @@
+{
+  // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
+  // Pointez pour afficher la description des attributs existants.
+  // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "address": "localhost",
+      "localRoot": "${workspaceFolder}/apps/bot",
+      "name": "Bot: Attach to Remote",
+      "port": 9229,
+      "remoteRoot": "${workspaceFolder}/apps/bot",
+      "request": "attach",
+      "restart": true,
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    }
+  ]
+}
