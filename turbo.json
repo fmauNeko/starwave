@@ -12,6 +12,7 @@
     },
     "lint": {},
     "test": {},
+    "test:cov": {},
     "test:e2e": {}
   }
 }
