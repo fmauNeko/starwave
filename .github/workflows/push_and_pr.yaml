@@ -161,7 +161,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.matrix) }}
     steps:
-      - uses: benc-uk/workflow-dispatch@v1
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1
         with:
           workflow: docker.yaml
           inputs: |
