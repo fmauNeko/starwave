@@ -1,4 +1,4 @@
-FROM node:lts-alpine@sha256:951203ef9d4e576c355194222fd19c2c7736f91228deb112675414ae3a7c9046 AS base
+FROM node:lts-alpine@sha256:c921b97d4b74f51744057454b306b418cf693865e73b8100559189605f6955b8 AS base
 
 RUN apk add --no-cache bash curl unzip libc6-compat && \
   curl https://bun.sh/install | bash
@@ -29,7 +29,7 @@ RUN curl -sf https://gobinaries.com/tj/node-prune | sh && \
   node-prune
 
 # ---
-FROM node:lts-alpine@sha256:951203ef9d4e576c355194222fd19c2c7736f91228deb112675414ae3a7c9046 AS runner
+FROM node:lts-alpine@sha256:c921b97d4b74f51744057454b306b418cf693865e73b8100559189605f6955b8 AS runner
 
 ENV NODE_ENV=production
 WORKDIR /app
