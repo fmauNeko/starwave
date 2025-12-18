@@ -5,6 +5,7 @@
     ":rebaseStalePrs",
     ":semanticCommits",
     ":semanticCommitScope(deps)",
-    ":automergeMinor"
+    ":automergeMinor",
+    ":automergeDigest"
   ]
 }
