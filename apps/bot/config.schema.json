@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://starwave.dissidence.ovh/config.schema.json",
+  "title": "Starwave88 Config Schema",
+  "description": "Schema for the Starwave88 configuration file.",
+  "type": "object",
+  "properties": {
+    "discord": {
+      "description": "Discord bot configuration.",
+      "type": "object",
+      "properties": {
+        "devGuildIds": {
+          "description": "The development guild IDs.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "guildsSettings": {
+          "description": "Settings for different guilds.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "language": {
+                "description": "Language setting for the guild.",
+                "type": "string"
+              },
+              "roles": {
+                "description": "Mapping of roles in the Discord server.",
+                "type": "object",
+                "properties": {
+                  "admin": {
+                    "description": "Role ID for administrators.",
+                    "type": "string"
+                  }
+                },
+                "required": ["admin"]
+              },
+              "theme": {
+                "description": "Theme setting for the guild.",
+                "type": "object",
+                "properties": {
+                  "accentColor": {
+                    "description": "Accent color for the guild theme.",
+                    "type": "string"
+                  }
+                },
+                "required": ["accentColor"]
+              }
+            },
+            "required": ["language", "roles", "theme"]
+          }
+        },
+        "token": {
+          "description": "The bot token.",
+          "type": "string"
+        }
+      },
+      "required": ["devGuildIds", "guildsSettings", "token"]
+    }
+  },
+  "required": ["discord"]
+}
