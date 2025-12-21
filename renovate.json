@@ -8,5 +8,6 @@
     ":automergeMinor",
     ":automergeDigest"
   ],
-  "baseBranchPatterns": ["develop"]
+  "baseBranchPatterns": ["develop"],
+  "ignorePaths": ["charts/starwave/values.yaml"]
 }
