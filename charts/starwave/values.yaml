@@ -1,0 +1,96 @@
+# yaml-language-server: $schema=./values.schema.json
+
+global:
+  imagePullSecrets: []
+  podAnnotations: {}
+  podLabels: {}
+  podSecurityContext: {}
+  securityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+  serviceAccount:
+    create: true
+    name: ''
+    annotations: {}
+
+apps:
+  bot:
+    enabled: true
+    nameOverride: ''
+    fullnameOverride: ''
+
+    replicaCount: 1
+
+    image:
+      repository: ghcr.io/fmauNeko/starwave/bot
+      tag: ''
+      pullPolicy: IfNotPresent
+      imagePullSecrets: []
+
+    command: []
+    args: []
+
+    service:
+      enabled: true
+      type: ClusterIP
+      port: 3000
+      targetPort: 3000
+      annotations: {}
+
+    config:
+      discord:
+        devGuildIds: []
+        guildsSettings: {}
+      configMountPath: /app/config.json
+
+    secret:
+      create: true
+      name: ''
+      existingSecret: ''
+      existingKey: discordToken
+      value: ''
+      annotations: {}
+
+    env: []
+    envFrom: []
+
+    probes:
+      liveness:
+        enabled: true
+        path: /
+        initialDelaySeconds: 10
+        periodSeconds: 10
+        timeoutSeconds: 1
+        failureThreshold: 3
+        successThreshold: 1
+      readiness:
+        enabled: true
+        path: /
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        timeoutSeconds: 1
+        failureThreshold: 3
+        successThreshold: 1
+      startup:
+        enabled: false
+        path: /
+        failureThreshold: 30
+        periodSeconds: 10
+        timeoutSeconds: 1
+
+    resources: {}
+    podAnnotations: {}
+    podLabels: {}
+    podSecurityContext: {}
+    securityContext: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    topologySpreadConstraints: []
+
+    serviceAccount:
+      create: null
+      name: ''
+      annotations: {}

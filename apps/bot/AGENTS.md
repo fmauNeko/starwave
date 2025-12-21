@@ -9,6 +9,7 @@
 
 - Install deps at repo root: `bun install`.
 - Create local config: copy apps/bot/config.example.json to apps/bot/config.json and fill tokens/guild settings (keep private).
+- Config can be overridden per-field via env vars using uppercase keys with double underscores and the BOT__ prefix (e.g., BOT__DISCORD__TOKEN, BOT__DISCORD__DEV_GUILD_IDS, BOT__DISCORD__GUILDS_SETTINGS__<GUILD_ID>__LANGUAGE/ROLE_ADMIN/ACCENT_COLOR); env overrides merge over config.json before validation.
 - Dev watch: `cd apps/bot && bun run start:dev`.
 - Prod: `cd apps/bot && bun run build && bun run start:prod`.
 - Tests: `cd apps/bot && bun run test` (unit), `bun run test:e2e` (e2e), `bun run test:cov` (coverage).
@@ -16,7 +17,7 @@
 
 ## Patterns & Conventions
 
-- Use the validated config bootstrap shown in [apps/bot/src/app.module.ts#L1-L23](apps/bot/src/app.module.ts#L1-L23) with `ConfigModule.forRoot` and `validateConfig`.
+- Use the validated config bootstrap shown in [apps/bot/src/app.module.ts#L1-L23](apps/bot/src/app.module.ts#L1-L23) with `ConfigModule.forRoot` and `validateEnv`.
 - Define new config fields via arktype schema [apps/bot/src/config/config.type.ts#L1-L33](apps/bot/src/config/config.type.ts#L1-L33) and load through [apps/bot/src/config/configuration.ts#L1-L24](apps/bot/src/config/configuration.ts#L1-L24).
 - Configure Discord/Necord intents and tokens inside [apps/bot/src/discord/discord.module.ts#L1-L31](apps/bot/src/discord/discord.module.ts#L1-L31); use `ConfigService.get(..., { infer: true })` as shown.
 - Implement event handlers with `@Once`/`@On` decorators like [apps/bot/src/discord/discord.service.ts#L5-L20](apps/bot/src/discord/discord.service.ts#L5-L20); keep logging through Nest Logger.

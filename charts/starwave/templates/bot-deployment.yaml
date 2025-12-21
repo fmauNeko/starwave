@@ -1,0 +1,148 @@
+{{- if .Values.apps.bot.enabled }}
+{{- $bot := .Values.apps.bot -}}
+{{- $secret := $bot.secret -}}
+{{- $secretCreate := true -}}
+{{- if ne $secret.create nil }}{{- $secretCreate = $secret.create -}}{{- end -}}
+{{- if $secret.existingSecret }}{{- $secretCreate = false -}}{{- end -}}
+{{- $secretName := default (printf "%s-token" (include "starwave.bot.fullname" .)) $secret.name -}}
+{{- if $secret.existingSecret }}{{- $secretName = $secret.existingSecret -}}{{- end -}}
+{{- $secretKey := default "discordToken" $secret.existingKey -}}
+{{- $podAnnotations := merge (dict) (default (dict) .Values.global.podAnnotations) (default (dict) $bot.podAnnotations) -}}
+{{- $_ := set $podAnnotations "checksum/config" (include (print $.Template.BasePath "/bot-configmap.yaml") . | sha256sum) -}}
+{{- if $secretCreate }}{{- $_ := set $podAnnotations "checksum/secret" (include (print $.Template.BasePath "/bot-secret.yaml") . | sha256sum) -}}{{- end -}}
+{{- $podLabels := merge (dict) (default (dict) .Values.global.podLabels) (default (dict) $bot.podLabels) -}}
+{{- $podSecurityContext := merge (dict) (default (dict) .Values.global.podSecurityContext) (default (dict) $bot.podSecurityContext) -}}
+{{- $securityContext := merge (dict) (default (dict) .Values.global.securityContext) (default (dict) $bot.securityContext) -}}
+{{- $nodeSelector := merge (dict) (default (dict) .Values.global.nodeSelector) (default (dict) $bot.nodeSelector) -}}
+{{- $tolerations := concat (default (list) .Values.global.tolerations) (default (list) $bot.tolerations) -}}
+{{- $affinity := merge (dict) (default (dict) .Values.global.affinity) (default (dict) $bot.affinity) -}}
+{{- $spread := concat (default (list) .Values.global.topologySpreadConstraints) (default (list) $bot.topologySpreadConstraints) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "starwave.bot.fullname" . }}
+  labels:
+{{ include "starwave.bot.labels" . | indent 4 }}
+spec:
+  replicas: {{ $bot.replicaCount }}
+  selector:
+    matchLabels:
+{{ include "starwave.bot.selectorLabels" . | indent 6 }}
+  template:
+    metadata:
+      labels:
+{{ include "starwave.bot.selectorLabels" . | indent 8 }}
+{{- with $podLabels }}
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with $podAnnotations }}
+      annotations:
+{{ toYaml . | indent 8 }}
+{{- end }}
+    spec:
+      serviceAccountName: {{ include "starwave.bot.serviceAccountName" . }}
+{{- with concat (default (list) .Values.global.imagePullSecrets) (default (list) $bot.image.imagePullSecrets) }}
+      imagePullSecrets:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with $podSecurityContext }}
+      securityContext:
+{{ toYaml . | indent 8 }}
+{{- end }}
+      containers:
+        - name: bot
+          image: {{ include "starwave.bot.image" . }}
+          imagePullPolicy: {{ $bot.image.pullPolicy }}
+{{- with $securityContext }}
+          securityContext:
+{{ toYaml . | indent 10 }}
+{{- end }}
+{{- with $bot.command }}
+          command:
+{{ toYaml . | indent 10 }}
+{{- end }}
+{{- with $bot.args }}
+          args:
+{{ toYaml . | indent 10 }}
+{{- end }}
+          env:
+            - name: PORT
+              value: "{{ $bot.service.targetPort }}"
+            - name: BOT__DISCORD__TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $secretKey }}
+{{- with $bot.env }}
+{{ toYaml . | indent 10 }}
+{{- end }}
+{{- with $bot.envFrom }}
+          envFrom:
+{{ toYaml . | indent 10 }}
+{{- end }}
+          ports:
+            - name: http
+              containerPort: {{ $bot.service.targetPort }}
+              protocol: TCP
+{{- if $bot.probes.liveness.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ $bot.probes.liveness.path }}
+              port: http
+            initialDelaySeconds: {{ $bot.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ $bot.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ $bot.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ $bot.probes.liveness.failureThreshold }}
+            successThreshold: {{ $bot.probes.liveness.successThreshold }}
+{{- end }}
+{{- if $bot.probes.readiness.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ $bot.probes.readiness.path }}
+              port: http
+            initialDelaySeconds: {{ $bot.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ $bot.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ $bot.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ $bot.probes.readiness.failureThreshold }}
+            successThreshold: {{ $bot.probes.readiness.successThreshold }}
+{{- end }}
+{{- if $bot.probes.startup.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ $bot.probes.startup.path }}
+              port: http
+            periodSeconds: {{ $bot.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ $bot.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ $bot.probes.startup.failureThreshold }}
+            successThreshold: {{ $bot.probes.startup.successThreshold | default 1 }}
+{{- end }}
+{{- with $bot.resources }}
+          resources:
+{{ toYaml . | indent 12 }}
+{{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: {{ $bot.config.configMountPath }}
+              subPath: config.json
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "starwave.bot.fullname" . }}-config
+{{- with $nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with $tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with $affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- with $spread }}
+      topologySpreadConstraints:
+{{ toYaml . | indent 8 }}
+{{- end }}
+{{- end }}

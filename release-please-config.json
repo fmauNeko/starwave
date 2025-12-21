@@ -1,7 +1,18 @@
 {
   "tag-separator": "@",
   "packages": {
-    "apps/bot": {}
+    "apps/bot": {
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "charts/starwave/Chart.yaml",
+          "jsonpath": "$.appVersion"
+        }
+      ]
+    },
+    "charts/starwave": {
+      "release-type": "helm"
+    }
   },
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json"
 }

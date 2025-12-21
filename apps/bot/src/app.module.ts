@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { validateConfig } from './config/config.type';
-import configuration from './config/configuration';
+import configuration, { validateEnv } from './config/configuration';
 import { DiscordModule } from './discord/discord.module';
 
 @Module({
@@ -11,7 +10,7 @@ import { DiscordModule } from './discord/discord.module';
     ConfigModule.forRoot({
       cache: true,
       load: [configuration],
-      validate: validateConfig,
+      validate: validateEnv,
     }),
     DiscordModule,
   ],

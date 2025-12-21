@@ -1,0 +1,84 @@
+name: Push and PR
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    outputs:
+      docker_matrix: ${{ steps.matrix.outputs.docker_matrix }}
+      helm_matrix: ${{ steps.matrix.outputs.helm_matrix }}
+      releases_created: ${{ steps.release.outputs.releases_created }}
+    steps:
+      - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4
+        id: release
+      - name: Generate matrix output
+        id: matrix
+        run: |
+          outputs='${{ toJson(steps.release.outputs) }}'
+          echo "::group::Input"
+          echo "$outputs"
+          echo "::endgroup::"
+          targets=$(jq -n --argjson r "$outputs" '
+            (($r.paths_released // "[]") | fromjson? // []) |
+            map(. as $p | {path:$p, name:($p|split("/")|last), tag_name:($r[$p+"--tag_name"] // "")})
+          ')
+          echo docker_matrix=$(echo "$targets" | jq -c '{target:[.[]|select(.path|startswith("apps/"))]}') >> $GITHUB_OUTPUT
+          echo helm_matrix=$(echo "$targets" | jq -c '{target:[.[]|select(.path|startswith("charts/"))]}') >> $GITHUB_OUTPUT
+
+  docker-release:
+    name: Docker release build
+    if: ${{ fromJson(needs.release.outputs.docker_matrix).target[0] != null }}
+    runs-on: ubuntu-latest
+    needs: [release]
+    strategy:
+      matrix: ${{ fromJson(needs.release.outputs.docker_matrix) }}
+    steps:
+      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1
+        with:
+          workflow: docker.yaml
+          inputs: |
+            {
+              "target": "${{ matrix.target.name }}"
+            }
+          ref: ${{ matrix.target.tag_name }}
+
+  helm-release:
+    name: Helm chart release
+    if: ${{ fromJson(needs.release.outputs.helm_matrix).target[0] != null }}
+    runs-on: ubuntu-latest
+    needs: [release]
+    strategy:
+      matrix: ${{ fromJson(needs.release.outputs.helm_matrix) }}
+    steps:
+      - name: Dispatch Helm chart release
+        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1
+        with:
+          workflow: helm-release.yaml
+          ref: ${{ matrix.target.tag_name }}
+
+  backmerge:
+    name: Backmerge main into develop
+    if: ${{ needs.release.outputs.releases_created == 'true' }}
+    runs-on: ubuntu-latest
+    needs: [release]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Backmerge main into develop
+        run: |
+          git checkout develop
+          git merge --no-ff main -m "chore: backmerge main into develop [skip ci]"
+          git push
