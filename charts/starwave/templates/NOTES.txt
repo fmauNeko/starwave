@@ -1,0 +1,10 @@
+The starwave bot has been deployed.
+
+- Release: {{ .Release.Name }}
+- Namespace: {{ .Release.Namespace }}
+- Bot Service: {{ if and .Values.apps.bot.service.enabled .Values.apps.bot.enabled }}{{ include "starwave.bot.fullname" . }} ({{ .Values.apps.bot.service.type }}) port {{ .Values.apps.bot.service.port }}{{ else }}disabled{{ end }}
+- Config map: {{ include "starwave.bot.fullname" . }}-config mounted at {{ .Values.apps.bot.config.configMountPath }}
+- Discord token secret: {{- $secret := .Values.apps.bot.secret -}}
+  {{- if $secret.existingSecret }}existing {{ $secret.existingSecret }}{{ else }}{{ default (printf "%s-token" (include "starwave.bot.fullname" .)) $secret.name }}{{ end }} (key {{ default "discordToken" $secret.existingKey }})
+
+Use `kubectl port-forward svc/{{ include "starwave.bot.fullname" . }} {{ .Values.apps.bot.service.port }}:{{ .Values.apps.bot.service.port }}` to reach the HTTP endpoint locally.

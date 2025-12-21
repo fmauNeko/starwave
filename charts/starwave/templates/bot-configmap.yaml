@@ -1,0 +1,12 @@
+{{- if .Values.apps.bot.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "starwave.bot.fullname" . }}-config
+  labels:
+{{ include "starwave.bot.labels" . | indent 4 }}
+data:
+  config.json: |
+{{- $config := omit .Values.apps.bot.config "configMountPath" }}
+{{ toPrettyJson $config | nindent 4 }}
+{{- end }}
