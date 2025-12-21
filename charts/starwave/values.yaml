@@ -24,7 +24,7 @@ apps:
     replicaCount: 1
 
     image:
-      repository: ghcr.io/fmauNeko/starwave/bot
+      repository: ghcr.io/fmauneko/starwave/bot
       tag: ''
       pullPolicy: IfNotPresent
       imagePullSecrets: []
