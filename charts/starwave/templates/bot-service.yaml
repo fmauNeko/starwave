@@ -1,0 +1,21 @@
+{{- if and .Values.apps.bot.enabled .Values.apps.bot.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "starwave.bot.fullname" . }}
+  labels:
+{{ include "starwave.bot.labels" . | indent 4 }}
+{{- with .Values.apps.bot.service.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  type: {{ .Values.apps.bot.service.type }}
+  selector:
+{{ include "starwave.bot.selectorLabels" . | indent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.apps.bot.service.port }}
+      targetPort: {{ .Values.apps.bot.service.targetPort }}
+      protocol: TCP
+{{- end }}

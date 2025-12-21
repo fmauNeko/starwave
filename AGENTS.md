@@ -49,3 +49,4 @@
 - `bun run lint && bun run test && bun run test:e2e && bun run build`
 - Ensure apps/bot/config.example.json stays updated when adding config keys; no secrets committed.
 - PR includes brief notes on new commands/config requirements.
+- Helm: chart lives at charts/starwave; config.json is rendered from values (token always via Secret), Service enabled by default on :3000, no ingress; keep values.yaml aligned with values.schema.json when adding config.

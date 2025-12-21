@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "starwave values",
+  "type": "object",
+  "$defs": {
+    "probe": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "path": { "type": "string" },
+        "initialDelaySeconds": { "type": "integer", "minimum": 0 },
+        "periodSeconds": { "type": "integer", "minimum": 1 },
+        "timeoutSeconds": { "type": "integer", "minimum": 1 },
+        "failureThreshold": { "type": "integer", "minimum": 1 },
+        "successThreshold": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "global": {
+      "type": "object",
+      "properties": {
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "podAnnotations": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "podLabels": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "podSecurityContext": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "securityContext": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "affinity": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "serviceAccount": {
+          "type": "object",
+          "properties": {
+            "create": { "type": "boolean" },
+            "name": { "type": "string" },
+            "annotations": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "apps": {
+      "type": "object",
+      "properties": {
+        "bot": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "nameOverride": { "type": "string" },
+            "fullnameOverride": { "type": "string" },
+            "replicaCount": { "type": "integer", "minimum": 0 },
+            "image": {
+              "type": "object",
+              "properties": {
+                "repository": { "type": "string", "minLength": 1 },
+                "tag": { "type": "string" },
+                "pullPolicy": { "type": "string" },
+                "imagePullSecrets": {
+                  "type": "array",
+                  "items": { "type": "object", "additionalProperties": true }
+                }
+              },
+              "required": ["repository"],
+              "additionalProperties": false
+            },
+            "command": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "args": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "service": {
+              "type": "object",
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "type": { "type": "string" },
+                "port": { "type": "integer", "minimum": 1 },
+                "targetPort": { "type": "integer", "minimum": 1 },
+                "annotations": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "required": ["enabled", "port", "targetPort"],
+              "additionalProperties": false
+            },
+            "config": {
+              "type": "object",
+              "properties": {
+                "discord": {
+                  "type": "object",
+                  "properties": {
+                    "devGuildIds": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "guildsSettings": {
+                      "type": "object",
+                      "patternProperties": {
+                        ".*": {
+                          "type": "object",
+                          "properties": {
+                            "language": { "type": "string" },
+                            "roles": {
+                              "type": "object",
+                              "patternProperties": {
+                                ".*": { "type": "string" }
+                              },
+                              "additionalProperties": false
+                            },
+                            "theme": {
+                              "type": "object",
+                              "properties": {
+                                "accentColor": { "type": "string" }
+                              },
+                              "required": ["accentColor"],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": ["language", "roles", "theme"],
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": ["devGuildIds", "guildsSettings"],
+                  "additionalProperties": false
+                },
+                "configMountPath": { "type": "string", "minLength": 1 }
+              },
+              "required": ["discord"],
+              "additionalProperties": false
+            },
+            "secret": {
+              "type": "object",
+              "properties": {
+                "create": { "type": ["boolean", "null"] },
+                "name": { "type": "string" },
+                "existingSecret": { "type": "string" },
+                "existingKey": { "type": "string" },
+                "value": { "type": "string" },
+                "annotations": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "required": ["create", "existingKey"],
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "create": { "const": true },
+                      "existingSecret": { "type": "string", "maxLength": 0 }
+                    },
+                    "required": ["create"]
+                  },
+                  "then": {
+                    "required": ["value"]
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "existingSecret": { "type": "string", "minLength": 1 }
+                    },
+                    "required": ["existingSecret"]
+                  },
+                  "then": {
+                    "properties": {
+                      "create": { "const": false }
+                    }
+                  }
+                }
+              ]
+            },
+            "env": {
+              "type": "array",
+              "items": { "type": "object", "additionalProperties": true }
+            },
+            "envFrom": {
+              "type": "array",
+              "items": { "type": "object", "additionalProperties": true }
+            },
+            "probes": {
+              "type": "object",
+              "properties": {
+                "liveness": { "$ref": "#/$defs/probe" },
+                "readiness": { "$ref": "#/$defs/probe" },
+                "startup": { "$ref": "#/$defs/probe" }
+              },
+              "additionalProperties": false
+            },
+            "resources": { "type": "object", "additionalProperties": true },
+            "podAnnotations": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "podLabels": { "type": "object", "additionalProperties": true },
+            "podSecurityContext": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "securityContext": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "nodeSelector": { "type": "object", "additionalProperties": true },
+            "tolerations": {
+              "type": "array",
+              "items": { "type": "object", "additionalProperties": true }
+            },
+            "affinity": { "type": "object", "additionalProperties": true },
+            "topologySpreadConstraints": {
+              "type": "array",
+              "items": { "type": "object", "additionalProperties": true }
+            },
+            "serviceAccount": {
+              "type": "object",
+              "properties": {
+                "create": { "type": ["boolean", "null"] },
+                "name": { "type": "string" },
+                "annotations": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "required": ["enabled", "image", "config", "secret", "service"],
+          "additionalProperties": false
+        }
+      },
+      "required": ["bot"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["apps"],
+  "additionalProperties": false
+}
