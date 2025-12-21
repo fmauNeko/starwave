@@ -5,7 +5,7 @@
       "extra-files": [
         {
           "type": "yaml",
-          "path": "charts/starwave/Chart.yaml",
+          "path": "/charts/starwave/Chart.yaml",
           "jsonpath": "$.appVersion"
         }
       ]
