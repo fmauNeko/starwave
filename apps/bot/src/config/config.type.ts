@@ -22,7 +22,7 @@ export const configSchema = type.module({
   },
   env: {
     NODE_ENV: "'development' | 'production' | 'test'",
-    '+': 'delete',
+    '+': 'ignore',
   },
   result: 'Merge<json, env>',
 });
@@ -30,13 +30,3 @@ export const configSchema = type.module({
 export type JsonConfig = typeof configSchema.json.infer;
 export type EnvConfig = typeof configSchema.env.infer;
 export type Config = typeof configSchema.result.infer;
-
-export function validateConfig(config: Record<string, unknown>): EnvConfig {
-  const validationResult = configSchema.env(config);
-
-  if (validationResult instanceof type.errors) {
-    throw validationResult.toTraversalError();
-  }
-
-  return validationResult;
-}
