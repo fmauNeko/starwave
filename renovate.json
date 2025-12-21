@@ -7,5 +7,6 @@
     ":semanticCommitScope(deps)",
     ":automergeMinor",
     ":automergeDigest"
-  ]
+  ],
+  "baseBranchPatterns": ["develop"]
 }

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/fmauNeko/starwave/compare/bot@v0.1.0...bot@v0.2.0) (2025-12-21)
+
+
+### Features
+
+* **bot:config:** allow overriding json config with env vars ([093af95](https://github.com/fmauNeko/starwave/commit/093af95536d7261103207b7bd4a65ebf1a604e54))
+
 ## [0.1.0](https://github.com/fmauNeko/starwave/compare/bot@v0.0.1...bot@v0.1.0) (2025-12-20)
 
 
