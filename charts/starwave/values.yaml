@@ -25,7 +25,7 @@ apps:
 
     image:
       repository: ghcr.io/fmauneko/starwave/bot
-      tag: ''
+      tag: '@sha256:2bdb61fbfe01a44db6212ae710ee26f4387a65d0120e22ad96a0846a6ef600cd'
       pullPolicy: IfNotPresent
       imagePullSecrets: []
 
