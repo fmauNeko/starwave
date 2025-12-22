@@ -1,2 +1,2 @@
-/// <reference types='@suites/doubles.vitest/unit' />
-/// <reference types='@suites/di.nestjs/types' />
+/// <reference types='./node_modules/@suites/doubles.vitest/unit' />
+/// <reference types='./node_modules/@suites/di.nestjs/types' />
