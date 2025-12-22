@@ -42,7 +42,7 @@
       "devDependencies": {
         "@eslint/eslintrc": "3.3.3",
         "@eslint/js": "9.39.2",
-        "@golevelup/ts-vitest": "0.5.2",
+        "@golevelup/ts-vitest": "1.0.0",
         "@nestjs/cli": "11.0.14",
         "@nestjs/schematics": "11.0.9",
         "@nestjs/testing": "11.1.9",
@@ -284,7 +284,7 @@
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.4.1", "", { "dependencies": { "@eslint/core": "^0.17.0", "levn": "^0.4.1" } }, "sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA=="],
 
-    "@golevelup/ts-vitest": ["@golevelup/ts-vitest@0.5.2", "", {}, "sha512-kxL12/4lBeYcdpfabvqWGgIagt8ycD6vUNlVyNUjGjxuqo8wPRB1Ohfnn4LNWQG8X8/xf74S2qYnOGqJ7IvWFA=="],
+    "@golevelup/ts-vitest": ["@golevelup/ts-vitest@1.0.0", "", {}, "sha512-aVeBMJ26hx8clmI6+r0kwrb1pmTvGD6TmGQVecUGJx17BHjNs0fqZ0eUDY6xpMr0uZIiSYyj0yKZPT7Dn/iS9A=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.1", "", {}, "sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA=="],
 
