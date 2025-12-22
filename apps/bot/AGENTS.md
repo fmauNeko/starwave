@@ -26,7 +26,7 @@
 - Set role metadata via [apps/bot/src/discord/authorization/require-role.decorator.ts#L1-L6](apps/bot/src/discord/authorization/require-role.decorator.ts#L1-L6) and reuse role enums from [apps/bot/src/discord/authorization/role.enum.ts#L1-L6](apps/bot/src/discord/authorization/role.enum.ts#L1-L6).
 - Handle forbidden responses with themed messages as in [apps/bot/src/discord/authorization/discord-forbidden.filter.ts#L1-L55](apps/bot/src/discord/authorization/discord-forbidden.filter.ts#L1-L55).
 - ✅ DO register new Discord handlers under `src/discord/**` and import their modules into DiscordModule.
-- ✅ DO reuse Vitest + `@golevelup/ts-vitest` mocking seen in [apps/bot/src/discord/discord.service.spec.ts#L1-L16](apps/bot/src/discord/discord.service.spec.ts#L1-L16) and [apps/bot/test/app.e2e-spec.ts#L1-L29](apps/bot/test/app.e2e-spec.ts#L1-L29).
+- ✅ DO reuse Vitest + Suites automocking via `TestBed.solitary` from `@suites/unit` as shown in [apps/bot/src/discord/discord.service.spec.ts#L1-L15](apps/bot/src/discord/discord.service.spec.ts#L1-L15) and [apps/bot/src/discord/authorization/discord-forbidden.filter.spec.ts#L1-L14](apps/bot/src/discord/authorization/discord-forbidden.filter.spec.ts#L1-L14).
 - ❌ DON'T read config.json directly or bypass schema; always go through the validated loader [apps/bot/src/config/configuration.ts#L1-L24](apps/bot/src/config/configuration.ts#L1-L24).
 - ✅ DO keep guild role maps ordered by rank; follow RoleRank in [apps/bot/src/discord/authorization/role.enum.ts#L1-L6](apps/bot/src/discord/authorization/role.enum.ts#L1-L6) and mapping in [apps/bot/src/discord/authorization/role.guard.ts#L19-L33](apps/bot/src/discord/authorization/role.guard.ts#L19-L33).
 
