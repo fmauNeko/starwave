@@ -15,7 +15,6 @@ export default defineConfig(
         ...globals.node,
         ...globals.vitest,
       },
-      ecmaVersion: 5,
       sourceType: 'module',
       parserOptions: {
         projectService: true,
