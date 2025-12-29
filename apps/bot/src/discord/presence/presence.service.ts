@@ -1,11 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ActivityType, Client } from 'discord.js';
 import { Once } from 'necord';
 
 @Injectable()
 export class PresenceService {
-  private readonly logger = new Logger(PresenceService.name);
-
   public constructor(private readonly client: Client) {}
 
   @Once('clientReady')

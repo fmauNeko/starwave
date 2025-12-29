@@ -33,8 +33,9 @@ export class DiscordForbiddenFilter implements ExceptionFilter {
     }
 
     const guildId = interaction.guildId;
+    const settings = this.guildsSettings[guildId];
 
-    if (!(guildId in this.guildsSettings)) {
+    if (!settings) {
       throw new DiscordForbiddenException(
         "Cette fonctionnalité n'est pas configurée pour ce serveur.",
       );
@@ -42,11 +43,7 @@ export class DiscordForbiddenFilter implements ExceptionFilter {
 
     const components = [
       new ContainerBuilder()
-        .setAccentColor(
-          Number(
-            this.guildsSettings[guildId].theme.accentColor.replace('#', '0x'),
-          ),
-        )
+        .setAccentColor(Number(settings.theme.accentColor.replace('#', '0x')))
         .addTextDisplayComponents(
           new TextDisplayBuilder().setContent(exception.message),
         ),
