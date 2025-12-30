@@ -32,6 +32,10 @@ describe('Module imports', () => {
       On: () => () => undefined,
       Context: () => () => undefined,
       SlashCommand: () => () => undefined,
+      Options: () => () => undefined,
+      StringOption: () => () => undefined,
+      IntegerOption: () => () => undefined,
+      createCommandGroupDecorator: () => () => (target: unknown) => target,
     }));
 
     const appModule = (await import('./app.module.js')) as unknown as {
