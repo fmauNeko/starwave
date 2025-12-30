@@ -4,10 +4,10 @@
 
 | Aspect      | Details                                            |
 | ----------- | -------------------------------------------------- |
-| Type        | Turborepo + Bun workspaces monorepo                |
+| Type        | Turborepo + pnpm workspaces monorepo               |
 | Structure   | `apps/*` (deployables), `packages/*` (shared libs) |
 | Active Apps | `apps/bot` - NestJS Discord bot                    |
-| Stack       | TypeScript (ESM), Node >=18, Bun 1.3+              |
+| Stack       | TypeScript (ESM), Node >=18, pnpm 10+              |
 | Testing     | Vitest + SWC                                       |
 | Linting     | ESLint 9 flat config + Prettier                    |
 | Commits     | Conventional Commits via Husky + Commitlint        |
@@ -19,19 +19,19 @@ Each app/package maintains its own AGENTS.md with domain-specific guidance. Alwa
 
 ```bash
 # Setup
-bun install
+pnpm install
 
 # Development
-bun run dev              # All apps in watch mode
-bun run build            # Build all
-bun run lint             # Lint all
-bun run test             # Unit tests all
-bun run test:e2e         # E2E tests all
-bun run format           # Prettier format all
+pnpm run dev              # All apps in watch mode
+pnpm run build            # Build all
+pnpm run lint             # Lint all
+pnpm run test             # Unit tests all
+pnpm run test:e2e         # E2E tests all
+pnpm run format           # Prettier format all
 
 # Package-specific (faster iteration)
-cd apps/bot && bun run start:dev   # Bot in watch mode
-cd apps/bot && bun run test        # Bot unit tests only
+cd apps/bot && pnpm run start:dev   # Bot in watch mode
+cd apps/bot && pnpm run test        # Bot unit tests only
 ```
 
 ## Universal Conventions
@@ -66,7 +66,7 @@ cd apps/bot && bun run test        # Bot unit tests only
 
 1. Branch from `develop`
 2. Conventional commit messages
-3. All checks pass: `bun run lint && bun run test && bun run test:e2e && bun run build`
+3. All checks pass: `pnpm run lint && pnpm run test && pnpm run test:e2e && pnpm run build`
 4. Update relevant AGENTS.md if behavior/structure changes
 5. Update `config.example.json` if adding config keys
 
@@ -129,10 +129,10 @@ Files: `.github/workflows/release-please.yaml`, `docker-release.yaml`, `helm-rel
 
 Before marking work complete:
 
-- [ ] `bun run lint` passes
-- [ ] `bun run test` passes
-- [ ] `bun run test:e2e` passes
-- [ ] `bun run build` succeeds
+- [ ] `pnpm run lint` passes
+- [ ] `pnpm run test` passes
+- [ ] `pnpm run test:e2e` passes
+- [ ] `pnpm run build` succeeds
 - [ ] No secrets in committed code
 - [ ] `config.example.json` updated if config changed
 - [ ] Relevant AGENTS.md updated if behavior/structure changed

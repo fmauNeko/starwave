@@ -1,14 +1,12 @@
 FROM node:lts-alpine@sha256:c921b97d4b74f51744057454b306b418cf693865e73b8100559189605f6955b8 AS base
 
-RUN apk add --no-cache bash curl unzip libc6-compat && \
-  curl https://bun.sh/install | bash
-ENV PATH="${PATH}:/root/.bun/bin"
+RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 # ---
 FROM base AS prepare
 
-RUN bun add -g turbo@^2
+RUN pnpm add -g turbo@^2
 COPY . .
 RUN turbo prune bot --docker
 
@@ -16,15 +14,14 @@ RUN turbo prune bot --docker
 FROM base AS builder
 
 COPY --from=prepare /app/out/json/ .
-RUN bun install
+RUN pnpm install --frozen-lockfile
 
 COPY --from=prepare /app/out/full/ .
-RUN bun run build
+RUN pnpm run build
 
 ENV NODE_ENV=production
 RUN rm -rf node_modules && \
-  rm -rf /root/.bun/install/cache/ && \
-  bun install --frozen-lockfile --production
+  pnpm install --frozen-lockfile --prod
 RUN curl -sf https://gobinaries.com/tj/node-prune | sh && \
   node-prune
 

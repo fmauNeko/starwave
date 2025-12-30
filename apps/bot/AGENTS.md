@@ -15,22 +15,22 @@ Lightweight service exposing only health endpoint (`GET /`). All Discord interac
 
 ```bash
 # From repo root
-bun install
+pnpm install
 
 # Create local config
 cp apps/bot/config.example.json apps/bot/config.json
 # Edit config.json with your Discord token and guild settings
 
 # Development (watch mode)
-cd apps/bot && bun run start:dev
+cd apps/bot && pnpm run start:dev
 
 # Production
-cd apps/bot && bun run build && bun run start:prod
+cd apps/bot && pnpm run build && pnpm run start:prod
 
 # Tests
-cd apps/bot && bun run test          # Unit tests
-cd apps/bot && bun run test:e2e      # E2E tests
-cd apps/bot && bun run test:cov      # Coverage
+cd apps/bot && pnpm run test          # Unit tests
+cd apps/bot && pnpm run test:e2e      # E2E tests
+cd apps/bot && pnpm run test:cov      # Coverage
 ```
 
 ### Environment Variable Overrides
@@ -251,10 +251,10 @@ Logger or Discord client not mocked. Ensure:
 
 ```bash
 cd apps/bot
-bun run lint
-bun run test
-bun run test:e2e
-bun run build
+pnpm run lint
+pnpm run test
+pnpm run test:e2e
+pnpm run build
 ```
 
 - [ ] All commands pass
