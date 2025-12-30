@@ -2,59 +2,263 @@
 
 ## Package Identity
 
-- NestJS 11 Discord bot using Necord over discord.js; schedules presence and enforces role-based access.
-- Runs as a lightweight service; exposes only the default health GET route.
+| Aspect    | Details                                   |
+| --------- | ----------------------------------------- |
+| Type      | NestJS 11 Discord bot                     |
+| Framework | Necord (discord.js 14 wrapper)            |
+| Config    | Arktype schema validation + env overrides |
+| Testing   | Vitest + @suites/unit for automocking     |
+
+Lightweight service exposing only health endpoint (`GET /`). All Discord interaction via Necord decorators.
 
 ## Setup & Run
 
-- Install deps at repo root: `bun install`.
-- Create local config: copy apps/bot/config.example.json to apps/bot/config.json and fill tokens/guild settings (keep private).
-- Config can be overridden per-field via env vars using uppercase keys with double underscores and the BOT__ prefix (e.g., BOT__DISCORD__TOKEN, BOT__DISCORD__DEV_GUILD_IDS, BOT__DISCORD__GUILDS_SETTINGS__<GUILD_ID>__LANGUAGE/ROLE_ADMIN/ACCENT_COLOR); env overrides merge over config.json before validation.
-- Dev watch: `cd apps/bot && bun run start:dev`.
-- Prod: `cd apps/bot && bun run build && bun run start:prod`.
-- Tests: `cd apps/bot && bun run test` (unit), `bun run test:e2e` (e2e), `bun run test:cov` (coverage).
-- Lint/format: `cd apps/bot && bun run lint && bun run format`.
+```bash
+# From repo root
+bun install
 
-## Patterns & Conventions
+# Create local config
+cp apps/bot/config.example.json apps/bot/config.json
+# Edit config.json with your Discord token and guild settings
 
-- Use the validated config bootstrap shown in [apps/bot/src/app.module.ts#L1-L23](apps/bot/src/app.module.ts#L1-L23) with `ConfigModule.forRoot` and `validateEnv`.
-- Define new config fields via arktype schema [apps/bot/src/config/config.type.ts#L1-L33](apps/bot/src/config/config.type.ts#L1-L33) and load through [apps/bot/src/config/configuration.ts#L1-L24](apps/bot/src/config/configuration.ts#L1-L24).
-- Configure Discord/Necord intents and tokens inside [apps/bot/src/discord/discord.module.ts#L1-L31](apps/bot/src/discord/discord.module.ts#L1-L31); use `ConfigService.get(..., { infer: true })` as shown.
-- Implement event handlers with `@Once`/`@On` decorators like [apps/bot/src/discord/discord.service.ts#L5-L20](apps/bot/src/discord/discord.service.ts#L5-L20); keep logging through Nest Logger.
-- Update presence on client readiness following [apps/bot/src/discord/presence/presence.service.ts#L5-L20](apps/bot/src/discord/presence/presence.service.ts#L5-L20).
-- Wire global guard/filter in [apps/bot/src/discord/authorization/authorization.module.ts#L1-L15](apps/bot/src/discord/authorization/authorization.module.ts#L1-L15); guard logic lives in [apps/bot/src/discord/authorization/role.guard.ts#L1-L88](apps/bot/src/discord/authorization/role.guard.ts#L1-L88).
-- Set role metadata via [apps/bot/src/discord/authorization/require-role.decorator.ts#L1-L6](apps/bot/src/discord/authorization/require-role.decorator.ts#L1-L6) and reuse role enums from [apps/bot/src/discord/authorization/role.enum.ts#L1-L6](apps/bot/src/discord/authorization/role.enum.ts#L1-L6).
-- Handle forbidden responses with themed messages as in [apps/bot/src/discord/authorization/discord-forbidden.filter.ts#L1-L55](apps/bot/src/discord/authorization/discord-forbidden.filter.ts#L1-L55).
-- ✅ DO register new Discord handlers under `src/discord/**` and import their modules into DiscordModule.
-- ✅ DO reuse Vitest + Suites automocking via `TestBed.solitary` from `@suites/unit` as shown in [apps/bot/src/discord/discord.service.spec.ts#L1-L15](apps/bot/src/discord/discord.service.spec.ts#L1-L15) and [apps/bot/src/discord/authorization/discord-forbidden.filter.spec.ts#L1-L14](apps/bot/src/discord/authorization/discord-forbidden.filter.spec.ts#L1-L14).
-- ❌ DON'T read config.json directly or bypass schema; always go through the validated loader [apps/bot/src/config/configuration.ts#L1-L24](apps/bot/src/config/configuration.ts#L1-L24).
-- ✅ DO keep guild role maps ordered by rank; follow RoleRank in [apps/bot/src/discord/authorization/role.enum.ts#L1-L6](apps/bot/src/discord/authorization/role.enum.ts#L1-L6) and mapping in [apps/bot/src/discord/authorization/role.guard.ts#L19-L33](apps/bot/src/discord/authorization/role.guard.ts#L19-L33).
+# Development (watch mode)
+cd apps/bot && bun run start:dev
 
-## Touch Points / Key Files
+# Production
+cd apps/bot && bun run build && bun run start:prod
 
-- Entrypoint bootstrap: [apps/bot/src/main.ts#L1-L8](apps/bot/src/main.ts#L1-L8)
-- App composition with config + schedule: [apps/bot/src/app.module.ts#L1-L23](apps/bot/src/app.module.ts#L1-L23)
-- Config schema/loader: [apps/bot/src/config/config.type.ts#L1-L33](apps/bot/src/config/config.type.ts#L1-L33), [apps/bot/src/config/configuration.ts#L1-L24](apps/bot/src/config/configuration.ts#L1-L24)
-- Discord wiring/events: [apps/bot/src/discord/discord.module.ts#L1-L31](apps/bot/src/discord/discord.module.ts#L1-L31), [apps/bot/src/discord/discord.service.ts#L5-L20](apps/bot/src/discord/discord.service.ts#L5-L20)
-- Authorization guard/filter/decorator: [apps/bot/src/discord/authorization/role.guard.ts#L1-L88](apps/bot/src/discord/authorization/role.guard.ts#L1-L88), [apps/bot/src/discord/authorization/discord-forbidden.filter.ts#L1-L55](apps/bot/src/discord/authorization/discord-forbidden.filter.ts#L1-L55), [apps/bot/src/discord/authorization/require-role.decorator.ts#L1-L6](apps/bot/src/discord/authorization/require-role.decorator.ts#L1-L6)
-- Presence status: [apps/bot/src/discord/presence/presence.service.ts#L5-L20](apps/bot/src/discord/presence/presence.service.ts#L5-L20)
-- Tests and mocks: [apps/bot/test/app.e2e-spec.ts#L1-L29](apps/bot/test/app.e2e-spec.ts#L1-L29), [apps/bot/src/discord/discord.service.spec.ts#L1-L16](apps/bot/src/discord/discord.service.spec.ts#L1-L16), [apps/bot/test/mocks/discord.mock.module.ts#L1-L7](apps/bot/test/mocks/discord.mock.module.ts#L1-L7)
+# Tests
+cd apps/bot && bun run test          # Unit tests
+cd apps/bot && bun run test:e2e      # E2E tests
+cd apps/bot && bun run test:cov      # Coverage
+```
 
-## JIT Index Hints
+### Environment Variable Overrides
 
-- Find Necord handlers: `rg -n "@(On|Once)" apps/bot/src/discord`
-- Find guards/filters: `rg -n "Guard|Filter" apps/bot/src/discord`
-- Locate config keys: `rg -n "discord\." apps/bot/src apps/bot/config.*.json`
-- Search tests: `rg -n "describe\(" apps/bot/src apps/bot/test`
-- Discover Nest modules: `rg -n "class .*Module" apps/bot/src`
+Config can be overridden via env vars with `BOT__` prefix. Keys use UPPER_SNAKE_CASE with `__` as path separator:
+
+| Config Path                                           | Env Var                                                          |
+| ----------------------------------------------------- | ---------------------------------------------------------------- |
+| `discord.token`                                       | `BOT__DISCORD__TOKEN`                                            |
+| `discord.devGuildIds`                                 | `BOT__DISCORD__DEV_GUILD_IDS` (comma-separated or JSON array)    |
+| `discord.guildsSettings.<GUILD_ID>.language`          | `BOT__DISCORD__GUILDS_SETTINGS__<GUILD_ID>__LANGUAGE`            |
+| `discord.guildsSettings.<GUILD_ID>.roles.admin`       | `BOT__DISCORD__GUILDS_SETTINGS__<GUILD_ID>__ROLES__ADMIN`        |
+| `discord.guildsSettings.<GUILD_ID>.theme.accentColor` | `BOT__DISCORD__GUILDS_SETTINGS__<GUILD_ID>__THEME__ACCENT_COLOR` |
+
+Env vars merge over `config.json` before validation.
+
+## How To...
+
+### Add a New Slash Command
+
+1. Create command file in `src/discord/` (or subdirectory):
+
+```typescript
+// src/discord/example/example.command.ts
+import { Injectable } from '@nestjs/common';
+import { Context, SlashCommand, type SlashCommandContext } from 'necord';
+import { RequireRole } from '../authorization/require-role.decorator';
+import { Role } from '../authorization/role.enum';
+
+@Injectable()
+@RequireRole(Role.Admin) // Optional: restrict access
+export class ExampleCommand {
+  @SlashCommand({
+    name: 'example',
+    description: 'Example command',
+  })
+  public execute(@Context() [interaction]: SlashCommandContext) {
+    return interaction.reply({ content: 'Example response!' });
+  }
+}
+```
+
+2. Register in `DiscordModule`:
+
+```typescript
+// src/discord/discord.module.ts
+providers: [DiscordService, PingCommand, ExampleCommand],  // Add here
+```
+
+3. Add tests in `src/discord/example/example.command.spec.ts`
+
+### Add a New Role
+
+1. Add to role enum in `src/discord/authorization/role.enum.ts`:
+
+```typescript
+export const Role = {
+  Admin: 'admin',
+  Moderator: 'moderator', // Add new role
+} as const satisfies Record<string, string>;
+
+export const RoleRank = {
+  [Role.Admin]: 2, // Bump admin rank
+  [Role.Moderator]: 1, // New role gets lower rank
+} as const satisfies Record<Role, number>;
+```
+
+2. Add role ID mapping in `config.json` per guild:
+
+```json
+"roles": {
+  "admin": "111111111111111111",
+  "moderator": "222222222222222222"
+}
+```
+
+3. Update `config.example.json` and `config.schema.json` accordingly
+
+### Add a New Config Field
+
+1. Update Arktype schema in `src/config/config.type.ts`
+2. Update `config.example.json` with example value
+3. Update `config.schema.json` with JSON Schema definition
+4. If Helm-deployed, update `charts/starwave/values.yaml` and `values.schema.json`
+
+### Add a New Module
+
+1. Create module directory: `src/discord/<feature>/`
+2. Create module file with providers:
+
+```typescript
+// src/discord/feature/feature.module.ts
+@Module({
+  providers: [FeatureService],
+  exports: [FeatureService],
+})
+export class FeatureModule {}
+```
+
+3. Import in `DiscordModule`:
+
+```typescript
+imports: [ConfigModule, NecordModule.forRootAsync(...), FeatureModule],
+```
+
+## Architecture Decisions
+
+| Decision                       | Rationale                                                          |
+| ------------------------------ | ------------------------------------------------------------------ |
+| **Arktype over Zod**           | Better TypeScript inference, smaller bundle, faster validation     |
+| **@suites/unit**               | Auto-mocking for NestJS DI; reduces boilerplate in unit tests      |
+| **Config file + env merge**    | File for structure, env for secrets/overrides in deployment        |
+| **RoleRank numeric system**    | Allows hierarchy comparisons (`>=`) instead of exact role matching |
+| **Necord over raw discord.js** | NestJS-native decorators, better DI integration, cleaner handlers  |
+
+## Key Files
+
+| Purpose          | File                                                    |
+| ---------------- | ------------------------------------------------------- |
+| App bootstrap    | `src/main.ts`                                           |
+| Root module      | `src/app.module.ts`                                     |
+| Config schema    | `src/config/config.type.ts`                             |
+| Config loader    | `src/config/configuration.ts`                           |
+| Discord wiring   | `src/discord/discord.module.ts`                         |
+| Event handlers   | `src/discord/discord.service.ts`                        |
+| Role guard       | `src/discord/authorization/role.guard.ts`               |
+| Forbidden filter | `src/discord/authorization/discord-forbidden.filter.ts` |
+| Role decorator   | `src/discord/authorization/require-role.decorator.ts`   |
+| Role enum        | `src/discord/authorization/role.enum.ts`                |
+| Presence updates | `src/discord/presence/presence.service.ts`              |
+| E2E test setup   | `test/app.e2e-spec.ts`                                  |
+| Test config mock | `test/__mocks__/configuration.ts`                       |
+
+## Search Patterns
+
+| Find                  | Pattern                                   | Scope           |
+| --------------------- | ----------------------------------------- | --------------- |
+| Necord event handlers | `@(On\|Once)`                             | `src/discord/`  |
+| Slash commands        | `@SlashCommand`                           | `src/discord/`  |
+| Guards/Filters        | `implements CanActivate\|ExceptionFilter` | `src/`          |
+| Config access         | `configService.get`                       | `src/`          |
+| Test suites           | `describe\(`                              | `src/`, `test/` |
+| NestJS modules        | `@Module`                                 | `src/`          |
+| Role usage            | `@RequireRole`                            | `src/discord/`  |
+
+## Testing Guide
+
+### Unit Tests
+
+- Use `@suites/unit` TestBed for automatic mocking
+- Place alongside source: `*.spec.ts`
+- Mock Logger to avoid console noise
+
+```typescript
+import { TestBed } from '@suites/unit';
+
+const { unit } = await TestBed.solitary(MyService).compile();
+```
+
+### E2E Tests
+
+- Place in `test/` directory
+- Use `DiscordMockModule` to replace Discord connection
+- Config mocked via `test/__mocks__/configuration.ts`
+
+```typescript
+vi.mock(import('../src/config/configuration.js'));
+
+const moduleFixture = await Test.createTestingModule({ imports: [AppModule] })
+  .overrideModule(DiscordModule)
+  .useModule(DiscordMockModule)
+  .compile();
+```
+
+### Test Config
+
+- `test/config.test.json` - keep in sync with schema when adding fields
 
 ## Common Gotchas
 
-- apps/bot/config.json must include guild entries and role IDs or RoleGuard will block interactions.
-- Accent colors must be hex strings (e.g. #ffffff) matching the schema; the filter converts them to numbers for Discord components.
-- Necord token and devGuildIds must be set; missing values prevent the client from logging in.
-- Tests use apps/bot/test/config.test.json; keep it in sync with the schema when adding config keys.
+| Issue                             | Cause                                | Fix                                                  |
+| --------------------------------- | ------------------------------------ | ---------------------------------------------------- |
+| RoleGuard blocks all interactions | Missing guild entry in `config.json` | Add guild ID to `guildsSettings`                     |
+| Bot won't log in                  | Missing/invalid token                | Check `discord.token` in config                      |
+| Commands not registering          | Missing `devGuildIds`                | Add guild IDs for dev command sync                   |
+| Accent color errors               | Wrong format                         | Use hex string with `#` (e.g., `#ffffff`)            |
+| Tests fail on config              | `config.test.json` out of sync       | Update test config to match schema                   |
+| E2E Discord errors                | Missing mock                         | Ensure `DiscordMockModule` overrides `DiscordModule` |
 
-## Pre-PR Checks
+## Troubleshooting
 
-- `cd apps/bot && bun run lint && bun run test && bun run test:e2e && bun run build`
+### "Cannot find module './config.json'"
+
+Config file missing. Copy from example:
+
+```bash
+cp config.example.json config.json
+```
+
+### "Invalid config: ..." validation error
+
+Schema mismatch. Check `src/config/config.type.ts` for required fields and types.
+
+### Discord interactions timeout
+
+1. Check bot has correct intents enabled in Discord Developer Portal
+2. Verify `devGuildIds` contains your test server
+3. Check role IDs match actual Discord roles
+
+### Tests hang indefinitely
+
+Logger or Discord client not mocked. Ensure:
+
+- Unit tests use `TestBed.solitary()`
+- E2E tests override `DiscordModule` with mock
+
+## Pre-PR Checklist
+
+```bash
+cd apps/bot
+bun run lint
+bun run test
+bun run test:e2e
+bun run build
+```
+
+- [ ] All commands pass
+- [ ] `config.example.json` updated if config changed
+- [ ] `config.schema.json` updated if config changed
+- [ ] Tests added for new functionality
+- [ ] AGENTS.md updated if patterns/structure changed
