@@ -17,6 +17,7 @@ interface GuildVolumeState {
 export class ZmqVolumeController implements OnModuleDestroy {
   private readonly logger = new Logger(ZmqVolumeController.name);
   private readonly guildStates = new Map<string, GuildVolumeState>();
+  private readonly availablePorts: number[] = [];
   private nextPort = BASE_PORT;
 
   public onModuleDestroy(): void {
@@ -31,7 +32,7 @@ export class ZmqVolumeController implements OnModuleDestroy {
       return existing.port;
     }
 
-    const port = this.nextPort++;
+    const port = this.availablePorts.pop() ?? this.nextPort++;
     this.guildStates.set(guildId, {
       socket: new Request(),
       port,
@@ -56,10 +57,21 @@ export class ZmqVolumeController implements OnModuleDestroy {
     }
 
     const address = `tcp://127.0.0.1:${String(state.port)}`;
-    state.socket.connect(address);
-    state.connected = true;
 
-    this.logger.debug(`Connected to ZMQ at ${address} for guild ${guildId}`);
+    try {
+      state.socket.connect(address);
+      state.connected = true;
+      this.logger.debug(`Connected to ZMQ at ${address} for guild ${guildId}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to connect to ZMQ at ${address} for guild ${guildId}:`,
+        error,
+      );
+      throw new Error(
+        `Failed to connect ZMQ volume controller for guild ${guildId}: ${message}`,
+      );
+    }
   }
 
   public async setVolume(guildId: string, volume: number): Promise<number> {
@@ -73,7 +85,7 @@ export class ZmqVolumeController implements OnModuleDestroy {
     }
 
     const clampedVolume = Math.max(0, Math.min(2, volume));
-    const command = `${VOLUME_FILTER_NAME} volume ${String(clampedVolume)}`;
+    const command = this.buildVolumeCommand(clampedVolume);
     this.logger.debug(`Sending ZMQ command: ${command}`);
 
     try {
@@ -129,6 +141,7 @@ export class ZmqVolumeController implements OnModuleDestroy {
       this.logger.warn(`Error cleaning up ZMQ for guild ${guildId}:`, error);
     }
 
+    this.availablePorts.push(state.port);
     this.guildStates.delete(guildId);
     this.logger.debug(`Cleaned up ZMQ controller for guild ${guildId}`);
   }
@@ -155,5 +168,11 @@ export class ZmqVolumeController implements OnModuleDestroy {
           }
         });
     });
+  }
+
+  private buildVolumeCommand(volume: number): string {
+    // FFmpeg azmq filter command format: "<filter_name> <option> <value>"
+    // See: https://ffmpeg.org/ffmpeg-filters.html#zmq_002c-azmq
+    return `${VOLUME_FILTER_NAME} volume ${String(volume)}`;
   }
 }

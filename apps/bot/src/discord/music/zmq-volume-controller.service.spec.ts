@@ -238,6 +238,15 @@ describe('ZmqVolumeController', () => {
         service.cleanup('unknown');
       }).not.toThrow();
     });
+
+    it('returns port to available pool for reuse', () => {
+      const port1 = service.allocatePort('guild1');
+      service.cleanup('guild1');
+
+      const port2 = service.allocatePort('guild2');
+
+      expect(port2).toBe(port1);
+    });
   });
 
   describe('onModuleDestroy', () => {

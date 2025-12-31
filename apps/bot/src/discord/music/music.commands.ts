@@ -518,7 +518,14 @@ export class MusicCommands {
       return '🔇';
     }
 
-    const icon = percentage <= 50 ? '🔉' : percentage <= 100 ? '🔊' : '📢';
+    let icon: string;
+    if (percentage <= 50) {
+      icon = '🔉';
+    } else if (percentage <= 100) {
+      icon = '🔊';
+    } else {
+      icon = '📢';
+    }
     const bar =
       '█'.repeat(Math.min(filledBlocks, 10)) + '░'.repeat(emptyBlocks);
 

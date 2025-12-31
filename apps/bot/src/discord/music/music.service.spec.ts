@@ -306,6 +306,12 @@ describe('MusicService', () => {
         'guild-123',
       );
     });
+
+    it('stops voice playback', () => {
+      service.cleanup('guild-123');
+
+      expect(vi.mocked(voiceService.stop)).toHaveBeenCalledWith('guild-123');
+    });
   });
 
   describe('getUpcoming', () => {
@@ -578,6 +584,31 @@ describe('MusicService', () => {
       idleCallback();
 
       expect(vi.mocked(voiceService.play)).not.toHaveBeenCalled();
+    });
+
+    it('does not register duplicate listeners when called multiple times', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      service.setupAutoPlay('guild-123');
+      service.setupAutoPlay('guild-123');
+
+      expect(mockPlayer.on).toHaveBeenCalledTimes(1);
+    });
+
+    it('allows new listener after cleanup', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      service.setupAutoPlay('guild-123');
+      service.cleanup('guild-123');
+      service.setupAutoPlay('guild-123');
+
+      expect(mockPlayer.on).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -14,7 +14,7 @@ const VIDEO_ID_PATTERN = regex('^([a-zA-Z0-9_-]{11})$');
 export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
   public readonly name = 'YouTube';
   private readonly logger = new Logger(YouTubeProvider.name);
-  private innertube!: Innertube;
+  private innertube: Innertube | undefined;
 
   public async onModuleInit(): Promise<void> {
     this.innertube = await Innertube.create({
@@ -38,7 +38,7 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
       throw new Error('Invalid YouTube URL');
     }
 
-    const info = await this.innertube.getBasicInfo(videoId);
+    const info = await this.getInnertube().getBasicInfo(videoId);
     const { basic_info } = info;
 
     return {
@@ -56,7 +56,7 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
       throw new Error('Invalid YouTube URL');
     }
 
-    const info = await this.innertube.getBasicInfo(videoId);
+    const info = await this.getInnertube().getBasicInfo(videoId);
     const streamingData = info.streaming_data;
 
     if (!streamingData) {
@@ -96,5 +96,14 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
     }
 
     return null;
+  }
+
+  private getInnertube(): Innertube {
+    if (!this.innertube) {
+      throw new Error(
+        'YouTube client not initialized. Ensure onModuleInit has completed.',
+      );
+    }
+    return this.innertube;
   }
 }

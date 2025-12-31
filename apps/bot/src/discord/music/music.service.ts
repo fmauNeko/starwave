@@ -13,6 +13,11 @@ const ZMQ_CONNECT_DELAY_MS = 500;
 export class MusicService {
   private readonly logger = new Logger(MusicService.name);
   private readonly queues = new Map<string, MusicQueue>();
+  private readonly zmqConnectTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
+  private readonly autoPlaySetup = new Set<string>();
 
   public constructor(
     private readonly audioFilterService: AudioFilterService,
@@ -159,11 +164,18 @@ export class MusicService {
   }
 
   public cleanup(guildId: string): void {
+    this.clearZmqTimer(guildId);
+    this.voiceService.stop(guildId);
+    this.autoPlaySetup.delete(guildId);
     this.queues.delete(guildId);
     this.volumeController.cleanup(guildId);
   }
 
   public setupAutoPlay(guildId: string): void {
+    if (this.autoPlaySetup.has(guildId)) {
+      return;
+    }
+
     const player = this.voiceService.getPlayer(guildId);
     if (!player) {
       return;
@@ -180,6 +192,8 @@ export class MusicService {
         void this.playTrack(guildId, nextTrack);
       }
     });
+
+    this.autoPlaySetup.add(guildId);
   }
 
   private getProviderForUrl(url: string): MusicProvider {
@@ -210,7 +224,16 @@ export class MusicService {
       inputType: StreamType.OggOpus,
     });
 
-    setTimeout(() => {
+    this.scheduleZmqConnect(guildId);
+
+    this.logger.log(`Now playing: ${track.title} in guild ${guildId}`);
+  }
+
+  private scheduleZmqConnect(guildId: string): void {
+    this.clearZmqTimer(guildId);
+
+    const timer = setTimeout(() => {
+      this.zmqConnectTimers.delete(guildId);
       try {
         this.volumeController.connect(guildId);
       } catch (error: unknown) {
@@ -218,7 +241,15 @@ export class MusicService {
       }
     }, ZMQ_CONNECT_DELAY_MS);
 
-    this.logger.log(`Now playing: ${track.title} in guild ${guildId}`);
+    this.zmqConnectTimers.set(guildId, timer);
+  }
+
+  private clearZmqTimer(guildId: string): void {
+    const timer = this.zmqConnectTimers.get(guildId);
+    if (timer) {
+      clearTimeout(timer);
+      this.zmqConnectTimers.delete(guildId);
+    }
   }
 
   private getOrCreateQueue(guildId: string): MusicQueue {

@@ -72,6 +72,9 @@ export class AudioFilterService {
     const volumeFilter = `${VOLUME_FILTER_NAME}=volume=${String(volume)}`;
 
     if (zmqBindAddress) {
+      // FFmpeg filter syntax requires colons in filter arguments to be escaped.
+      // We need a double backslash (`\\:`) in the final filter string, which is
+      // represented here as `\\\\:` in the TypeScript string literal.
       const escapedAddress = zmqBindAddress.replace(/:/g, '\\\\:');
       return `azmq=bind_address=${escapedAddress},${volumeFilter}`;
     }
@@ -89,9 +92,17 @@ export class AudioFilterService {
       stderrData += data.toString();
     });
 
-    ffmpeg.on('error', (error) => {
-      this.logger.error('FFmpeg process error:', error);
-      outputStream.destroy(error);
+    ffmpeg.on('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') {
+        const ffmpegError = new Error(
+          'FFmpeg is not installed or not found in PATH. Please install FFmpeg to use music features.',
+        );
+        this.logger.error(ffmpegError.message);
+        outputStream.destroy(ffmpegError);
+      } else {
+        this.logger.error('FFmpeg process error:', error);
+        outputStream.destroy(error);
+      }
     });
 
     ffmpeg.on('close', (code) => {
