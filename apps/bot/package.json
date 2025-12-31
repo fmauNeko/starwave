@@ -27,7 +27,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "arktype": "^2.1.29",
-    "discord-api-types": "^0.37.99",
+    "discord-api-types": "^0.38.0",
     "discord.js": "^14.25.1",
     "necord": "^6.11.2",
     "reflect-metadata": "^0.2.2",
