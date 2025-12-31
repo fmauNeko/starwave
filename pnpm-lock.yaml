@@ -81,14 +81,14 @@ importers:
         specifier: ^2.1.29
         version: 2.1.29
       discord-api-types:
-        specifier: ^0.37.99
-        version: 0.37.120
+        specifier: ^0.38.0
+        version: 0.38.37
       discord.js:
         specifier: ^14.25.1
         version: 14.25.1
       necord:
         specifier: ^6.11.2
-        version: 6.12.0(@nestjs/common@11.1.11(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.11)(discord-api-types@0.37.120)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 6.12.0(@nestjs/common@11.1.11(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.11)(discord-api-types@0.38.37)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -2509,9 +2509,6 @@ packages:
   diff@4.0.2:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
     engines: {node: '>=0.3.1'}
-
-  discord-api-types@0.37.120:
-    resolution: {integrity: sha512-7xpNK0EiWjjDFp2nAhHXezE4OUWm7s1zhc/UXXN6hnFFU8dfoPHgV0Hx0RPiCa3ILRpdeh152icc68DGCyXYIw==}
 
   discord-api-types@0.38.37:
     resolution: {integrity: sha512-Cv47jzY1jkGkh5sv0bfHYqGgKOWO1peOrGMkDFM4UmaGMOTgOW8QSexhvixa9sVOiz8MnVOBryWYyw/CEVhj7w==}
@@ -7159,8 +7156,6 @@ snapshots:
 
   diff@4.0.2: {}
 
-  discord-api-types@0.37.120: {}
-
   discord-api-types@0.38.37: {}
 
   discord.js@14.25.1:
@@ -8517,12 +8512,12 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  necord@6.12.0(@nestjs/common@11.1.11(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.11)(discord-api-types@0.37.120)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2):
+  necord@6.12.0(@nestjs/common@11.1.11(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.11)(discord-api-types@0.38.37)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2):
     dependencies:
       '@nestjs/common': 11.1.11(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.11(@nestjs/common@11.1.11(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.11)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nuxt/opencollective': 0.4.1
-      discord-api-types: 0.37.120
+      discord-api-types: 0.38.37
       discord.js: 14.25.1
       path-to-regexp: 8.3.0
       reflect-metadata: 0.2.2
