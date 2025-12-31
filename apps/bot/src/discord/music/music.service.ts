@@ -1,32 +1,28 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { AudioPlayerStatus, StreamType } from '@discordjs/voice';
-import { ClientType, Innertube, UniversalCache } from 'youtubei.js';
 import { AudioFilterService } from './audio-filter.service';
 import { VoiceService } from '../voice/voice.service';
 import { ZmqVolumeController } from './zmq-volume-controller.service';
 import { LoopMode, MusicQueue, type Track } from './music-queue';
+import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
+import type { MusicProvider } from './providers/music-provider.interface';
 
 const ZMQ_CONNECT_DELAY_MS = 500;
 
 @Injectable()
-export class MusicService implements OnModuleInit {
+export class MusicService {
   private readonly logger = new Logger(MusicService.name);
   private readonly queues = new Map<string, MusicQueue>();
-  private innertube!: Innertube;
 
   public constructor(
     private readonly audioFilterService: AudioFilterService,
     private readonly voiceService: VoiceService,
     private readonly volumeController: ZmqVolumeController,
+    private readonly providerDiscovery: MusicProviderDiscovery,
   ) {}
 
-  public async onModuleInit(): Promise<void> {
-    this.innertube = await Innertube.create({
-      cache: new UniversalCache(false),
-      generate_session_locally: true,
-      client_type: ClientType.ANDROID,
-    });
-    this.logger.log('YouTube.js client initialized');
+  private get providers(): MusicProvider[] {
+    return this.providerDiscovery.getProviders();
   }
 
   public async play(
@@ -34,7 +30,8 @@ export class MusicService implements OnModuleInit {
     url: string,
     requestedBy: string,
   ): Promise<Track> {
-    const track = await this.fetchTrackInfo(url, requestedBy);
+    const provider = this.getProviderForUrl(url);
+    const track = await provider.fetchTrackInfo(url, requestedBy);
     const queue = this.getOrCreateQueue(guildId);
 
     queue.add(track);
@@ -185,29 +182,17 @@ export class MusicService implements OnModuleInit {
     });
   }
 
-  private async fetchTrackInfo(
-    url: string,
-    requestedBy: string,
-  ): Promise<Track> {
-    const videoId = this.extractVideoId(url);
-    if (!videoId) {
-      throw new Error('Invalid YouTube URL');
+  private getProviderForUrl(url: string): MusicProvider {
+    const provider = this.providers.find((p) => p.canHandle(url));
+    if (!provider) {
+      throw new Error(`No provider found for URL: ${url}`);
     }
-
-    const info = await this.innertube.getBasicInfo(videoId);
-    const { basic_info } = info;
-
-    return {
-      url,
-      title: basic_info.title ?? 'Unknown Title',
-      duration: basic_info.duration ?? 0,
-      thumbnail: basic_info.thumbnail?.[0]?.url ?? '',
-      requestedBy,
-    };
+    return provider;
   }
 
   private async playTrack(guildId: string, track: Track): Promise<void> {
-    const audioUrl = await this.getAudioUrl(track.url);
+    const provider = this.getProviderForUrl(track.url);
+    const audioUrl = await provider.getAudioUrl(track.url);
 
     this.volumeController.allocatePort(guildId);
     const zmqBindAddress = this.volumeController.getBindAddress(guildId);
@@ -234,56 +219,6 @@ export class MusicService implements OnModuleInit {
     }, ZMQ_CONNECT_DELAY_MS);
 
     this.logger.log(`Now playing: ${track.title} in guild ${guildId}`);
-  }
-
-  private async getAudioUrl(url: string): Promise<string> {
-    const videoId = this.extractVideoId(url);
-    if (!videoId) {
-      throw new Error('Invalid YouTube URL');
-    }
-
-    const info = await this.innertube.getBasicInfo(videoId);
-    const streamingData = info.streaming_data;
-
-    if (!streamingData) {
-      throw new Error('No streaming data available for this video');
-    }
-
-    const audioFormat = streamingData.adaptive_formats.find(
-      (format) =>
-        format.has_audio &&
-        !format.has_video &&
-        format.mime_type.includes('audio/webm') &&
-        format.mime_type.includes('opus'),
-    );
-
-    const fallbackFormat = streamingData.adaptive_formats.find(
-      (format) => format.has_audio && !format.has_video,
-    );
-
-    const selectedFormat = audioFormat ?? fallbackFormat;
-
-    if (!selectedFormat?.url) {
-      throw new Error('No audio format available for this video');
-    }
-
-    return selectedFormat.url;
-  }
-
-  private extractVideoId(url: string): string | null {
-    const patterns = [
-      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-      /^([a-zA-Z0-9_-]{11})$/,
-    ];
-
-    for (const pattern of patterns) {
-      const match = url.match(pattern);
-      if (match?.[1]) {
-        return match[1];
-      }
-    }
-
-    return null;
   }
 
   private getOrCreateQueue(guildId: string): MusicQueue {

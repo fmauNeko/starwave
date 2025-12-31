@@ -42,6 +42,29 @@ cd apps/bot && pnpm run test        # Bot unit tests only
 - TypeScript strict mode, ESM modules
 - No `as any`, `@ts-ignore`, or `@ts-expect-error`
 
+### ESLint Disables
+
+When eslint rules need to be disabled, use **line-level** or **block-level** disables targeting only the specific code that needs it. Never use file-level disables (`/* eslint-disable rule */` at file top).
+
+Disables should only be used in non-production code (tests, mocks, stubs). If you need to disable a rule in production code, reconsider the approach or discuss with the team first.
+
+```typescript
+// ✅ Good: Line-level disable in test file
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+class StubProvider {}
+
+// ✅ Good: Block-level disable for multiple related lines in test
+/* eslint-disable @typescript-eslint/unbound-method */
+vi.mocked(service.method).mockReturnValue([]);
+vi.mocked(service.otherMethod).mockReturnValue({});
+/* eslint-enable @typescript-eslint/unbound-method */
+
+// ❌ Bad: File-level disable at top of file
+/* eslint-disable @typescript-eslint/no-extraneous-class */
+
+// ❌ Bad: Disabling rules in production code
+```
+
 ### File Organization
 
 - Tests alongside source (`*.spec.ts`) or under `test/` for e2e
