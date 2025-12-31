@@ -5,7 +5,7 @@ import { App } from 'supertest/types';
 import { vi } from 'vitest';
 import { DiscordModule } from '../src/discord/discord.module';
 import { AppModule } from './../src/app.module';
-import { DiscordMockModule } from './__mocks__/discord.mock.module';
+import { DiscordMockModule } from './discord.mock.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;

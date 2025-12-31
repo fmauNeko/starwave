@@ -1,6 +1,6 @@
 import eslint from '@eslint/js';
+import vitest from '@vitest/eslint-plugin';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import vitest from 'eslint-plugin-vitest';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
