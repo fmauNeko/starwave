@@ -118,7 +118,7 @@ importers:
         specifier: 9.39.2
         version: 9.39.2
       '@necord/schematics':
-        specifier: ^1.3.8
+        specifier: 1.3.8
         version: 1.3.8(chokidar@4.0.3)(typescript@5.9.3)
       '@nestjs/cli':
         specifier: 11.0.14
@@ -160,7 +160,7 @@ importers:
         specifier: 4.0.16
         version: 4.0.16(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1))
       '@vitest/eslint-plugin':
-        specifier: ^1.0.1
+        specifier: 1.6.4
         version: 1.6.4(eslint@9.39.2(jiti@2.6.1))(typescript@5.9.3)(vitest@4.0.16(@types/node@25.0.3)(jiti@2.6.1)(terser@5.44.1))
       eslint:
         specifier: 9.39.2
