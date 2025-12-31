@@ -1,9 +1,12 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { AudioPlayerStatus, StreamType } from '@discordjs/voice';
 import { ClientType, Innertube, UniversalCache } from 'youtubei.js';
-import { Readable } from 'node:stream';
+import { AudioFilterService } from './audio-filter.service';
 import { VoiceService } from '../voice/voice.service';
+import { ZmqVolumeController } from './zmq-volume-controller.service';
 import { LoopMode, MusicQueue, type Track } from './music-queue';
+
+const ZMQ_CONNECT_DELAY_MS = 500;
 
 @Injectable()
 export class MusicService implements OnModuleInit {
@@ -11,7 +14,11 @@ export class MusicService implements OnModuleInit {
   private readonly queues = new Map<string, MusicQueue>();
   private innertube!: Innertube;
 
-  public constructor(private readonly voiceService: VoiceService) {}
+  public constructor(
+    private readonly audioFilterService: AudioFilterService,
+    private readonly voiceService: VoiceService,
+    private readonly volumeController: ZmqVolumeController,
+  ) {}
 
   public async onModuleInit(): Promise<void> {
     this.innertube = await Innertube.create({
@@ -143,8 +150,20 @@ export class MusicService implements OnModuleInit {
     return status === AudioPlayerStatus.Paused;
   }
 
+  public async setVolume(guildId: string, volume: number): Promise<number> {
+    if (!this.volumeController.isConnected(guildId)) {
+      throw new Error('No active playback to adjust volume');
+    }
+    return this.volumeController.setVolume(guildId, volume);
+  }
+
+  public getVolume(guildId: string): number {
+    return this.volumeController.getVolume(guildId);
+  }
+
   public cleanup(guildId: string): void {
     this.queues.delete(guildId);
+    this.volumeController.cleanup(guildId);
   }
 
   public setupAutoPlay(guildId: string): void {
@@ -188,16 +207,36 @@ export class MusicService implements OnModuleInit {
   }
 
   private async playTrack(guildId: string, track: Track): Promise<void> {
-    const { stream, streamType } = await this.getAudioStream(track.url);
-    this.voiceService.play(guildId, stream, {
-      inputType: streamType,
+    const audioUrl = await this.getAudioUrl(track.url);
+
+    this.volumeController.allocatePort(guildId);
+    const zmqBindAddress = this.volumeController.getBindAddress(guildId);
+    const currentVolume = this.volumeController.getVolume(guildId);
+
+    const filteredStream = this.audioFilterService.createFilteredStream(
+      audioUrl,
+      {
+        volume: currentVolume,
+        zmqBindAddress,
+      },
+    );
+
+    this.voiceService.play(guildId, filteredStream, {
+      inputType: StreamType.OggOpus,
     });
+
+    setTimeout(() => {
+      try {
+        this.volumeController.connect(guildId);
+      } catch (error: unknown) {
+        this.logger.warn(`Failed to connect ZMQ for guild ${guildId}:`, error);
+      }
+    }, ZMQ_CONNECT_DELAY_MS);
+
     this.logger.log(`Now playing: ${track.title} in guild ${guildId}`);
   }
 
-  private async getAudioStream(
-    url: string,
-  ): Promise<{ stream: Readable; streamType: StreamType }> {
+  private async getAudioUrl(url: string): Promise<string> {
     const videoId = this.extractVideoId(url);
     if (!videoId) {
       throw new Error('Invalid YouTube URL');
@@ -228,27 +267,7 @@ export class MusicService implements OnModuleInit {
       throw new Error('No audio format available for this video');
     }
 
-    const isWebmOpus =
-      selectedFormat.mime_type.includes('audio/webm') &&
-      selectedFormat.mime_type.includes('opus');
-
-    const response = await fetch(selectedFormat.url);
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch audio stream: ${String(response.status)}`,
-      );
-    }
-
-    if (!response.body) {
-      throw new Error('No response body available');
-    }
-
-    return {
-      stream: Readable.fromWeb(
-        response.body as Parameters<typeof Readable.fromWeb>[0],
-      ),
-      streamType: isWebmOpus ? StreamType.WebmOpus : StreamType.Arbitrary,
-    };
+    return selectedFormat.url;
   }
 
   private extractVideoId(url: string): string | null {

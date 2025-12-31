@@ -35,6 +35,7 @@ describe('Module imports', () => {
       Options: () => () => undefined,
       StringOption: () => () => undefined,
       IntegerOption: () => () => undefined,
+      NumberOption: () => () => undefined,
       createCommandGroupDecorator: () => () => (target: unknown) => target,
     }));
 

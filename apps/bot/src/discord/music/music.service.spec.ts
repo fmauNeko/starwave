@@ -2,19 +2,11 @@
 import { TestBed, Mocked } from '@suites/unit';
 import { AudioPlayerStatus, type AudioResource } from '@discordjs/voice';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Readable } from 'node:stream';
+import { PassThrough } from 'node:stream';
 import { MusicService } from './music.service';
 import { VoiceService } from '../voice/voice.service';
+import { AudioFilterService } from './audio-filter.service';
 import { LoopMode } from './music-queue';
-
-const createMockFetchResponse = () => ({
-  ok: true,
-  body: Readable.toWeb(Readable.from([Buffer.from('test audio data')])),
-});
-const mockFetch = vi
-  .fn()
-  .mockImplementation(() => Promise.resolve(createMockFetchResponse()));
-vi.stubGlobal('fetch', mockFetch);
 
 vi.mock('youtubei.js', () => ({
   Innertube: {
@@ -50,6 +42,7 @@ vi.mock('youtubei.js', () => ({
 describe('MusicService', () => {
   let service: MusicService;
   let voiceService: Mocked<VoiceService>;
+  let audioFilterService: Mocked<AudioFilterService>;
 
   const mockAudioResource = {} as AudioResource;
 
@@ -58,6 +51,11 @@ describe('MusicService', () => {
     const { unit, unitRef } = await TestBed.solitary(MusicService).compile();
     service = unit;
     voiceService = unitRef.get(VoiceService);
+    audioFilterService = unitRef.get(AudioFilterService);
+
+    audioFilterService.createFilteredStream.mockImplementation(
+      () => new PassThrough(),
+    );
 
     await service.onModuleInit();
   });

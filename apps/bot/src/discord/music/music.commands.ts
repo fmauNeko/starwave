@@ -7,6 +7,7 @@ import {
   SlashCommand,
   StringOption,
   IntegerOption,
+  NumberOption,
   type SlashCommandContext,
 } from 'necord';
 import { VoiceService } from '../voice/voice.service';
@@ -30,6 +31,17 @@ class RemoveDto {
     min_value: 1,
   })
   position!: number;
+}
+
+class VolumeDto {
+  @NumberOption({
+    name: 'level',
+    description: 'Volume level (0-200, where 100 is normal)',
+    required: true,
+    min_value: 0,
+    max_value: 200,
+  })
+  level!: number;
 }
 
 const MusicCommandDecorator = createCommandGroupDecorator({
@@ -354,6 +366,54 @@ export class MusicCommands {
   }
 
   @SlashCommand({
+    name: 'volume',
+    description: 'Set the playback volume (0-200)',
+  })
+  public async volume(
+    @Context() [interaction]: SlashCommandContext,
+    @Options() { level }: VolumeDto,
+  ) {
+    const guildId = interaction.guildId;
+    if (!guildId) {
+      return interaction.reply({
+        content: 'This command can only be used in a server.',
+        ephemeral: true,
+      });
+    }
+
+    if (
+      !this.musicService.isPlaying(guildId) &&
+      !this.musicService.isPaused(guildId)
+    ) {
+      return interaction.reply({
+        content: 'Nothing is playing.',
+        ephemeral: true,
+      });
+    }
+
+    await interaction.deferReply();
+
+    try {
+      const volumeMultiplier = level / 100;
+      const newVolume = await this.musicService.setVolume(
+        guildId,
+        volumeMultiplier,
+      );
+      const displayVolume = Math.round(newVolume * 100);
+      const volumeBar = this.createVolumeBar(displayVolume);
+
+      return await interaction.editReply({
+        content: `${volumeBar} Volume set to **${String(displayVolume)}%**`,
+      });
+    } catch (error) {
+      this.logger.error('Failed to set volume', error);
+      return interaction.editReply({
+        content: `Failed to set volume: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+    }
+  }
+
+  @SlashCommand({
     name: 'remove',
     description: 'Remove a track from the queue',
   })
@@ -447,5 +507,25 @@ export class MusicCommands {
       case LoopMode.Queue:
         return '🔁';
     }
+  }
+
+  private createVolumeBar(percentage: number): string {
+    const filledBlocks = Math.round(percentage / 10);
+    const emptyBlocks = 10 - Math.min(filledBlocks, 10);
+    const overflowBlocks = Math.max(0, filledBlocks - 10);
+
+    if (percentage === 0) {
+      return '🔇';
+    }
+
+    const icon = percentage <= 50 ? '🔉' : percentage <= 100 ? '🔊' : '📢';
+    const bar =
+      '█'.repeat(Math.min(filledBlocks, 10)) + '░'.repeat(emptyBlocks);
+
+    if (overflowBlocks > 0) {
+      return `${icon} ${bar} +${String(overflowBlocks * 10)}%`;
+    }
+
+    return `${icon} ${bar}`;
   }
 }
