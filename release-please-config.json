@@ -1,15 +1,7 @@
 {
   "tag-separator": "@",
   "packages": {
-    "apps/bot": {
-      "extra-files": [
-        {
-          "type": "yaml",
-          "path": "/charts/starwave/Chart.yaml",
-          "jsonpath": "$.appVersion"
-        }
-      ]
-    },
+    "apps/bot": {},
     "charts/starwave": {
       "release-type": "helm",
       "package-name": "chart-starwave"
