@@ -19,6 +19,8 @@ jobs:
       docker_matrix: ${{ steps.matrix.outputs.docker_matrix }}
       helm_matrix: ${{ steps.matrix.outputs.helm_matrix }}
       releases_created: ${{ steps.release.outputs.releases_created }}
+      bot_release_created: ${{ steps.release.outputs['apps/bot--release_created'] }}
+      bot_version: ${{ steps.release.outputs['apps/bot--version'] }}
     steps:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4
         id: release
@@ -67,14 +69,39 @@ jobs:
           workflow: helm-release.yaml
           ref: ${{ matrix.target.tag_name }}
 
-  backmerge:
-    name: Backmerge main into develop
-    if: ${{ needs.release.outputs.releases_created == 'true' }}
+  update-chart-appversion:
+    name: Update Helm chart appVersion
+    if: ${{ needs.release.outputs.bot_release_created == 'true' }}
     runs-on: ubuntu-latest
     needs: [release]
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Update Chart.yaml appVersion
+        run: |
+          BOT_VERSION="${{ needs.release.outputs.bot_version }}"
+          sed -i "s/^appVersion:.*/appVersion: ${BOT_VERSION}/" charts/starwave/Chart.yaml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add charts/starwave/Chart.yaml
+          git commit -m "deps(charts/starwave): bump appVersion to ${{ needs.release.outputs.bot_version }}"
+          git push
+
+  backmerge:
+    name: Backmerge main into develop
+    if: ${{ always() && needs.release.outputs.releases_created == 'true' }}
+    runs-on: ubuntu-latest
+    needs: [release, update-chart-appversion]
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          ref: main
           fetch-depth: 0
 
       - name: Backmerge main into develop
