@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { AudioPlayerStatus, type AudioResource } from '@discordjs/voice';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PassThrough } from 'node:stream';
@@ -18,6 +17,7 @@ const mockTrack = {
   requestedBy: 'user#1234',
 };
 
+/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-enum-comparison */
 describe('MusicService', () => {
   let service: MusicService;
   let voiceService: VoiceService;
@@ -90,7 +90,7 @@ describe('MusicService', () => {
         duration: 180,
         requestedBy: 'user#1234',
       });
-      expect(voiceService.play).toHaveBeenCalled();
+      expect(vi.mocked(voiceService.play)).toHaveBeenCalled();
     });
 
     it('uses provider to fetch track info', async () => {
@@ -100,7 +100,7 @@ describe('MusicService', () => {
         'user#1234',
       );
 
-      expect(mockProvider.fetchTrackInfo).toHaveBeenCalledWith(
+      expect(vi.mocked(mockProvider.fetchTrackInfo)).toHaveBeenCalledWith(
         'https://youtube.com/watch?v=dQw4w9WgXcQ',
         'user#1234',
       );
@@ -113,7 +113,7 @@ describe('MusicService', () => {
         'user#1234',
       );
 
-      expect(mockProvider.getAudioUrl).toHaveBeenCalledWith(
+      expect(vi.mocked(mockProvider.getAudioUrl)).toHaveBeenCalledWith(
         'https://youtube.com/watch?v=dQw4w9WgXcQ',
       );
     });
@@ -131,6 +131,48 @@ describe('MusicService', () => {
     it('returns undefined when no queue exists', () => {
       const result = service.skip('guild-123');
       expect(result).toBeUndefined();
+    });
+
+    it('plays next track when available', async () => {
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+
+      vi.clearAllMocks();
+
+      const next = service.skip('guild-123');
+
+      expect(next).toMatchObject({ title: 'Track 2' });
+      // playTrack is called asynchronously with void, so wait for it
+      await vi.waitFor(() => {
+        expect(vi.mocked(voiceService.play)).toHaveBeenCalled();
+      });
+    });
+
+    it('stops voice when no next track', async () => {
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      vi.clearAllMocks();
+
+      const next = service.skip('guild-123');
+
+      expect(next).toBeUndefined();
+      expect(vi.mocked(voiceService.stop)).toHaveBeenCalledWith('guild-123');
     });
   });
 
@@ -150,7 +192,7 @@ describe('MusicService', () => {
       const result = service.stop('guild-123');
 
       expect(result).toBe(true);
-      expect(voiceService.stop).toHaveBeenCalledWith('guild-123');
+      expect(vi.mocked(voiceService.stop)).toHaveBeenCalledWith('guild-123');
     });
   });
 
@@ -159,14 +201,14 @@ describe('MusicService', () => {
       const result = service.pause('guild-123');
 
       expect(result).toBe(true);
-      expect(voiceService.pause).toHaveBeenCalledWith('guild-123');
+      expect(vi.mocked(voiceService.pause)).toHaveBeenCalledWith('guild-123');
     });
 
     it('delegates resume to voice service', () => {
       const result = service.resume('guild-123');
 
       expect(result).toBe(true);
-      expect(voiceService.unpause).toHaveBeenCalledWith('guild-123');
+      expect(vi.mocked(voiceService.unpause)).toHaveBeenCalledWith('guild-123');
     });
   });
 
@@ -256,5 +298,311 @@ describe('MusicService', () => {
 
       expect(service.getNowPlaying('guild-123')).toBeUndefined();
     });
+
+    it('calls volume controller cleanup', () => {
+      service.cleanup('guild-123');
+
+      expect(vi.mocked(volumeController.cleanup)).toHaveBeenCalledWith(
+        'guild-123',
+      );
+    });
+  });
+
+  describe('getUpcoming', () => {
+    it('returns empty array when no queue exists', () => {
+      const result = service.getUpcoming('guild-123');
+      expect(result).toEqual([]);
+    });
+
+    it('returns upcoming tracks', async () => {
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+
+      const upcoming = service.getUpcoming('guild-123');
+
+      expect(upcoming).toHaveLength(1);
+      expect(upcoming[0]).toMatchObject({ title: 'Track 2' });
+    });
+  });
+
+  describe('clearQueue', () => {
+    it('returns false when no queue exists', () => {
+      const result = service.clearQueue('guild-123');
+      expect(result).toBe(false);
+    });
+
+    it('clears queue but keeps current track', async () => {
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+
+      const result = service.clearQueue('guild-123');
+
+      expect(result).toBe(true);
+      expect(service.getNowPlaying('guild-123')).toMatchObject({
+        title: 'Test Video',
+      });
+      expect(service.getUpcoming('guild-123')).toHaveLength(0);
+    });
+  });
+
+  describe('shuffle', () => {
+    it('returns true when enough tracks to shuffle', async () => {
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+
+      const result = service.shuffle('guild-123');
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when only one track', async () => {
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+
+      const result = service.shuffle('guild-123');
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('getLoopMode', () => {
+    it('returns None when no queue exists', () => {
+      const result = service.getLoopMode('guild-123');
+      expect(result).toBe(LoopMode.None);
+    });
+
+    it('returns current loop mode', async () => {
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      service.cycleLoopMode('guild-123');
+
+      const result = service.getLoopMode('guild-123');
+      expect(result).toBe(LoopMode.Track);
+    });
+  });
+
+  describe('remove', () => {
+    it('returns undefined when no queue exists', () => {
+      const result = service.remove('guild-123', 0);
+      expect(result).toBeUndefined();
+    });
+
+    it('returns undefined when trying to remove current track', async () => {
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+
+      const result = service.remove('guild-123', 0);
+      expect(result).toBeUndefined();
+    });
+
+    it('removes track at specified index', async () => {
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+
+      const removed = service.remove('guild-123', 1);
+
+      expect(removed).toMatchObject({ title: 'Track 2' });
+      expect(service.getUpcoming('guild-123')).toHaveLength(0);
+    });
+  });
+
+  describe('setVolume', () => {
+    it('throws error when not connected', async () => {
+      vi.mocked(volumeController.isConnected).mockReturnValue(false);
+
+      await expect(service.setVolume('guild-123', 0.5)).rejects.toThrow(
+        'No active playback to adjust volume',
+      );
+    });
+
+    it('sets volume when connected', async () => {
+      vi.mocked(volumeController.isConnected).mockReturnValue(true);
+      vi.mocked(volumeController.setVolume).mockResolvedValue(0.75);
+
+      const result = await service.setVolume('guild-123', 0.75);
+
+      expect(vi.mocked(volumeController.setVolume)).toHaveBeenCalledWith(
+        'guild-123',
+        0.75,
+      );
+      expect(result).toBe(0.75);
+    });
+  });
+
+  describe('getVolume', () => {
+    it('returns volume from controller', () => {
+      vi.mocked(volumeController.getVolume).mockReturnValue(0.5);
+
+      const result = service.getVolume('guild-123');
+
+      expect(result).toBe(0.5);
+    });
+  });
+
+  describe('setupAutoPlay', () => {
+    it('does nothing when no player exists', () => {
+      vi.mocked(voiceService.getPlayer).mockReturnValue(undefined);
+
+      service.setupAutoPlay('guild-123');
+
+      expect(vi.mocked(voiceService.getPlayer)).toHaveBeenCalledWith(
+        'guild-123',
+      );
+    });
+
+    it('sets up idle listener on player', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      service.setupAutoPlay('guild-123');
+
+      expect(mockPlayer.on).toHaveBeenCalledWith(
+        AudioPlayerStatus.Idle,
+        expect.any(Function),
+      );
+    });
+
+    it('plays next track when player goes idle', async () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+      service.setupAutoPlay('guild-123');
+      vi.clearAllMocks();
+
+      idleCallback();
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(voiceService.play)).toHaveBeenCalled();
+      });
+    });
+
+    it('does nothing on idle when queue does not exist', () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      service.setupAutoPlay('guild-123');
+      vi.clearAllMocks();
+
+      idleCallback();
+
+      expect(vi.mocked(voiceService.play)).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('play - queuing behavior', () => {
+    it('does not play when queue already has tracks', async () => {
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      vi.clearAllMocks();
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+
+      expect(vi.mocked(voiceService.play)).not.toHaveBeenCalled();
+    });
   });
 });
+/* eslint-enable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-enum-comparison */

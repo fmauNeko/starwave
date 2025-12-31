@@ -44,7 +44,13 @@ cd apps/bot && pnpm run test        # Bot unit tests only
 
 ### ESLint Disables
 
-When eslint rules need to be disabled, use **line-level** or **block-level** disables targeting only the specific code that needs it. Never use file-level disables (`/* eslint-disable rule */` at file top).
+**ESLint disables should be used as a last resort.** Before adding a disable:
+
+1. First, try to fix the code to satisfy the rule
+2. If the rule is overly strict for a specific case, consider if the code can be restructured
+3. Only disable when the rule genuinely cannot be satisfied without compromising code quality
+
+When eslint rules must be disabled, use **line-level** or **block-level** disables targeting only the specific code that needs it. Never use file-level disables (`/* eslint-disable rule */` at file top).
 
 Disables should only be used in non-production code (tests, mocks, stubs). If you need to disable a rule in production code, reconsider the approach or discuss with the team first.
 
@@ -153,10 +159,18 @@ Files: `.github/workflows/release-please.yaml`, `docker-release.yaml`, `helm-rel
 Before marking work complete:
 
 - [ ] `pnpm run lint` passes
-- [ ] `pnpm run test` passes
+- [ ] `pnpm run test` passes (with coverage thresholds met)
 - [ ] `pnpm run test:e2e` passes
 - [ ] `pnpm run build` succeeds
 - [ ] No secrets in committed code
 - [ ] `config.example.json` updated if config changed
 - [ ] Relevant AGENTS.md updated if behavior/structure changed
 - [ ] Conventional commit message used
+
+### Coverage Requirements
+
+Test coverage thresholds are enforced in CI. Before finalizing any feature:
+
+1. Run `pnpm run test -- --coverage` to check coverage
+2. Ensure all thresholds are met (configured per-package in `vitest.config.ts`)
+3. New code should have tests - coverage should not decrease

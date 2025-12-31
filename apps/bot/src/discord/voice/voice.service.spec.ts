@@ -24,8 +24,14 @@ vi.mock('@discordjs/voice', () => ({
   NoSubscriberBehavior: {
     Pause: 'pause',
   },
+  StreamType: {
+    OggOpus: 'ogg/opus',
+    WebmOpus: 'webm/opus',
+    Arbitrary: 'arbitrary',
+  },
 }));
 
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 describe('VoiceService', () => {
   let service: VoiceService;
 
@@ -342,4 +348,335 @@ describe('VoiceService', () => {
       expect(result).toBe(mockPlayer);
     });
   });
+
+  describe('getPlayerStatus', () => {
+    it('returns undefined when no player exists', () => {
+      expect(service.getPlayerStatus('guild-123')).toBeUndefined();
+    });
+
+    it('returns player status when player exists', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+        state: { status: discordVoice.AudioPlayerStatus.Playing },
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue({} as never);
+
+      service.play('guild-123', 'test.mp3');
+      const result = service.getPlayerStatus('guild-123');
+
+      expect(result).toBe(discordVoice.AudioPlayerStatus.Playing);
+    });
+  });
+
+  describe('connection handling', () => {
+    it('sets up disconnection handler on join', async () => {
+      const connectionHandlers: Record<string, (...args: unknown[]) => void> =
+        {};
+      const mockConnection = {
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+          connectionHandlers[event] = handler;
+        }),
+        destroy: vi.fn(),
+      };
+
+      const mockChannel = {
+        id: 'channel-123',
+        name: 'General',
+        guild: {
+          id: 'guild-123',
+          name: 'Test Guild',
+          voiceAdapterCreator: vi.fn(),
+        },
+      } as unknown as VoiceBasedChannel;
+
+      vi.mocked(discordVoice.joinVoiceChannel).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.entersState).mockResolvedValue(
+        mockConnection as never,
+      );
+
+      await service.join(mockChannel);
+
+      expect(mockConnection.on).toHaveBeenCalledWith(
+        discordVoice.VoiceConnectionStatus.Disconnected,
+        expect.any(Function),
+      );
+      expect(mockConnection.on).toHaveBeenCalledWith(
+        'error',
+        expect.any(Function),
+      );
+    });
+
+    it('handles disconnection by attempting reconnect', async () => {
+      const connectionHandlers: Record<string, (...args: unknown[]) => void> =
+        {};
+      const mockConnection = {
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+          connectionHandlers[event] = handler;
+        }),
+        destroy: vi.fn(),
+      };
+
+      const mockChannel = {
+        id: 'channel-123',
+        name: 'General',
+        guild: {
+          id: 'guild-123',
+          name: 'Test Guild',
+          voiceAdapterCreator: vi.fn(),
+        },
+      } as unknown as VoiceBasedChannel;
+
+      vi.mocked(discordVoice.joinVoiceChannel).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.entersState)
+        .mockResolvedValueOnce(mockConnection as never)
+        .mockResolvedValueOnce(mockConnection as never);
+
+      await service.join(mockChannel);
+
+      connectionHandlers[discordVoice.VoiceConnectionStatus.Disconnected]?.();
+
+      await vi.waitFor(() => {
+        expect(discordVoice.entersState).toHaveBeenCalledWith(
+          mockConnection,
+          discordVoice.VoiceConnectionStatus.Signalling,
+          5_000,
+        );
+      });
+    });
+
+    it('destroys connection when reconnect fails', async () => {
+      const connectionHandlers: Record<string, (...args: unknown[]) => void> =
+        {};
+      const mockConnection = {
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+          connectionHandlers[event] = handler;
+        }),
+        destroy: vi.fn(),
+      };
+
+      const mockChannel = {
+        id: 'channel-123',
+        name: 'General',
+        guild: {
+          id: 'guild-123',
+          name: 'Test Guild',
+          voiceAdapterCreator: vi.fn(),
+        },
+      } as unknown as VoiceBasedChannel;
+
+      vi.mocked(discordVoice.joinVoiceChannel).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.entersState)
+        .mockResolvedValueOnce(mockConnection as never)
+        .mockRejectedValue(new Error('Timeout'));
+
+      await service.join(mockChannel);
+
+      connectionHandlers[discordVoice.VoiceConnectionStatus.Disconnected]?.();
+
+      await vi.waitFor(() => {
+        expect(mockConnection.destroy).toHaveBeenCalled();
+      });
+    });
+
+    it('handles connection error', async () => {
+      const connectionHandlers: Record<string, (...args: unknown[]) => void> =
+        {};
+      const mockConnection = {
+        on: vi.fn((event: string, handler: (...args: unknown[]) => void) => {
+          connectionHandlers[event] = handler;
+        }),
+        destroy: vi.fn(),
+      };
+
+      const mockChannel = {
+        id: 'channel-123',
+        name: 'General',
+        guild: {
+          id: 'guild-123',
+          name: 'Test Guild',
+          voiceAdapterCreator: vi.fn(),
+        },
+      } as unknown as VoiceBasedChannel;
+
+      vi.mocked(discordVoice.joinVoiceChannel).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.entersState).mockResolvedValue(
+        mockConnection as never,
+      );
+
+      await service.join(mockChannel);
+
+      expect(() => {
+        connectionHandlers['error']?.(new Error('Connection error'));
+      }).not.toThrow();
+    });
+  });
+
+  describe('player error handling', () => {
+    it('handles player error without crashing', () => {
+      let errorHandler: ((error: Error) => void) | undefined;
+      const mockPlayer = {
+        on: vi.fn((event: string, handler: (error: Error) => void) => {
+          if (event === 'error') {
+            errorHandler = handler;
+          }
+        }),
+        play: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue({} as never);
+
+      service.play('guild-123', 'test.mp3');
+
+      expect(() => {
+        errorHandler?.(new Error('Audio error'));
+      }).not.toThrow();
+    });
+
+    it('handles player idle event', () => {
+      let idleHandler: (() => void) | undefined;
+      const mockPlayer = {
+        on: vi.fn((event: string, handler: () => void) => {
+          if (event === discordVoice.AudioPlayerStatus.Idle) {
+            idleHandler = handler;
+          }
+        }),
+        play: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue({} as never);
+
+      service.play('guild-123', 'test.mp3');
+
+      expect(() => {
+        idleHandler?.();
+      }).not.toThrow();
+    });
+  });
+
+  describe('play with options', () => {
+    it('passes inputType option to createAudioResource', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue({} as never);
+
+      service.play('guild-123', 'test.mp3', {
+        inputType: discordVoice.StreamType.OggOpus,
+      });
+
+      expect(discordVoice.createAudioResource).toHaveBeenCalledWith(
+        'test.mp3',
+        {
+          inputType: discordVoice.StreamType.OggOpus,
+          inlineVolume: undefined,
+        },
+      );
+    });
+
+    it('passes inlineVolume option to createAudioResource', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue({} as never);
+
+      service.play('guild-123', 'test.mp3', { inlineVolume: true });
+
+      expect(discordVoice.createAudioResource).toHaveBeenCalledWith(
+        'test.mp3',
+        {
+          inputType: undefined,
+          inlineVolume: true,
+        },
+      );
+    });
+  });
+
+  describe('leave with existing player', () => {
+    it('stops and cleans up player when leaving', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+        stop: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+        destroy: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue({} as never);
+
+      service.play('guild-123', 'test.mp3');
+      const result = service.leave('guild-123');
+
+      expect(mockPlayer.stop).toHaveBeenCalled();
+      expect(mockConnection.destroy).toHaveBeenCalled();
+      expect(result).toBe(true);
+    });
+  });
 });
+/* eslint-enable @typescript-eslint/no-unsafe-enum-comparison */
