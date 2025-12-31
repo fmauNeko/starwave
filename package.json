@@ -29,7 +29,7 @@
     "eslint-plugin-turbo": "2.7.2",
     "globals": "16.5.0",
     "husky": "9.1.7",
-    "inquirer": "9.3.8",
+    "inquirer": "13.1.0",
     "jiti": "2.6.1",
     "prettier": "3.7.4",
     "turbo": "2.7.2",
