@@ -49,7 +49,7 @@ export default defineConfig(
     },
     languageOptions: {
       globals: {
-        ...vitest.environments.env.globals,
+        ...vitest.configs.env.languageOptions.globals,
       },
     },
   },
