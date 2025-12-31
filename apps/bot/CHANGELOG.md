@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/fmauNeko/starwave/compare/bot@v0.3.0...bot@v0.3.1) (2025-12-31)
+
+
+### Bug Fixes
+
+* **bot:** fix Dockerfile ([b29a0f0](https://github.com/fmauNeko/starwave/commit/b29a0f0f08deb3cb31a5300b0235e876f8cef6d8))
+
 ## [0.3.0](https://github.com/fmauNeko/starwave/compare/bot@v0.2.0...bot@v0.3.0) (2025-12-31)
 
 
