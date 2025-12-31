@@ -12,3 +12,4 @@ onlyBuiltDependencies:
   - '@swc/core'
   - esbuild
   - unrs-resolver
+  - zeromq
