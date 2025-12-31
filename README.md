@@ -48,7 +48,7 @@ This `Turborepo` already configured useful commands for all your apps and packag
 
 ```bash
 # Will build all the app & packages with the supported `build` script.
-bun run build
+pnpm run build
 
 # ℹ️ If you plan to only build apps individually,
 # Please make sure you've built the packages first.
@@ -58,17 +58,17 @@ bun run build
 
 ```bash
 # Will run the development server for all the app & packages with the supported `dev` script.
-bun run dev
+pnpm run dev
 ```
 
 #### test
 
 ```bash
 # Will launch a test suites for all the app & packages with the supported `test` script.
-bun run test
+pnpm run test
 
 # You can launch e2e testes with `test:e2e`
-bun run test:e2e
+pnpm run test:e2e
 
 # See `@repo/jest-config` to customize the behavior.
 ```
@@ -78,7 +78,7 @@ bun run test:e2e
 ```bash
 # Will lint all the app & packages with the supported `lint` script.
 # See `@repo/eslint-config` to customize the behavior.
-bun run lint
+pnpm run lint
 ```
 
 #### Format
@@ -86,7 +86,7 @@ bun run lint
 ```bash
 # Will format all the supported `.ts,.js,json,.tsx,.jsx` files.
 # See `@repo/eslint-config/prettier-base.js` to customize the behavior.
-bun format
+pnpm run format
 ```
 
 ### Remote Caching

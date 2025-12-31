@@ -53,8 +53,9 @@ export class RoleGuard implements CanActivate {
     }
 
     const guildId = interaction.guildId;
+    const roleMap = this.roleIdToEnum[guildId];
 
-    if (!(guildId in this.roleIdToEnum)) {
+    if (!roleMap) {
       throw new DiscordForbiddenException(
         "Cette fonctionnalité n'est pas configurée pour ce serveur.",
       );
@@ -66,8 +67,8 @@ export class RoleGuard implements CanActivate {
       : memberRoles.cache.map((role) => role.id);
 
     const mappedRoles = userRoleIds
-      .map((roleId) => this.roleIdToEnum[guildId].get(roleId))
-      .filter((role) => !!role);
+      .map((roleId) => roleMap.get(roleId))
+      .filter((role): role is Role => role !== undefined);
 
     if (mappedRoles.length === 0) {
       throw new DiscordForbiddenException();

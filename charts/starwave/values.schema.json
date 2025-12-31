@@ -102,7 +102,6 @@
                   "items": { "type": "object", "additionalProperties": true }
                 }
               },
-              "required": ["repository"],
               "additionalProperties": false
             },
             "command": {
@@ -125,7 +124,6 @@
                   "additionalProperties": true
                 }
               },
-              "required": ["enabled", "port", "targetPort"],
               "additionalProperties": false
             },
             "config": {
@@ -168,7 +166,7 @@
                       "additionalProperties": false
                     }
                   },
-                  "required": ["devGuildIds", "guildsSettings"],
+                  "required": ["guildsSettings"],
                   "additionalProperties": false
                 },
                 "configMountPath": { "type": "string", "minLength": 1 }
@@ -181,7 +179,7 @@
               "properties": {
                 "create": { "type": ["boolean", "null"] },
                 "name": { "type": "string" },
-                "existingSecret": { "type": "string" },
+                "existingSecret": { "type": "string", "minLength": 0 },
                 "existingKey": { "type": "string" },
                 "value": { "type": "string" },
                 "annotations": {
@@ -189,19 +187,32 @@
                   "additionalProperties": true
                 }
               },
-              "required": ["create", "existingKey"],
+              "anyOf": [
+                { "required": ["value"] },
+                { "required": ["existingSecret"] }
+              ],
               "additionalProperties": false,
               "allOf": [
                 {
                   "if": {
                     "properties": {
-                      "create": { "const": true },
-                      "existingSecret": { "type": "string", "maxLength": 0 }
+                      "create": { "const": true }
                     },
                     "required": ["create"]
                   },
                   "then": {
                     "required": ["value"]
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "create": { "const": false }
+                    },
+                    "required": ["create"]
+                  },
+                  "then": {
+                    "required": ["existingSecret"]
                   }
                 },
                 {
@@ -216,9 +227,26 @@
                       "create": { "const": false }
                     }
                   }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "create": { "const": true }
+                    },
+                    "required": ["create"]
+                  },
+                  "then": {
+                    "properties": {
+                      "existingKey": {
+                        "type": "string",
+                        "default": "discordToken"
+                      }
+                    }
+                  }
                 }
               ]
             },
+
             "env": {
               "type": "array",
               "items": { "type": "object", "additionalProperties": true }
@@ -273,7 +301,7 @@
               "additionalProperties": false
             }
           },
-          "required": ["enabled", "image", "config", "secret", "service"],
+          "required": ["config"],
           "additionalProperties": false
         }
       },

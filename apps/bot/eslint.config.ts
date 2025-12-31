@@ -1,4 +1,5 @@
 import eslint from '@eslint/js';
+import vitest from '@vitest/eslint-plugin';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
@@ -15,7 +16,6 @@ export default defineConfig(
         ...globals.node,
         ...globals.vitest,
       },
-      ecmaVersion: 5,
       sourceType: 'module',
       parserOptions: {
         projectService: true,
@@ -27,6 +27,30 @@ export default defineConfig(
     files: ['**/*.module.ts'],
     rules: {
       '@typescript-eslint/no-extraneous-class': 'off',
+    },
+  },
+  {
+    files: ['**/*spec.ts'],
+    plugins: {
+      vitest,
+    },
+    rules: {
+      ...vitest.configs.recommended.rules,
+      '@typescript-eslint/unbound-method': 'off',
+      'vitest/expect-expect': [
+        vitest.configs.recommended.rules['vitest/expect-expect'],
+        { assertFunctionNames: ['expect', 'request.*.expect'] },
+      ],
+    },
+    settings: {
+      vitest: {
+        typecheck: true,
+      },
+    },
+    languageOptions: {
+      globals: {
+        ...vitest.environments.env.globals,
+      },
     },
   },
 );

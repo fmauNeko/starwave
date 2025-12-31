@@ -5,8 +5,10 @@ import { NecordModule } from 'necord';
 import { Config } from '../config/config.type';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { DiscordService } from './discord.service';
+import { MusicModule } from './music/music.module';
 import { PingCommand } from './ping/ping.command';
 import { PresenceModule } from './presence/presence.module';
+import { VoiceModule } from './voice/voice.module';
 
 @Module({
   imports: [
@@ -19,13 +21,16 @@ import { PresenceModule } from './presence/presence.module';
           GatewayIntentBits.Guilds,
           GatewayIntentBits.GuildMessages,
           GatewayIntentBits.MessageContent,
+          GatewayIntentBits.GuildVoiceStates,
         ],
         token: configService.get('discord.token', { infer: true }),
       }),
       inject: [ConfigService],
     }),
     AuthorizationModule,
+    MusicModule,
     PresenceModule,
+    VoiceModule,
   ],
   providers: [DiscordService, PingCommand],
 })

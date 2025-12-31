@@ -62,7 +62,12 @@ function collectEnvOverrides(env: NodeJS.ProcessEnv): JsonObject {
     }
 
     const pathSegments = parts.map(toCamelFromConst);
-    const leaf = pathSegments[pathSegments.length - 1];
+    const leaf = pathSegments.at(-1);
+
+    if (!leaf) {
+      continue;
+    }
+
     const parentSegments = pathSegments.slice(0, -1);
 
     const value =
@@ -118,14 +123,29 @@ function setDeep(
   pathSegments: string[],
   value: unknown,
 ): void {
+  if (pathSegments.length === 0) {
+    return;
+  }
+
   let current: JsonObject = target;
 
   for (let i = 0; i < pathSegments.length - 1; i += 1) {
     const segment = pathSegments[i];
+
+    if (!segment) {
+      return;
+    }
+
     current = ensureChildObject(current, segment);
   }
 
-  current[pathSegments[pathSegments.length - 1]] = value;
+  const leaf = pathSegments[pathSegments.length - 1];
+
+  if (!leaf) {
+    return;
+  }
+
+  current[leaf] = value;
 }
 
 function mergeConfig(base: JsonObject, overrides: JsonObject): JsonObject {
