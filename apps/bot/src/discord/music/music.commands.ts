@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EmbedBuilder } from 'discord.js';
+import { EmbedBuilder, MessageFlags } from 'discord.js';
 import {
   Context,
   Options,
@@ -71,7 +71,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -81,7 +81,7 @@ export class MusicCommands {
     if (!voiceChannel) {
       return interaction.reply({
         content: 'You must be in a voice channel to use this command.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -118,7 +118,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -141,7 +141,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -150,7 +150,7 @@ export class MusicCommands {
     if (!stopped) {
       return interaction.reply({
         content: 'Nothing is playing.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -168,7 +168,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -177,7 +177,7 @@ export class MusicCommands {
     if (!paused) {
       return interaction.reply({
         content: 'Nothing is playing or already paused.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -193,7 +193,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -202,7 +202,7 @@ export class MusicCommands {
     if (!resumed) {
       return interaction.reply({
         content: 'Nothing to resume.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -218,7 +218,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -227,7 +227,7 @@ export class MusicCommands {
     if (!track) {
       return interaction.reply({
         content: 'Nothing is currently playing.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -244,7 +244,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -255,7 +255,7 @@ export class MusicCommands {
     if (queue.length === 0) {
       return interaction.reply({
         content: 'The queue is empty.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -305,7 +305,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -314,7 +314,7 @@ export class MusicCommands {
     if (!cleared) {
       return interaction.reply({
         content: 'The queue is already empty.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -330,7 +330,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -339,7 +339,7 @@ export class MusicCommands {
     if (!shuffled) {
       return interaction.reply({
         content: 'Not enough tracks to shuffle.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -355,7 +355,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -377,7 +377,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -387,7 +387,7 @@ export class MusicCommands {
     ) {
       return interaction.reply({
         content: 'Nothing is playing.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -425,7 +425,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -435,7 +435,7 @@ export class MusicCommands {
       return interaction.reply({
         content:
           'Could not remove track. Invalid position or currently playing.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -453,7 +453,7 @@ export class MusicCommands {
     if (!guildId) {
       return interaction.reply({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -463,7 +463,7 @@ export class MusicCommands {
     if (!disconnected) {
       return interaction.reply({
         content: "I'm not connected to a voice channel.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 

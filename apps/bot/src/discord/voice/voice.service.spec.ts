@@ -1,6 +1,6 @@
-import { TestBed } from '@suites/unit';
 import * as discordVoice from '@discordjs/voice';
-import type { VoiceBasedChannel, Guild } from 'discord.js';
+import { TestBed } from '@suites/unit';
+import type { Guild, VoiceBasedChannel } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoiceService } from './voice.service';
 

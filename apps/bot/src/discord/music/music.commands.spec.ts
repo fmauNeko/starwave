@@ -1,17 +1,17 @@
-import { EmbedBuilder } from 'discord.js';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MusicCommands } from './music.commands';
-import { MusicService } from './music.service';
-import { VoiceService } from '../voice/voice.service';
-import { LoopMode, type Track } from './music-queue';
 import type {
   ChatInputCommandInteraction,
+  Collection,
   Guild,
   GuildMember,
-  VoiceBasedChannel,
   GuildMemberManager,
-  Collection,
+  VoiceBasedChannel,
 } from 'discord.js';
+import { EmbedBuilder, MessageFlags } from 'discord.js';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { VoiceService } from '../voice/voice.service';
+import { LoopMode, type Track } from './music-queue';
+import { MusicCommands } from './music.commands';
+import { MusicService } from './music.service';
 
 const mockTrack: Track = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
@@ -60,7 +60,7 @@ function createMockInteraction(
   } as unknown as ChatInputCommandInteraction;
 }
 
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-deprecated, @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-deprecated, @typescript-eslint/no-unsafe-assignment */
 describe('MusicCommands', () => {
   let commands: MusicCommands;
   let musicService: MusicService;
@@ -113,7 +113,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -126,7 +126,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'You must be in a voice channel to use this command.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -199,7 +199,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -235,7 +235,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -259,7 +259,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Nothing is playing.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
   });
@@ -272,7 +272,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -294,7 +294,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Nothing is playing or already paused.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
   });
@@ -307,7 +307,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -331,7 +331,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Nothing to resume.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
   });
@@ -344,7 +344,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -367,7 +367,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Nothing is currently playing.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
   });
@@ -380,7 +380,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -392,7 +392,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'The queue is empty.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -453,7 +453,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -477,7 +477,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'The queue is already empty.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
   });
@@ -490,7 +490,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -514,7 +514,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Not enough tracks to shuffle.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
   });
@@ -527,7 +527,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -574,7 +574,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -587,7 +587,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Nothing is playing.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -687,7 +687,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -712,7 +712,7 @@ describe('MusicCommands', () => {
       expect(interaction.reply).toHaveBeenCalledWith({
         content:
           'Could not remove track. Invalid position or currently playing.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
   });
@@ -725,7 +725,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: 'This command can only be used in a server.',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
 
@@ -750,7 +750,7 @@ describe('MusicCommands', () => {
 
       expect(interaction.reply).toHaveBeenCalledWith({
         content: "I'm not connected to a voice channel.",
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     });
   });
@@ -772,4 +772,4 @@ describe('MusicCommands', () => {
     });
   });
 });
-/* eslint-enable @typescript-eslint/unbound-method, @typescript-eslint/no-deprecated, @typescript-eslint/no-unsafe-assignment */
+/* eslint-enable @typescript-eslint/no-unsafe-assignment */

@@ -1,13 +1,13 @@
 import { AudioPlayerStatus, type AudioResource } from '@discordjs/voice';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PassThrough } from 'node:stream';
-import { MusicService } from './music.service';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoiceService } from '../voice/voice.service';
 import { AudioFilterService } from './audio-filter.service';
-import { ZmqVolumeController } from './zmq-volume-controller.service';
 import { LoopMode } from './music-queue';
+import { MusicService } from './music.service';
 import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
 import type { MusicProvider } from './providers/music-provider.interface';
+import { ZmqVolumeController } from './zmq-volume-controller.service';
 
 const mockTrack = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
@@ -17,7 +17,7 @@ const mockTrack = {
   requestedBy: 'user#1234',
 };
 
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-enum-comparison */
+/* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 describe('MusicService', () => {
   let service: MusicService;
   let voiceService: VoiceService;
@@ -240,7 +240,7 @@ describe('MusicService', () => {
     });
   });
 
-  describe('shuffle', () => {
+  describe('shuffle - insufficient tracks', () => {
     it('returns false when not enough tracks', () => {
       const result = service.shuffle('guild-123');
       expect(result).toBe(false);
@@ -605,4 +605,4 @@ describe('MusicService', () => {
     });
   });
 });
-/* eslint-enable @typescript-eslint/unbound-method, @typescript-eslint/no-unsafe-enum-comparison */
+/* eslint-enable @typescript-eslint/no-unsafe-enum-comparison */

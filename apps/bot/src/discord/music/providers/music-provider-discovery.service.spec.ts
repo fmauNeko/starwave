@@ -40,14 +40,12 @@ describe('MusicProviderDiscovery', () => {
       // eslint-disable-next-line @typescript-eslint/no-extraneous-class
       class RegularService {}
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       vi.mocked(discoveryService.getProviders).mockReturnValue([
         { metatype: YouTubeProvider, instance: mockYouTubeProvider },
         { metatype: SoundCloudProvider, instance: mockSoundCloudProvider },
         { metatype: RegularService, instance: {} },
       ] as ReturnType<DiscoveryService['getProviders']>);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       vi.mocked(reflector.get).mockImplementation((key, target) => {
         if (key === MUSIC_PROVIDER_KEY) {
           return target === YouTubeProvider || target === SoundCloudProvider;
@@ -67,7 +65,6 @@ describe('MusicProviderDiscovery', () => {
       // eslint-disable-next-line @typescript-eslint/no-extraneous-class
       class RegularService {}
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       vi.mocked(discoveryService.getProviders).mockReturnValue([
         { metatype: RegularService, instance: {} },
       ] as ReturnType<DiscoveryService['getProviders']>);
@@ -78,7 +75,6 @@ describe('MusicProviderDiscovery', () => {
     });
 
     it('filters out wrappers without metatype', () => {
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       vi.mocked(discoveryService.getProviders).mockReturnValue([
         { metatype: null, instance: {} },
         { metatype: undefined, instance: {} },
@@ -93,13 +89,11 @@ describe('MusicProviderDiscovery', () => {
       // eslint-disable-next-line @typescript-eslint/no-extraneous-class
       class YouTubeProvider {}
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       vi.mocked(discoveryService.getProviders).mockReturnValue([
         { metatype: YouTubeProvider, instance: null },
         { metatype: YouTubeProvider, instance: undefined },
       ] as unknown as ReturnType<DiscoveryService['getProviders']>);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       vi.mocked(reflector.get).mockReturnValue(true);
 
       service.onModuleInit();
