@@ -7,9 +7,26 @@
 {{- $secretName := default (printf "%s-token" (include "starwave.bot.fullname" .)) $secret.name -}}
 {{- if $secret.existingSecret }}{{- $secretName = $secret.existingSecret -}}{{- end -}}
 {{- $secretKey := default "discordToken" $secret.existingKey -}}
+{{- $ytCookies := $bot.youtubeCookies -}}
+{{- $ytCookiesEnabled := and $ytCookies $ytCookies.enabled -}}
+{{- $ytCookiesCreate := true -}}
+{{- if $ytCookiesEnabled -}}
+{{- if ne $ytCookies.create nil }}{{- $ytCookiesCreate = $ytCookies.create -}}{{- end -}}
+{{- if $ytCookies.existingSecret }}{{- $ytCookiesCreate = false -}}{{- end -}}
+{{- end -}}
+{{- $ytCookiesSecretName := "" -}}
+{{- if $ytCookiesEnabled -}}
+{{- $ytCookiesSecretName = default (printf "%s-youtube-cookies" (include "starwave.bot.fullname" .)) $ytCookies.name -}}
+{{- if $ytCookies.existingSecret }}{{- $ytCookiesSecretName = $ytCookies.existingSecret -}}{{- end -}}
+{{- end -}}
+{{- $ytCookiesSecretKey := "youtube-cookies.txt" -}}
+{{- if $ytCookiesEnabled }}{{- $ytCookiesSecretKey = default "youtube-cookies.txt" $ytCookies.existingKey -}}{{- end -}}
+{{- $ytCookiesMountPath := "/app/youtube-cookies.txt" -}}
+{{- if $ytCookiesEnabled }}{{- $ytCookiesMountPath = default "/app/youtube-cookies.txt" $ytCookies.mountPath -}}{{- end -}}
 {{- $podAnnotations := merge (dict) (default (dict) .Values.global.podAnnotations) (default (dict) $bot.podAnnotations) -}}
 {{- $_ := set $podAnnotations "checksum/config" (include (print $.Template.BasePath "/bot-configmap.yaml") . | sha256sum) -}}
 {{- if $secretCreate }}{{- $_ := set $podAnnotations "checksum/secret" (include (print $.Template.BasePath "/bot-secret.yaml") . | sha256sum) -}}{{- end -}}
+{{- if and $ytCookiesEnabled $ytCookiesCreate }}{{- $_ := set $podAnnotations "checksum/youtube-cookies" (include (print $.Template.BasePath "/bot-cookies-secret.yaml") . | sha256sum) -}}{{- end -}}
 {{- $podLabels := merge (dict) (default (dict) .Values.global.podLabels) (default (dict) $bot.podLabels) -}}
 {{- $podSecurityContext := merge (dict) (default (dict) .Values.global.podSecurityContext) (default (dict) $bot.podSecurityContext) -}}
 {{- $securityContext := merge (dict) (default (dict) .Values.global.securityContext) (default (dict) $bot.securityContext) -}}
@@ -73,6 +90,10 @@ spec:
                 secretKeyRef:
                   name: {{ $secretName }}
                   key: {{ $secretKey }}
+{{- if $ytCookiesEnabled }}
+            - name: BOT__YOUTUBE__COOKIES_PATH
+              value: {{ $ytCookiesMountPath | quote }}
+{{- end }}
 {{- with $bot.env }}
 {{ toYaml . | indent 10 }}
 {{- end }}
@@ -125,10 +146,21 @@ spec:
               mountPath: {{ $bot.config.configMountPath }}
               subPath: config.json
               readOnly: true
+{{- if $ytCookiesEnabled }}
+            - name: youtube-cookies
+              mountPath: {{ $ytCookiesMountPath }}
+              subPath: {{ $ytCookiesSecretKey }}
+              readOnly: true
+{{- end }}
       volumes:
         - name: config
           configMap:
             name: {{ include "starwave.bot.fullname" . }}-config
+{{- if $ytCookiesEnabled }}
+        - name: youtube-cookies
+          secret:
+            secretName: {{ $ytCookiesSecretName }}
+{{- end }}
 {{- with $nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

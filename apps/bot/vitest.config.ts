@@ -6,11 +6,16 @@ export default defineConfig({
   test: {
     globals: true,
     root: './',
+    setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.spec.ts'],
     exclude: [...configDefaults.exclude, 'dist/**'],
     coverage: {
       provider: 'v8',
-      exclude: ['src/main.ts'],
+      exclude: [
+        'src/main.ts',
+        // Process spawn wrapper - mocked in tests
+        'src/discord/music/yt-dlp.util.ts',
+      ],
       thresholds: {
         lines: 90,
         functions: 90,

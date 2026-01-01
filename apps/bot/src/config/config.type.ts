@@ -19,6 +19,9 @@ export const configSchema = type.module({
       },
       token: 'string',
     },
+    'youtube?': {
+      'cookiesPath?': 'string',
+    },
   },
   env: {
     NODE_ENV: "'development' | 'production' | 'test'",

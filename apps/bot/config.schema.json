@@ -56,6 +56,16 @@
         }
       },
       "required": ["devGuildIds", "guildsSettings", "token"]
+    },
+    "youtube": {
+      "description": "YouTube configuration for yt-dlp.",
+      "type": "object",
+      "properties": {
+        "cookiesPath": {
+          "description": "Path to a Netscape-format cookies file for YouTube authentication.",
+          "type": "string"
+        }
+      }
     }
   },
   "required": ["discord"]
