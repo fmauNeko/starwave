@@ -23,6 +23,18 @@
 {{- if $ytCookiesEnabled }}{{- $ytCookiesSecretKey = default "youtube-cookies.txt" $ytCookies.existingKey -}}{{- end -}}
 {{- $ytCookiesMountPath := "/app/youtube-cookies.txt" -}}
 {{- if $ytCookiesEnabled }}{{- $ytCookiesMountPath = default "/app/youtube-cookies.txt" $ytCookies.mountPath -}}{{- end -}}
+{{- $ytCookiesDir := dir $ytCookiesMountPath -}}
+{{- $ytCookiesFileName := base $ytCookiesMountPath -}}
+{{- $ytCookiesPersistence := dict -}}
+{{- if $ytCookiesEnabled }}{{- $ytCookiesPersistence = $ytCookies.persistence | default dict -}}{{- end -}}
+{{- $ytCookiesPersistenceEnabled := true -}}
+{{- if $ytCookiesEnabled -}}
+{{- if hasKey $ytCookiesPersistence "enabled" }}{{- $ytCookiesPersistenceEnabled = $ytCookiesPersistence.enabled -}}{{- end -}}
+{{- end -}}
+{{- $ytCookiesPvcName := "" -}}
+{{- if and $ytCookiesEnabled $ytCookiesPersistenceEnabled -}}
+{{- $ytCookiesPvcName = $ytCookiesPersistence.existingClaim | default (default (printf "%s-youtube-cookies" (include "starwave.bot.fullname" .)) $ytCookies.name) -}}
+{{- end -}}
 {{- $podAnnotations := merge (dict) (default (dict) .Values.global.podAnnotations) (default (dict) $bot.podAnnotations) -}}
 {{- $_ := set $podAnnotations "checksum/config" (include (print $.Template.BasePath "/bot-configmap.yaml") . | sha256sum) -}}
 {{- if $secretCreate }}{{- $_ := set $podAnnotations "checksum/secret" (include (print $.Template.BasePath "/bot-secret.yaml") . | sha256sum) -}}{{- end -}}
@@ -65,6 +77,28 @@ spec:
 {{- with $podSecurityContext }}
       securityContext:
 {{ toYaml . | indent 8 }}
+{{- end }}
+{{- if $ytCookiesEnabled }}
+      initContainers:
+        - name: copy-youtube-cookies
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              if [ ! -f {{ $ytCookiesMountPath }} ]; then
+                echo "Seeding YouTube cookies from secret..."
+                cp /youtube-cookies-secret/{{ $ytCookiesSecretKey }} {{ $ytCookiesMountPath }}
+                chmod 644 {{ $ytCookiesMountPath }}
+              else
+                echo "YouTube cookies already exist, skipping seed."
+              fi
+          volumeMounts:
+            - name: youtube-cookies-secret
+              mountPath: /youtube-cookies-secret
+              readOnly: true
+            - name: youtube-cookies
+              mountPath: {{ $ytCookiesDir }}
 {{- end }}
       containers:
         - name: bot
@@ -148,9 +182,7 @@ spec:
               readOnly: true
 {{- if $ytCookiesEnabled }}
             - name: youtube-cookies
-              mountPath: {{ $ytCookiesMountPath }}
-              subPath: {{ $ytCookiesSecretKey }}
-              readOnly: true
+              mountPath: {{ $ytCookiesDir }}
 {{- end }}
       volumes:
         - name: config
@@ -158,6 +190,13 @@ spec:
             name: {{ include "starwave.bot.fullname" . }}-config
 {{- if $ytCookiesEnabled }}
         - name: youtube-cookies
+{{- if $ytCookiesPersistenceEnabled }}
+          persistentVolumeClaim:
+            claimName: {{ $ytCookiesPvcName }}
+{{- else }}
+          emptyDir: {}
+{{- end }}
+        - name: youtube-cookies-secret
           secret:
             secretName: {{ $ytCookiesSecretName }}
 {{- end }}
