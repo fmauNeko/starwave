@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.3.1...chart-starwave@v0.4.0) (2026-01-01)
+
+
+### Features
+
+* **chart:** add persistent storage for YouTube cookies ([4ac7a5f](https://github.com/fmauNeko/starwave/commit/4ac7a5ff142e3827bf92f583a22dc1264e782032))
+
 ## [0.3.1](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.3.0...chart-starwave@v0.3.1) (2026-01-01)
 
 
