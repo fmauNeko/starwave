@@ -53,6 +53,16 @@ apps:
       value: ''
       annotations: {}
 
+    youtubeCookies:
+      enabled: false
+      create: true
+      name: ''
+      existingSecret: ''
+      existingKey: youtube-cookies.txt
+      value: ''
+      mountPath: /app/youtube-cookies.txt
+      annotations: {}
+
     env: []
     envFrom: []
 
