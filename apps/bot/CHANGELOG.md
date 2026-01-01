@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/fmauNeko/starwave/compare/bot@v0.3.1...bot@v0.4.0) (2026-01-01)
+
+
+### Features
+
+* **bot:** replace youtubei.js with yt-dlp for YouTube audio extraction ([f0343af](https://github.com/fmauNeko/starwave/commit/f0343afb951ed614ce50bc7277004c8e36565c63))
+
 ## [0.3.1](https://github.com/fmauNeko/starwave/compare/bot@v0.3.0...bot@v0.3.1) (2025-12-31)
 
 

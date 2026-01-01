@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.2.1...chart-starwave@v0.3.0) (2026-01-01)
+
+
+### Features
+
+* **chart:** add youtube cookies ([ecb7332](https://github.com/fmauNeko/starwave/commit/ecb7332a888890938016b6b657cdc86802baa796))
+
 ## [0.2.1](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.2.0...chart-starwave@v0.2.1) (2026-01-01)
 
 
