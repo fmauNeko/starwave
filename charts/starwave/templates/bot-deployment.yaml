@@ -82,6 +82,10 @@ spec:
       initContainers:
         - name: copy-youtube-cookies
           image: busybox:1.36
+{{- with $securityContext }}
+          securityContext:
+{{ toYaml . | indent 12 }}
+{{- end }}
           command:
             - sh
             - -c
