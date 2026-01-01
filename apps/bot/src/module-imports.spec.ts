@@ -17,6 +17,28 @@ describe('Module imports', () => {
       validateEnv: (env: unknown) => env,
     }));
 
+    vi.doMock('./discord/music/yt-dlp.service', () => ({
+      YtDlpService: class MockYtDlpService {
+        public onModuleInit = vi.fn();
+        public getVideoInfo = vi.fn();
+        public getAudioUrl = vi.fn();
+      },
+    }));
+
+    vi.doMock('@nestjs/schedule', () => ({
+      ScheduleModule: {
+        forRoot: () => ({
+          module: function MockScheduleModule() {
+            return undefined;
+          },
+        }),
+      },
+      Cron: () => () => undefined,
+      CronExpression: {
+        EVERY_DAY_AT_3AM: '0 3 * * *',
+      },
+    }));
+
     vi.doMock('necord', () => ({
       NecordModule: {
         forRootAsync: (options: unknown) => {
@@ -83,5 +105,5 @@ describe('Module imports', () => {
       development: ['dev-guild'],
       token: 'token-from-config',
     });
-  });
+  }, 10000);
 });

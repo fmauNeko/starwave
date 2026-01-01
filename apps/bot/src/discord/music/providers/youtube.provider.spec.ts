@@ -1,45 +1,36 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { YtDlpService, YtDlpVideoInfo } from '../yt-dlp.service';
 import { YouTubeProvider } from './youtube.provider';
 
-const { mockGetBasicInfo } = vi.hoisted(() => ({
-  mockGetBasicInfo: vi.fn().mockResolvedValue({
-    basic_info: {
+function createMockYtDlpService(
+  overrides: Partial<YtDlpService> = {},
+): YtDlpService {
+  return {
+    onModuleInit: vi.fn().mockResolvedValue(undefined),
+    checkForUpdates: vi.fn().mockResolvedValue(undefined),
+    getVideoInfo: vi.fn().mockResolvedValue({
       title: 'Test Video',
       duration: 180,
-      thumbnail: [{ url: 'https://example.com/thumb.jpg' }],
-    },
-    streaming_data: {
-      adaptive_formats: [
-        {
-          has_audio: true,
-          has_video: false,
-          url: 'https://example.com/audio.webm',
-          mime_type: 'audio/webm; codecs="opus"',
-        },
-      ],
-    },
-  }),
-}));
-
-vi.mock('youtubei.js', () => ({
-  Innertube: {
-    create: vi.fn().mockResolvedValue({
-      getBasicInfo: mockGetBasicInfo,
-    }),
-  },
-  UniversalCache: vi.fn(),
-  ClientType: {
-    ANDROID: 'ANDROID',
-  },
-}));
+      thumbnail: 'https://example.com/thumb.jpg',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    } satisfies YtDlpVideoInfo),
+    getAudioUrl: vi
+      .fn()
+      .mockResolvedValue('https://example.com/audio.webm?token=abc'),
+    forceUpdate: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  } as unknown as YtDlpService;
+}
 
 describe('YouTubeProvider', () => {
   let provider: YouTubeProvider;
+  let mockYtDlpService: YtDlpService;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
-    provider = new YouTubeProvider();
-    await provider.onModuleInit();
+    mockYtDlpService = createMockYtDlpService();
+    provider = new YouTubeProvider(mockYtDlpService);
+    provider.onModuleInit();
   });
 
   describe('canHandle', () => {
@@ -82,19 +73,30 @@ describe('YouTubeProvider', () => {
       );
 
       expect(track).toMatchObject({
-        url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         title: 'Test Video',
         duration: 180,
         thumbnail: 'https://example.com/thumb.jpg',
         requestedBy: 'user#1234',
       });
+      expect(mockYtDlpService.getVideoInfo).toHaveBeenCalledWith(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      );
+    });
+
+    it('normalizes video ID to canonical URL', async () => {
+      await provider.fetchTrackInfo('dQw4w9WgXcQ', 'user#1234');
+
+      expect(mockYtDlpService.getVideoInfo).toHaveBeenCalledWith(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      );
     });
 
     it('throws error for invalid URL', async () => {
       await expect(
         provider.fetchTrackInfo('https://example.com/not-youtube', 'user#1234'),
       ).rejects.toThrow('Invalid YouTube URL');
-      expect(mockGetBasicInfo).not.toHaveBeenCalled();
+      expect(mockYtDlpService.getVideoInfo).not.toHaveBeenCalled();
     });
   });
 
@@ -104,14 +106,35 @@ describe('YouTubeProvider', () => {
         'https://youtube.com/watch?v=dQw4w9WgXcQ',
       );
 
-      expect(audioUrl).toBe('https://example.com/audio.webm');
+      expect(audioUrl).toBe('https://example.com/audio.webm?token=abc');
+      expect(mockYtDlpService.getAudioUrl).toHaveBeenCalledWith(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      );
+    });
+
+    it('normalizes video ID to canonical URL', async () => {
+      await provider.getAudioUrl('dQw4w9WgXcQ');
+
+      expect(mockYtDlpService.getAudioUrl).toHaveBeenCalledWith(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      );
     });
 
     it('throws error for invalid URL', async () => {
       await expect(
         provider.getAudioUrl('https://example.com/not-youtube'),
       ).rejects.toThrow('Invalid YouTube URL');
-      expect(mockGetBasicInfo).not.toHaveBeenCalled();
+      expect(mockYtDlpService.getAudioUrl).not.toHaveBeenCalled();
+    });
+
+    it('propagates yt-dlp errors', async () => {
+      vi.mocked(mockYtDlpService.getAudioUrl).mockRejectedValueOnce(
+        new Error('yt-dlp exited with code 1'),
+      );
+
+      await expect(provider.getAudioUrl('dQw4w9WgXcQ')).rejects.toThrow(
+        'yt-dlp exited with code 1',
+      );
     });
   });
 

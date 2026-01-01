@@ -140,5 +140,85 @@ describe('AudioFilterService', () => {
         expect.objectContaining({ stdio: ['ignore', 'pipe', 'pipe'] }),
       );
     });
+
+    it('destroys output stream with ENOENT error when ffmpeg is not installed', async () => {
+      const { spawn } = await import('node:child_process');
+      const mockProcess = createMockChildProcess();
+      vi.mocked(spawn).mockReturnValue(mockProcess as never);
+
+      const result = service.createFilteredStream(testUrl);
+
+      const errorPromise = new Promise<Error>((resolve) => {
+        result.on('error', resolve);
+      });
+
+      const enoentError = new Error(
+        'spawn ffmpeg ENOENT',
+      ) as NodeJS.ErrnoException;
+      enoentError.code = 'ENOENT';
+      mockProcess.emit('error', enoentError);
+
+      const error = await errorPromise;
+      expect(error.message).toContain('FFmpeg is not installed');
+    });
+
+    it('destroys output stream with original error for non-ENOENT errors', async () => {
+      const { spawn } = await import('node:child_process');
+      const mockProcess = createMockChildProcess();
+      vi.mocked(spawn).mockReturnValue(mockProcess as never);
+
+      const result = service.createFilteredStream(testUrl);
+
+      const errorPromise = new Promise<Error>((resolve) => {
+        result.on('error', resolve);
+      });
+
+      const genericError = new Error(
+        'Some other error',
+      ) as NodeJS.ErrnoException;
+      genericError.code = 'EPERM';
+      mockProcess.emit('error', genericError);
+
+      const error = await errorPromise;
+      expect(error.message).toBe('Some other error');
+    });
+
+    it('handles ffmpeg exit with non-zero code', async () => {
+      const { spawn } = await import('node:child_process');
+      const mockProcess = createMockChildProcess();
+      vi.mocked(spawn).mockReturnValue(mockProcess as never);
+
+      service.createFilteredStream(testUrl);
+
+      mockProcess.stderr.write('FFmpeg error output');
+      mockProcess.emit('close', 1);
+
+      expect(mockProcess.stderr.destroyed).toBe(false);
+    });
+
+    it('kills ffmpeg process when output stream is closed', async () => {
+      const { spawn } = await import('node:child_process');
+      const mockProcess = createMockChildProcess();
+      vi.mocked(spawn).mockReturnValue(mockProcess as never);
+
+      const result = service.createFilteredStream(testUrl);
+
+      result.emit('close');
+
+      expect(mockProcess.kill).toHaveBeenCalledWith('SIGTERM');
+    });
+
+    it('does not kill ffmpeg if already killed when stream closes', async () => {
+      const { spawn } = await import('node:child_process');
+      const mockProcess = createMockChildProcess();
+      mockProcess.killed = true;
+      vi.mocked(spawn).mockReturnValue(mockProcess as never);
+
+      const result = service.createFilteredStream(testUrl);
+
+      result.destroy();
+
+      expect(mockProcess.kill).not.toHaveBeenCalled();
+    });
   });
 });

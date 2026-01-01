@@ -27,6 +27,7 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/schedule": "^6.1.0",
     "@snazzah/davey": "^0.1.9",
     "arkregex": "^0.0.5",
     "arktype": "^2.1.29",
@@ -35,7 +36,6 @@
     "necord": "^6.11.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "youtubei.js": "^16.0.1",
     "zeromq": "^6.5.0"
   },
   "devDependencies": {
@@ -51,7 +51,6 @@
     "@swc/cli": "0.7.9",
     "@swc/core": "1.15.7",
     "@types/express": "5.0.6",
-    "@types/jest": "30.0.0",
     "@types/node": "25.0.3",
     "@types/supertest": "6.0.3",
     "@vitest/coverage-v8": "4.0.16",

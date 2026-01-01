@@ -1,7 +1,7 @@
-import { Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { regex } from 'arkregex';
-import { ClientType, Innertube, UniversalCache } from 'youtubei.js';
 import type { Track } from '../music-queue';
+import { YtDlpService } from '../yt-dlp.service';
 import { MusicProvider } from './music-provider.decorator';
 import type { MusicProvider as MusicProviderInterface } from './music-provider.interface';
 
@@ -11,18 +11,15 @@ const YOUTUBE_URL_PATTERN = regex(
 const VIDEO_ID_PATTERN = regex('^([a-zA-Z0-9_-]{11})$');
 
 @MusicProvider()
+@Injectable()
 export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
   public readonly name = 'YouTube';
   private readonly logger = new Logger(YouTubeProvider.name);
-  private innertube: Innertube | undefined;
 
-  public async onModuleInit(): Promise<void> {
-    this.innertube = await Innertube.create({
-      cache: new UniversalCache(false),
-      generate_session_locally: true,
-      client_type: ClientType.ANDROID,
-    });
-    this.logger.log('YouTube.js client initialized');
+  public constructor(private readonly ytDlpService: YtDlpService) {}
+
+  public onModuleInit(): void {
+    this.logger.log('YouTube provider initialized with yt-dlp backend');
   }
 
   public canHandle(url: string): boolean {
@@ -38,14 +35,14 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
       throw new Error('Invalid YouTube URL');
     }
 
-    const info = await this.getInnertube().getBasicInfo(videoId);
-    const { basic_info } = info;
+    const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const info = await this.ytDlpService.getVideoInfo(canonicalUrl);
 
     return {
-      url,
-      title: basic_info.title ?? 'Unknown Title',
-      duration: basic_info.duration ?? 0,
-      thumbnail: basic_info.thumbnail?.[0]?.url ?? '',
+      url: canonicalUrl,
+      title: info.title,
+      duration: info.duration,
+      thumbnail: info.thumbnail,
       requestedBy,
     };
   }
@@ -56,32 +53,14 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
       throw new Error('Invalid YouTube URL');
     }
 
-    const info = await this.getInnertube().getBasicInfo(videoId);
-    const streamingData = info.streaming_data;
+    this.logger.debug(`Getting audio URL for video: ${videoId}`);
 
-    if (!streamingData) {
-      throw new Error('No streaming data available for this video');
-    }
+    const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const audioUrl = await this.ytDlpService.getAudioUrl(canonicalUrl);
 
-    const audioFormat = streamingData.adaptive_formats.find(
-      (format) =>
-        format.has_audio &&
-        !format.has_video &&
-        format.mime_type.includes('audio/webm') &&
-        format.mime_type.includes('opus'),
-    );
+    this.logger.debug(`Got audio URL (length: ${String(audioUrl.length)})`);
 
-    const fallbackFormat = streamingData.adaptive_formats.find(
-      (format) => format.has_audio && !format.has_video,
-    );
-
-    const selectedFormat = audioFormat ?? fallbackFormat;
-
-    if (!selectedFormat?.url) {
-      throw new Error('No audio format available for this video');
-    }
-
-    return selectedFormat.url;
+    return audioUrl;
   }
 
   private extractVideoId(url: string): string | null {
@@ -96,14 +75,5 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
     }
 
     return null;
-  }
-
-  private getInnertube(): Innertube {
-    if (!this.innertube) {
-      throw new Error(
-        'YouTube client not initialized. Ensure onModuleInit has completed.',
-      );
-    }
-    return this.innertube;
   }
 }
