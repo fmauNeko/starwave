@@ -4,6 +4,9 @@ import type { Config } from '../../config/config.type';
 
 vi.mock('node:fs', () => ({
   existsSync: vi.fn().mockReturnValue(false),
+  readFileSync: vi.fn().mockImplementation(() => {
+    throw new Error('ENOENT');
+  }),
   createWriteStream: vi.fn().mockReturnValue({
     on: vi.fn(),
   }),
@@ -41,7 +44,7 @@ vi.mock('./yt-dlp.util', () => ({
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { YtDlpService } from './yt-dlp.service';
 
@@ -320,6 +323,173 @@ describe('YtDlpService', () => {
       expect(mockFetch).toHaveBeenNthCalledWith(
         2,
         expect.stringContaining('github.com/yt-dlp/yt-dlp/releases/download'),
+      );
+    });
+  });
+
+  describe('musl libc detection', () => {
+    const originalPlatform = process.platform;
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      Object.defineProperty(process, 'platform', {
+        value: 'linux',
+        configurable: true,
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(process, 'platform', {
+        value: originalPlatform,
+        configurable: true,
+      });
+    });
+
+    it('detects musl from /proc/self/maps containing musl', async () => {
+      vi.mocked(readFileSync).mockReturnValue(
+        '/lib/ld-musl-x86_64.so.1\n/app/something.so',
+      );
+      vi.mocked(existsSync).mockReturnValue(false);
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ tag_name: '2024.02.01' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          body: {
+            getReader: vi.fn().mockReturnValue({
+              read: vi.fn().mockResolvedValue({ done: true }),
+            }),
+          },
+        });
+
+      service = new YtDlpService(configService);
+      await service.onModuleInit();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('yt-dlp_musllinux'),
+      );
+    });
+
+    it('detects musl from /etc/alpine-release when /proc/self/maps fails', async () => {
+      vi.mocked(readFileSync).mockImplementation(() => {
+        throw new Error('ENOENT');
+      });
+      vi.mocked(existsSync).mockImplementation((path) => {
+        if (typeof path === 'string' && path === '/etc/alpine-release')
+          return true;
+        return false;
+      });
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ tag_name: '2024.02.01' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          body: {
+            getReader: vi.fn().mockReturnValue({
+              read: vi.fn().mockResolvedValue({ done: true }),
+            }),
+          },
+        });
+
+      service = new YtDlpService(configService);
+      await service.onModuleInit();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('yt-dlp_musllinux'),
+      );
+    });
+
+    it('uses glibc binary when not on musl', async () => {
+      vi.mocked(readFileSync).mockReturnValue(
+        '/lib/x86_64-linux-gnu/libc.so.6\n/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2',
+      );
+      vi.mocked(existsSync).mockReturnValue(false);
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ tag_name: '2024.02.01' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          body: {
+            getReader: vi.fn().mockReturnValue({
+              read: vi.fn().mockResolvedValue({ done: true }),
+            }),
+          },
+        });
+
+      service = new YtDlpService(configService);
+      await service.onModuleInit();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringMatching(/yt-dlp_linux$/),
+      );
+    });
+
+    it('uses correct binary on Windows', async () => {
+      Object.defineProperty(process, 'platform', {
+        value: 'win32',
+        configurable: true,
+      });
+
+      vi.mocked(existsSync).mockReturnValue(false);
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ tag_name: '2024.02.01' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          body: {
+            getReader: vi.fn().mockReturnValue({
+              read: vi.fn().mockResolvedValue({ done: true }),
+            }),
+          },
+        });
+
+      service = new YtDlpService(configService);
+      await service.onModuleInit();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('yt-dlp.exe'),
+      );
+    });
+
+    it('uses correct binary on macOS', async () => {
+      Object.defineProperty(process, 'platform', {
+        value: 'darwin',
+        configurable: true,
+      });
+
+      vi.mocked(existsSync).mockReturnValue(false);
+
+      mockFetch
+        .mockResolvedValueOnce({
+          ok: true,
+          json: vi.fn().mockResolvedValue({ tag_name: '2024.02.01' }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          body: {
+            getReader: vi.fn().mockReturnValue({
+              read: vi.fn().mockResolvedValue({ done: true }),
+            }),
+          },
+        });
+
+      service = new YtDlpService(configService);
+      await service.onModuleInit();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('yt-dlp_macos'),
       );
     });
   });
