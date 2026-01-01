@@ -1,0 +1,33 @@
+{{- if .Values.apps.bot.enabled }}
+{{- $ytCookies := .Values.apps.bot.youtubeCookies -}}
+{{- if $ytCookies.enabled }}
+{{- $persistence := $ytCookies.persistence | default dict -}}
+{{- $persistenceEnabled := true -}}
+{{- if hasKey $persistence "enabled" }}{{- $persistenceEnabled = $persistence.enabled -}}{{- end -}}
+{{- if and $persistenceEnabled (not $persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ default (printf "%s-youtube-cookies" (include "starwave.bot.fullname" .)) $ytCookies.name }}
+  labels:
+{{ include "starwave.bot.labels" . | indent 4 }}
+{{- with $ytCookies.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  accessModes:
+{{- with $persistence.accessModes }}
+{{ toYaml . | indent 4 }}
+{{- else }}
+    - ReadWriteOnce
+{{- end }}
+{{- if $persistence.storageClass }}
+  storageClassName: {{ $persistence.storageClass | quote }}
+{{- end }}
+  resources:
+    requests:
+      storage: {{ $persistence.size | default "1Mi" }}
+{{- end }}
+{{- end }}
+{{- end }}

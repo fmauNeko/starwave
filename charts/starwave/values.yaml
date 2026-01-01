@@ -62,6 +62,13 @@ apps:
       value: ''
       mountPath: /app/youtube-cookies.txt
       annotations: {}
+      persistence:
+        enabled: true
+        existingClaim: ''
+        storageClass: ''
+        size: 1Mi
+        accessModes:
+          - ReadWriteOnce
 
     env: []
     envFrom: []

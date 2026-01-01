@@ -1,4 +1,4 @@
-import { createWriteStream, existsSync } from 'node:fs';
+import { createWriteStream, existsSync, readFileSync } from 'node:fs';
 import {
   chmod,
   copyFile,
@@ -232,7 +232,16 @@ export class YtDlpService implements OnModuleInit {
       case 'darwin':
         return 'yt-dlp_macos';
       default:
-        return 'yt-dlp_linux';
+        return this.isMuslLibc() ? 'yt-dlp_musllinux' : 'yt-dlp_linux';
+    }
+  }
+
+  private isMuslLibc(): boolean {
+    try {
+      const memoryMappings = readFileSync('/proc/self/maps', 'utf-8');
+      return memoryMappings.includes('musl');
+    } catch {
+      return existsSync('/etc/alpine-release');
     }
   }
 

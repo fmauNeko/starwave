@@ -266,6 +266,39 @@
                 "annotations": {
                   "type": "object",
                   "additionalProperties": true
+                },
+                "persistence": {
+                  "type": "object",
+                  "description": "Persistent storage for YouTube cookies to preserve session updates across restarts",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "default": true,
+                      "description": "Use PersistentVolumeClaim instead of emptyDir"
+                    },
+                    "existingClaim": {
+                      "type": "string",
+                      "default": "",
+                      "description": "Use existing PVC instead of creating one"
+                    },
+                    "storageClass": {
+                      "type": "string",
+                      "default": "",
+                      "description": "Storage class for PVC (empty = cluster default)"
+                    },
+                    "size": {
+                      "type": "string",
+                      "default": "1Mi",
+                      "description": "Storage size for PVC"
+                    },
+                    "accessModes": {
+                      "type": "array",
+                      "items": { "type": "string" },
+                      "default": ["ReadWriteOnce"],
+                      "description": "Access modes for PVC"
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false,
