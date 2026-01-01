@@ -101,7 +101,10 @@ apps:
     podAnnotations: {}
     podLabels: {}
     podSecurityContext: {}
-    securityContext: {}
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
     nodeSelector: {}
     tolerations: []
     affinity: {}
