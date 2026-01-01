@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/fmauNeko/starwave/compare/bot@v0.4.0...bot@v0.5.0) (2026-01-01)
+
+
+### Features
+
+* **bot:** detect musl libc to download correct yt-dlp binary for Alpine ([eaf9a47](https://github.com/fmauNeko/starwave/commit/eaf9a479dc9d35fa8f631cf4be901835fc146ffc))
+
 ## [0.4.0](https://github.com/fmauNeko/starwave/compare/bot@v0.3.1...bot@v0.4.0) (2026-01-01)
 
 
