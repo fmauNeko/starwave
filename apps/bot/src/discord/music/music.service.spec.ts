@@ -1,13 +1,10 @@
 import { AudioPlayerStatus, type AudioResource } from '@discordjs/voice';
-import { PassThrough } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoiceService } from '../voice/voice.service';
-import { AudioFilterService } from './audio-filter.service';
 import { LoopMode } from './music-queue';
 import { MusicService } from './music.service';
 import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
 import type { MusicProvider } from './providers/music-provider.interface';
-import { ZmqVolumeController } from './zmq-volume-controller.service';
 
 const mockTrack = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
@@ -21,8 +18,6 @@ const mockTrack = {
 describe('MusicService', () => {
   let service: MusicService;
   let voiceService: VoiceService;
-  let audioFilterService: AudioFilterService;
-  let volumeController: ZmqVolumeController;
   let providerDiscovery: MusicProviderDiscovery;
   let mockProvider: MusicProvider;
 
@@ -42,10 +37,6 @@ describe('MusicService', () => {
       getProviders: vi.fn().mockReturnValue([mockProvider]),
     } as unknown as MusicProviderDiscovery;
 
-    audioFilterService = {
-      createFilteredStream: vi.fn().mockReturnValue(new PassThrough()),
-    } as unknown as AudioFilterService;
-
     voiceService = {
       play: vi.fn().mockReturnValue(mockAudioResource),
       stop: vi.fn().mockReturnValue(true),
@@ -53,24 +44,11 @@ describe('MusicService', () => {
       unpause: vi.fn().mockReturnValue(true),
       getPlayer: vi.fn(),
       getPlayerStatus: vi.fn().mockReturnValue(AudioPlayerStatus.Idle),
+      setVolume: vi.fn().mockReturnValue(0.5),
+      getVolume: vi.fn().mockReturnValue(0.25),
     } as unknown as VoiceService;
 
-    volumeController = {
-      allocatePort: vi.fn(),
-      getBindAddress: vi.fn().mockReturnValue('tcp://*:5555'),
-      getVolume: vi.fn().mockReturnValue(0.25),
-      connect: vi.fn(),
-      cleanup: vi.fn(),
-      isConnected: vi.fn().mockReturnValue(false),
-      setVolume: vi.fn(),
-    } as unknown as ZmqVolumeController;
-
-    service = new MusicService(
-      audioFilterService,
-      voiceService,
-      volumeController,
-      providerDiscovery,
-    );
+    service = new MusicService(voiceService, providerDiscovery);
   });
 
   afterEach(() => {
@@ -299,14 +277,6 @@ describe('MusicService', () => {
       expect(service.getNowPlaying('guild-123')).toBeUndefined();
     });
 
-    it('calls volume controller cleanup', () => {
-      service.cleanup('guild-123');
-
-      expect(vi.mocked(volumeController.cleanup)).toHaveBeenCalledWith(
-        'guild-123',
-      );
-    });
-
     it('stops voice playback', () => {
       service.cleanup('guild-123');
 
@@ -474,34 +444,56 @@ describe('MusicService', () => {
   });
 
   describe('setVolume', () => {
-    it('throws error when not connected', async () => {
-      vi.mocked(volumeController.isConnected).mockReturnValue(false);
+    it('throws error when not playing or paused', () => {
+      vi.mocked(voiceService.getPlayerStatus).mockReturnValue(
+        AudioPlayerStatus.Idle,
+      );
 
-      await expect(service.setVolume('guild-123', 0.5)).rejects.toThrow(
+      expect(() => service.setVolume('guild-123', 0.5)).toThrow(
         'No active playback to adjust volume',
       );
     });
 
-    it('sets volume when connected', async () => {
-      vi.mocked(volumeController.isConnected).mockReturnValue(true);
-      vi.mocked(volumeController.setVolume).mockResolvedValue(0.75);
+    it('sets volume when playing', () => {
+      vi.mocked(voiceService.getPlayerStatus).mockReturnValue(
+        AudioPlayerStatus.Playing,
+      );
+      vi.mocked(voiceService.setVolume).mockReturnValue(0.75);
 
-      const result = await service.setVolume('guild-123', 0.75);
+      const result = service.setVolume('guild-123', 0.75);
 
-      expect(vi.mocked(volumeController.setVolume)).toHaveBeenCalledWith(
+      expect(vi.mocked(voiceService.setVolume)).toHaveBeenCalledWith(
         'guild-123',
         0.75,
       );
       expect(result).toBe(0.75);
     });
+
+    it('sets volume when paused', () => {
+      vi.mocked(voiceService.getPlayerStatus).mockReturnValue(
+        AudioPlayerStatus.Paused,
+      );
+      vi.mocked(voiceService.setVolume).mockReturnValue(0.5);
+
+      const result = service.setVolume('guild-123', 0.5);
+
+      expect(vi.mocked(voiceService.setVolume)).toHaveBeenCalledWith(
+        'guild-123',
+        0.5,
+      );
+      expect(result).toBe(0.5);
+    });
   });
 
   describe('getVolume', () => {
-    it('returns volume from controller', () => {
-      vi.mocked(volumeController.getVolume).mockReturnValue(0.5);
+    it('returns volume from voice service', () => {
+      vi.mocked(voiceService.getVolume).mockReturnValue(0.5);
 
       const result = service.getVolume('guild-123');
 
+      expect(vi.mocked(voiceService.getVolume)).toHaveBeenCalledWith(
+        'guild-123',
+      );
       expect(result).toBe(0.5);
     });
   });

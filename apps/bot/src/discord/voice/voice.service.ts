@@ -21,10 +21,14 @@ export interface PlayOptions {
   inlineVolume?: boolean;
 }
 
+const DEFAULT_VOLUME = 0.25;
+
 @Injectable()
 export class VoiceService {
   private readonly logger = new Logger(VoiceService.name);
   private readonly players = new Map<string, AudioPlayer>();
+  private readonly resources = new Map<string, AudioResource>();
+  private readonly volumes = new Map<string, number>();
 
   public async join(channel: VoiceBasedChannel): Promise<VoiceConnection> {
     const guild = channel.guild;
@@ -80,17 +84,39 @@ export class VoiceService {
     const player = this.getOrCreatePlayer(guildId);
     connection.subscribe(player);
 
+    const enableInlineVolume = options.inlineVolume ?? true;
+
     const resource = createAudioResource(stream, {
       ...(options.inputType !== undefined && { inputType: options.inputType }),
-      ...(options.inlineVolume !== undefined && {
-        inlineVolume: options.inlineVolume,
-      }),
+      inlineVolume: enableInlineVolume,
     });
 
+    this.applyStoredVolume(guildId, resource);
+
+    this.resources.set(guildId, resource);
     player.play(resource);
     this.logger.log(`Started playing audio in guild ${guildId}`);
 
     return resource;
+  }
+
+  public setVolume(guildId: string, volume: number): number {
+    const clampedVolume = Math.max(0, Math.min(2, volume));
+    this.volumes.set(guildId, clampedVolume);
+
+    const resource = this.resources.get(guildId);
+    if (resource?.volume) {
+      resource.volume.setVolume(clampedVolume);
+      this.logger.debug(
+        `Set volume to ${String(Math.round(clampedVolume * 100))}% in guild ${guildId}`,
+      );
+    }
+
+    return clampedVolume;
+  }
+
+  public getVolume(guildId: string): number {
+    return this.volumes.get(guildId) ?? DEFAULT_VOLUME;
   }
 
   public stop(guildId: string): boolean {
@@ -171,6 +197,14 @@ export class VoiceService {
     if (player) {
       player.stop();
       this.players.delete(guildId);
+    }
+    this.resources.delete(guildId);
+  }
+
+  private applyStoredVolume(guildId: string, resource: AudioResource): void {
+    if (resource.volume) {
+      const volume = this.volumes.get(guildId) ?? DEFAULT_VOLUME;
+      resource.volume.setVolume(volume);
     }
   }
 
