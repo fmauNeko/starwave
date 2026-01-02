@@ -13,7 +13,7 @@ describe('MusicProviderDiscovery', () => {
     name,
     canHandle: vi.fn(),
     fetchTrackInfo: vi.fn(),
-    getAudioUrl: vi.fn(),
+    getAudioInfo: vi.fn(),
   });
 
   beforeEach(() => {

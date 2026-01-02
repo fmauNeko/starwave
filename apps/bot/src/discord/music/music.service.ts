@@ -3,7 +3,10 @@ import { AudioPlayerStatus, StreamType } from '@discordjs/voice';
 import { VoiceService } from '../voice/voice.service';
 import { LoopMode, MusicQueue, type Track } from './music-queue';
 import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
-import type { MusicProvider } from './providers/music-provider.interface';
+import type {
+  AudioInfo,
+  MusicProvider,
+} from './providers/music-provider.interface';
 
 @Injectable()
 export class MusicService {
@@ -194,13 +197,28 @@ export class MusicService {
 
   private async playTrack(guildId: string, track: Track): Promise<void> {
     const provider = this.getProviderForUrl(track.url);
-    const audioUrl = await provider.getAudioUrl(track.url);
+    const audioInfo = await provider.getAudioInfo(track.url);
+    const streamType = this.getStreamTypeForCodec(audioInfo);
 
-    this.voiceService.play(guildId, audioUrl, {
-      inputType: StreamType.Arbitrary,
+    this.voiceService.play(guildId, audioInfo.url, {
+      inputType: streamType,
     });
 
-    this.logger.log(`Now playing: ${track.title} in guild ${guildId}`);
+    this.logger.log(
+      `Now playing: ${track.title} in guild ${guildId} (codec: ${audioInfo.codec}, container: ${audioInfo.container})`,
+    );
+  }
+
+  private getStreamTypeForCodec(audioInfo: AudioInfo): StreamType {
+    if (audioInfo.codec === 'opus') {
+      if (audioInfo.container === 'webm') {
+        return StreamType.WebmOpus;
+      }
+      if (audioInfo.container === 'ogg') {
+        return StreamType.OggOpus;
+      }
+    }
+    return StreamType.Arbitrary;
   }
 
   private getOrCreateQueue(guildId: string): MusicQueue {

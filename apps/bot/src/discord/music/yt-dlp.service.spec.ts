@@ -246,7 +246,7 @@ describe('YtDlpService', () => {
 
     it('returns trimmed audio URL', async () => {
       mockExecYtDlp.mockResolvedValueOnce(
-        'https://example.com/audio.webm?token=abc\n',
+        'https://example.com/audio.webm?token=abc\nopus\nwebm\n',
       );
 
       const url = await service.getAudioUrl(
@@ -264,14 +264,25 @@ describe('YtDlpService', () => {
       ).rejects.toThrow('yt-dlp returned empty URL');
     });
 
-    it('passes correct arguments to yt-dlp', async () => {
-      mockExecYtDlp.mockResolvedValueOnce('https://example.com/audio.webm');
+    it('passes correct arguments to yt-dlp with Opus preference', async () => {
+      mockExecYtDlp.mockResolvedValueOnce(
+        'https://example.com/audio.webm\nopus\nwebm',
+      );
 
       await service.getAudioUrl('https://www.youtube.com/watch?v=test123');
 
       expect(mockExecYtDlp).toHaveBeenCalledWith(
         expect.stringContaining('yt-dlp'),
-        expect.arrayContaining(['-f', 'ba', '-g']),
+        expect.arrayContaining([
+          '-f',
+          'bestaudio[acodec=opus]/bestaudio',
+          '--print',
+          '%(urls)s',
+          '--print',
+          '%(acodec)s',
+          '--print',
+          '%(ext)s',
+        ]),
       );
     });
 
@@ -282,7 +293,9 @@ describe('YtDlpService', () => {
       vi.mocked(readFile).mockResolvedValue('2024.01.01');
       await serviceWithCookies.onModuleInit();
 
-      mockExecYtDlp.mockResolvedValueOnce('https://example.com/audio.webm');
+      mockExecYtDlp.mockResolvedValueOnce(
+        'https://example.com/audio.webm\nopus\nwebm',
+      );
 
       await serviceWithCookies.getAudioUrl(
         'https://www.youtube.com/watch?v=test123',
@@ -292,6 +305,55 @@ describe('YtDlpService', () => {
         expect.any(String),
         expect.arrayContaining(['--cookies', '/path/to/cookies.txt']),
       );
+    });
+  });
+
+  describe('getAudioInfo', () => {
+    beforeEach(async () => {
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readFile).mockResolvedValue('2024.01.01');
+      service = new YtDlpService(configService);
+      await service.onModuleInit();
+    });
+
+    it('returns url, codec, and container', async () => {
+      mockExecYtDlp.mockResolvedValueOnce(
+        'https://example.com/audio.webm\nopus\nwebm\n',
+      );
+
+      const info = await service.getAudioInfo(
+        'https://www.youtube.com/watch?v=test123',
+      );
+
+      expect(info).toEqual({
+        url: 'https://example.com/audio.webm',
+        codec: 'opus',
+        container: 'webm',
+      });
+    });
+
+    it('uses default values for missing codec/container', async () => {
+      mockExecYtDlp.mockResolvedValueOnce('https://example.com/audio.webm\n');
+
+      const info = await service.getAudioInfo(
+        'https://www.youtube.com/watch?v=test123',
+      );
+
+      expect(info).toEqual({
+        url: 'https://example.com/audio.webm',
+        codec: 'unknown',
+        container: 'unknown',
+      });
+    });
+
+    it('throws if service not ready', async () => {
+      const uninitializedService = new YtDlpService(configService);
+
+      await expect(
+        uninitializedService.getAudioInfo(
+          'https://www.youtube.com/watch?v=test',
+        ),
+      ).rejects.toThrow('yt-dlp binary not ready');
     });
   });
 

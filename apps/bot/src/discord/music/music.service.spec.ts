@@ -30,7 +30,11 @@ describe('MusicService', () => {
       name: 'MockProvider',
       canHandle: vi.fn().mockReturnValue(true),
       fetchTrackInfo: vi.fn().mockResolvedValue(mockTrack),
-      getAudioUrl: vi.fn().mockResolvedValue('https://example.com/audio.webm'),
+      getAudioInfo: vi.fn().mockResolvedValue({
+        url: 'https://example.com/audio.webm',
+        codec: 'opus',
+        container: 'webm',
+      }),
     };
 
     providerDiscovery = {
@@ -84,14 +88,14 @@ describe('MusicService', () => {
       );
     });
 
-    it('uses provider to get audio URL', async () => {
+    it('uses provider to get audio info', async () => {
       await service.play(
         'guild-123',
         'https://youtube.com/watch?v=dQw4w9WgXcQ',
         'user#1234',
       );
 
-      expect(vi.mocked(mockProvider.getAudioUrl)).toHaveBeenCalledWith(
+      expect(vi.mocked(mockProvider.getAudioInfo)).toHaveBeenCalledWith(
         'https://youtube.com/watch?v=dQw4w9WgXcQ',
       );
     });
