@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.4.1...chart-starwave@v0.5.0) (2026-01-02)
+
+
+### Features
+
+* **chart:** add secure default securityContext for bot container ([fef37a4](https://github.com/fmauNeko/starwave/commit/fef37a4cbc967733518ba84a8e5838042010fe0e))
+
+
+### Bug Fixes
+
+* **chart:** run cookies initContainer with same securityContext as bot ([6484a2f](https://github.com/fmauNeko/starwave/commit/6484a2f75fa0bf7e4e0e99e89a06be7ccbd8b21d))
+
 ## [0.4.1](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.4.0...chart-starwave@v0.4.1) (2026-01-01)
 
 
