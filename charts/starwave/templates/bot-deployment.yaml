@@ -110,15 +110,15 @@ spec:
           imagePullPolicy: {{ $bot.image.pullPolicy }}
 {{- with $securityContext }}
           securityContext:
-{{ toYaml . | indent 10 }}
+{{ toYaml . | indent 12 }}
 {{- end }}
 {{- with $bot.command }}
           command:
-{{ toYaml . | indent 10 }}
+{{ toYaml . | indent 12 }}
 {{- end }}
 {{- with $bot.args }}
           args:
-{{ toYaml . | indent 10 }}
+{{ toYaml . | indent 12 }}
 {{- end }}
           env:
             - name: PORT
@@ -133,11 +133,11 @@ spec:
               value: {{ $ytCookiesMountPath | quote }}
 {{- end }}
 {{- with $bot.env }}
-{{ toYaml . | indent 10 }}
+{{ toYaml . | indent 12 }}
 {{- end }}
 {{- with $bot.envFrom }}
           envFrom:
-{{ toYaml . | indent 10 }}
+{{ toYaml . | indent 12 }}
 {{- end }}
           ports:
             - name: http
