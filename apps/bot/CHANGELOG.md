@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.0.0](https://github.com/fmauNeko/starwave/compare/bot@v0.5.0...bot@v1.0.0) (2026-01-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **bot:** Volume control no longer uses FFmpeg CLI or ZeroMQ IPC
+
+### Bug Fixes
+
+* **bot:** add build-deps to Dockerfile ([7790d83](https://github.com/fmauNeko/starwave/commit/7790d8347967a13ca1847e8dabb9ce0abf74c772))
+
+
+### Performance Improvements
+
+* **bot:** enable Opus passthrough to reduce CPU usage ([a156b62](https://github.com/fmauNeko/starwave/commit/a156b62a47fd183ca12d731fc440e2f68cbd8786))
+
+
+### Code Refactoring
+
+* **bot:** replace ZMQ/FFmpeg volume control with Discord.js inlineVolume ([b77b72a](https://github.com/fmauNeko/starwave/commit/b77b72a00815d1754017c2b9e5d0c7930ed8d966))
+
 ## [0.5.0](https://github.com/fmauNeko/starwave/compare/bot@v0.4.0...bot@v0.5.0) (2026-01-01)
 
 
