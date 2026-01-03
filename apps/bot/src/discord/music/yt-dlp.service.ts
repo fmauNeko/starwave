@@ -28,6 +28,12 @@ export interface YtDlpVideoInfo {
   url: string;
 }
 
+export interface YtDlpAudioInfo {
+  url: string;
+  codec: string;
+  container: string;
+}
+
 @Injectable()
 export class YtDlpService implements OnModuleInit {
   private readonly logger = new Logger(YtDlpService.name);
@@ -104,25 +110,41 @@ export class YtDlpService implements OnModuleInit {
   }
 
   public async getAudioUrl(url: string): Promise<string> {
+    const info = await this.getAudioInfo(url);
+    return info.url;
+  }
+
+  public async getAudioInfo(url: string): Promise<YtDlpAudioInfo> {
     this.ensureReady();
 
+    // Prefer Opus codec for Discord passthrough, fallback to best audio
     const args = [
       '-f',
-      'ba',
-      '-g',
+      'bestaudio[acodec=opus]/bestaudio',
+      '--print',
+      '%(urls)s',
+      '--print',
+      '%(acodec)s',
+      '--print',
+      '%(ext)s',
       ...this.getCookiesArgs(),
       ...this.getExtractorArgs(),
       url,
     ];
 
     const output = await execYtDlp(this.binaryPath, args);
-    const audioUrl = output.trim();
+    const lines = output.trim().split('\n');
 
+    const audioUrl = lines[0]?.trim();
     if (!audioUrl) {
       throw new Error('yt-dlp returned empty URL');
     }
 
-    return audioUrl;
+    return {
+      url: audioUrl,
+      codec: lines[1]?.trim() ?? 'unknown',
+      container: lines[2]?.trim() ?? 'unknown',
+    };
   }
 
   public async forceUpdate(): Promise<void> {

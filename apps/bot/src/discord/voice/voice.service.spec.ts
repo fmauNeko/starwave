@@ -192,8 +192,7 @@ describe('VoiceService', () => {
       expect(discordVoice.createAudioResource).toHaveBeenCalledWith(
         'test.mp3',
         {
-          inputType: undefined,
-          inlineVolume: undefined,
+          inlineVolume: true,
         },
       );
       expect(mockPlayer.play).toHaveBeenCalledWith(mockResource);
@@ -616,7 +615,7 @@ describe('VoiceService', () => {
         'test.mp3',
         {
           inputType: discordVoice.StreamType.OggOpus,
-          inlineVolume: undefined,
+          inlineVolume: true,
         },
       );
     });
@@ -643,7 +642,6 @@ describe('VoiceService', () => {
       expect(discordVoice.createAudioResource).toHaveBeenCalledWith(
         'test.mp3',
         {
-          inputType: undefined,
           inlineVolume: true,
         },
       );
@@ -676,6 +674,124 @@ describe('VoiceService', () => {
       expect(mockPlayer.stop).toHaveBeenCalled();
       expect(mockConnection.destroy).toHaveBeenCalled();
       expect(result).toBe(true);
+    });
+  });
+
+  describe('setVolume', () => {
+    it('stores volume and applies to current resource', () => {
+      const mockVolume = {
+        setVolume: vi.fn(),
+      };
+      const mockResource = {
+        volume: mockVolume,
+      };
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue(
+        mockResource as never,
+      );
+
+      service.play('guild-123', 'test.mp3');
+      const result = service.setVolume('guild-123', 0.75);
+
+      expect(mockVolume.setVolume).toHaveBeenCalledWith(0.75);
+      expect(result).toBe(0.75);
+    });
+
+    it('clamps volume to valid range (0-2)', () => {
+      const mockVolume = {
+        setVolume: vi.fn(),
+      };
+      const mockResource = {
+        volume: mockVolume,
+      };
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue(
+        mockResource as never,
+      );
+
+      service.play('guild-123', 'test.mp3');
+
+      expect(service.setVolume('guild-123', 3)).toBe(2);
+      expect(service.setVolume('guild-123', -1)).toBe(0);
+    });
+
+    it('stores volume even when no resource exists', () => {
+      const result = service.setVolume('guild-123', 0.5);
+
+      expect(result).toBe(0.5);
+      expect(service.getVolume('guild-123')).toBe(0.5);
+    });
+  });
+
+  describe('getVolume', () => {
+    it('returns default volume when not set', () => {
+      const result = service.getVolume('guild-123');
+      expect(result).toBe(0.25);
+    });
+
+    it('returns previously set volume', () => {
+      service.setVolume('guild-123', 0.8);
+      const result = service.getVolume('guild-123');
+      expect(result).toBe(0.8);
+    });
+  });
+
+  describe('play with volume', () => {
+    it('applies stored volume to new resource', () => {
+      const mockVolume = {
+        setVolume: vi.fn(),
+      };
+      const mockResource = {
+        volume: mockVolume,
+      };
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue(
+        mockResource as never,
+      );
+
+      service.setVolume('guild-123', 0.6);
+      service.play('guild-123', 'test.mp3');
+
+      expect(mockVolume.setVolume).toHaveBeenCalledWith(0.6);
     });
   });
 });

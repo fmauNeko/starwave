@@ -19,8 +19,8 @@ jobs:
       docker_matrix: ${{ steps.matrix.outputs.docker_matrix }}
       helm_matrix: ${{ steps.matrix.outputs.helm_matrix }}
       releases_created: ${{ steps.release.outputs.releases_created }}
-      bot_release_created: ${{ steps.release.outputs['apps/bot--release_created'] }}
-      bot_version: ${{ steps.release.outputs['apps/bot--version'] }}
+      prs_created: ${{ steps.release.outputs.prs_created }}
+      pr: ${{ steps.release.outputs.pr }}
     steps:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4
         id: release
@@ -71,11 +71,30 @@ jobs:
 
   update-chart-appversion:
     name: Update Helm chart appVersion
-    if: ${{ needs.release.outputs.bot_release_created == 'true' }}
+    if: ${{ needs.release.outputs.prs_created == 'true' }}
     runs-on: ubuntu-latest
     needs: [release]
+    outputs:
+      updated: ${{ steps.update.outputs.updated }}
     steps:
+      - name: Extract pending bot version from PR
+        id: extract
+        env:
+          PR_JSON: ${{ needs.release.outputs.pr }}
+        run: |
+          # Parse PR body to find bot version: <summary>bot: X.Y.Z</summary>
+          BOT_VERSION=$(echo "$PR_JSON" | jq -r '.body' | grep -oP '<summary>bot: \K[0-9]+\.[0-9]+\.[0-9]+' | head -1)
+          if [ -n "$BOT_VERSION" ]; then
+            echo "bot_version=$BOT_VERSION" >> $GITHUB_OUTPUT
+            echo "has_bot_release=true" >> $GITHUB_OUTPUT
+            echo "Found pending bot release: $BOT_VERSION"
+          else
+            echo "has_bot_release=false" >> $GITHUB_OUTPUT
+            echo "No pending bot release found in PR"
+          fi
+
       - name: Generate GitHub App token
+        if: steps.extract.outputs.has_bot_release == 'true'
         id: app-token
         uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2
         with:
@@ -83,22 +102,38 @@ jobs:
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        if: steps.extract.outputs.has_bot_release == 'true'
         with:
           ref: main
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
 
-      - name: Update Chart.yaml appVersion
+      - name: Check and update Chart.yaml appVersion
+        if: steps.extract.outputs.has_bot_release == 'true'
+        id: update
         run: |
-          BOT_VERSION="${{ needs.release.outputs.bot_version }}"
-          sed -i "s/^appVersion:.*/appVersion: ${BOT_VERSION}/" charts/starwave/Chart.yaml
+          BOT_VERSION="${{ steps.extract.outputs.bot_version }}"
+          CURRENT_APP_VERSION=$(grep -oP '^appVersion: \K.*' charts/starwave/Chart.yaml)
+
+          echo "Pending bot version: $BOT_VERSION"
+          echo "Current appVersion: $CURRENT_APP_VERSION"
+
+          if [ "$CURRENT_APP_VERSION" = "$BOT_VERSION" ]; then
+            echo "appVersion already matches pending bot version, skipping update"
+            echo "updated=false" >> $GITHUB_OUTPUT
+          else
+            echo "Updating appVersion from $CURRENT_APP_VERSION to $BOT_VERSION"
+            sed -i "s/^appVersion:.*/appVersion: ${BOT_VERSION}/" charts/starwave/Chart.yaml
+            echo "updated=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Commit and push
+        if: steps.update.outputs.updated == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add charts/starwave/Chart.yaml
-          git commit -m "fix(charts:starwave): bump appVersion to ${{ needs.release.outputs.bot_version }}"
+          git commit -m "fix(chart): sync appVersion to ${{ steps.extract.outputs.bot_version }}"
           git push
 
   backmerge:

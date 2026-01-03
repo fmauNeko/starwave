@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { YtDlpService, YtDlpVideoInfo } from '../yt-dlp.service';
+import type {
+  YtDlpAudioInfo,
+  YtDlpService,
+  YtDlpVideoInfo,
+} from '../yt-dlp.service';
 import { YouTubeProvider } from './youtube.provider';
 
 function createMockYtDlpService(
@@ -17,6 +21,11 @@ function createMockYtDlpService(
     getAudioUrl: vi
       .fn()
       .mockResolvedValue('https://example.com/audio.webm?token=abc'),
+    getAudioInfo: vi.fn().mockResolvedValue({
+      url: 'https://example.com/audio.webm?token=abc',
+      codec: 'opus',
+      container: 'webm',
+    } satisfies YtDlpAudioInfo),
     forceUpdate: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   } as unknown as YtDlpService;
@@ -100,39 +109,43 @@ describe('YouTubeProvider', () => {
     });
   });
 
-  describe('getAudioUrl', () => {
-    it('returns audio URL for valid video URL', async () => {
-      const audioUrl = await provider.getAudioUrl(
+  describe('getAudioInfo', () => {
+    it('returns audio info for valid video URL', async () => {
+      const audioInfo = await provider.getAudioInfo(
         'https://youtube.com/watch?v=dQw4w9WgXcQ',
       );
 
-      expect(audioUrl).toBe('https://example.com/audio.webm?token=abc');
-      expect(mockYtDlpService.getAudioUrl).toHaveBeenCalledWith(
+      expect(audioInfo).toEqual({
+        url: 'https://example.com/audio.webm?token=abc',
+        codec: 'opus',
+        container: 'webm',
+      });
+      expect(mockYtDlpService.getAudioInfo).toHaveBeenCalledWith(
         'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
       );
     });
 
     it('normalizes video ID to canonical URL', async () => {
-      await provider.getAudioUrl('dQw4w9WgXcQ');
+      await provider.getAudioInfo('dQw4w9WgXcQ');
 
-      expect(mockYtDlpService.getAudioUrl).toHaveBeenCalledWith(
+      expect(mockYtDlpService.getAudioInfo).toHaveBeenCalledWith(
         'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
       );
     });
 
     it('throws error for invalid URL', async () => {
       await expect(
-        provider.getAudioUrl('https://example.com/not-youtube'),
+        provider.getAudioInfo('https://example.com/not-youtube'),
       ).rejects.toThrow('Invalid YouTube URL');
-      expect(mockYtDlpService.getAudioUrl).not.toHaveBeenCalled();
+      expect(mockYtDlpService.getAudioInfo).not.toHaveBeenCalled();
     });
 
     it('propagates yt-dlp errors', async () => {
-      vi.mocked(mockYtDlpService.getAudioUrl).mockRejectedValueOnce(
+      vi.mocked(mockYtDlpService.getAudioInfo).mockRejectedValueOnce(
         new Error('yt-dlp exited with code 1'),
       );
 
-      await expect(provider.getAudioUrl('dQw4w9WgXcQ')).rejects.toThrow(
+      await expect(provider.getAudioInfo('dQw4w9WgXcQ')).rejects.toThrow(
         'yt-dlp exited with code 1',
       );
     });

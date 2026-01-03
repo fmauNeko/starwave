@@ -81,3 +81,23 @@ jobs:
             fi
             helm push "${pkg}" $(echo "oci://ghcr.io/${GITHUB_REPOSITORY}/charts" | tr '[:upper:]' '[:lower:]')
           done
+
+      - name: Sync ArgoCD Application
+        if: ${{ vars.ARGOCD_SERVER != '' }}
+        env:
+          ARGOCD_SERVER: ${{ vars.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Install ArgoCD CLI
+          curl -sSL -o /usr/local/bin/argocd https://${ARGOCD_SERVER}/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
+          # Hard refresh to force OCI chart re-fetch (bypass cache)
+          argocd app get starwave --hard-refresh
+
+          # Trigger sync
+          argocd app sync starwave
+
+          echo "ArgoCD sync triggered successfully"

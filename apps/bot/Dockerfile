@@ -17,7 +17,7 @@ RUN turbo prune bot --docker
 # ---
 FROM base AS prod-deps
 
-RUN apk add --no-cache curl
+RUN apk add --no-cache curl make gcc g++ python3
 
 COPY --from=prepare /app/out/json/ .
 RUN pnpm --filter=./apps/bot deploy --legacy --prod /dependencies && \
@@ -29,6 +29,8 @@ RUN curl -sf https://gobinaries.com/tj/node-prune | sh && \
 
 # ---
 FROM base AS builder
+
+RUN apk add --no-cache make gcc g++ python3
 
 COPY --from=prepare /app/out/json/ .
 RUN pnpm install --frozen-lockfile

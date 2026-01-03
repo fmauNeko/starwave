@@ -1,5 +1,11 @@
 import type { Track } from '../music-queue';
 
+export interface AudioInfo {
+  url: string;
+  codec: string;
+  container: string;
+}
+
 export interface MusicProvider {
   readonly name: string;
 
@@ -7,7 +13,7 @@ export interface MusicProvider {
 
   fetchTrackInfo(url: string, requestedBy: string): Promise<Track>;
 
-  getAudioUrl(url: string): Promise<string>;
+  getAudioInfo(url: string): Promise<AudioInfo>;
 }
 
 export const MUSIC_PROVIDER = Symbol('MUSIC_PROVIDER');

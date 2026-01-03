@@ -593,14 +593,13 @@ describe('MusicCommands', () => {
 
     it('sets volume when playing', async () => {
       vi.mocked(musicService.isPlaying).mockReturnValue(true);
-      vi.mocked(musicService.setVolume).mockResolvedValue(0.5);
+      vi.mocked(musicService.setVolume).mockReturnValue(0.5);
       const interaction = createMockInteraction();
 
       await commands.volume([interaction], { level: 50 });
 
-      expect(interaction.deferReply).toHaveBeenCalled();
       expect(musicService.setVolume).toHaveBeenCalledWith('guild-123', 0.5);
-      expect(interaction.editReply).toHaveBeenCalledWith({
+      expect(interaction.reply).toHaveBeenCalledWith({
         content: expect.stringContaining('50%'),
       });
     });
@@ -608,7 +607,7 @@ describe('MusicCommands', () => {
     it('sets volume when paused', async () => {
       vi.mocked(musicService.isPlaying).mockReturnValue(false);
       vi.mocked(musicService.isPaused).mockReturnValue(true);
-      vi.mocked(musicService.setVolume).mockResolvedValue(0.75);
+      vi.mocked(musicService.setVolume).mockReturnValue(0.75);
       const interaction = createMockInteraction();
 
       await commands.volume([interaction], { level: 75 });
@@ -618,62 +617,67 @@ describe('MusicCommands', () => {
 
     it('handles volume error', async () => {
       vi.mocked(musicService.isPlaying).mockReturnValue(true);
-      vi.mocked(musicService.setVolume).mockRejectedValue(
-        new Error('Volume error'),
-      );
+      vi.mocked(musicService.setVolume).mockImplementation(() => {
+        throw new Error('Volume error');
+      });
       const interaction = createMockInteraction();
 
       await commands.volume([interaction], { level: 50 });
 
-      expect(interaction.editReply).toHaveBeenCalledWith({
+      expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Failed to set volume: Volume error',
+        flags: MessageFlags.Ephemeral,
       });
     });
 
     it('handles non-Error volume exceptions', async () => {
       vi.mocked(musicService.isPlaying).mockReturnValue(true);
-      vi.mocked(musicService.setVolume).mockRejectedValue('string error');
+      vi.mocked(musicService.setVolume).mockImplementation(() => {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error
+        throw 'string error';
+      });
       const interaction = createMockInteraction();
 
       await commands.volume([interaction], { level: 50 });
 
-      expect(interaction.editReply).toHaveBeenCalledWith({
+      expect(interaction.reply).toHaveBeenCalledWith({
         content: 'Failed to set volume: Unknown error',
+        flags: MessageFlags.Ephemeral,
       });
     });
 
     it('shows muted icon for 0% volume', async () => {
       vi.mocked(musicService.isPlaying).mockReturnValue(true);
-      vi.mocked(musicService.setVolume).mockResolvedValue(0);
+      vi.mocked(musicService.setVolume).mockReturnValue(0);
       const interaction = createMockInteraction();
 
       await commands.volume([interaction], { level: 0 });
 
-      expect(interaction.editReply).toHaveBeenCalledWith({
+      expect(interaction.reply).toHaveBeenCalledWith({
         content: expect.stringContaining('0%'),
       });
     });
 
     it('shows boosted volume for levels over 100%', async () => {
       vi.mocked(musicService.isPlaying).mockReturnValue(true);
-      vi.mocked(musicService.setVolume).mockResolvedValue(1.5);
+      vi.mocked(musicService.setVolume).mockReturnValue(1.5);
       const interaction = createMockInteraction();
 
       await commands.volume([interaction], { level: 150 });
 
-      expect(interaction.editReply).toHaveBeenCalledWith({
+      expect(interaction.reply).toHaveBeenCalledWith({
         content: expect.stringContaining('150%'),
       });
     });
 
     it('shows low volume icon for levels <= 50%', async () => {
       vi.mocked(musicService.isPlaying).mockReturnValue(true);
-      vi.mocked(musicService.setVolume).mockResolvedValue(0.3);
+      vi.mocked(musicService.setVolume).mockReturnValue(0.3);
       const interaction = createMockInteraction();
 
       await commands.volume([interaction], { level: 30 });
 
-      expect(interaction.editReply).toHaveBeenCalledWith({
+      expect(interaction.reply).toHaveBeenCalledWith({
         content: expect.stringMatching(/🔉.*30%/),
       });
     });

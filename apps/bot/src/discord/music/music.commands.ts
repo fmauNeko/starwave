@@ -369,7 +369,7 @@ export class MusicCommands {
     name: 'volume',
     description: 'Set the playback volume (0-200)',
   })
-  public async volume(
+  public volume(
     @Context() [interaction]: SlashCommandContext,
     @Options() { level }: VolumeDto,
   ) {
@@ -391,24 +391,20 @@ export class MusicCommands {
       });
     }
 
-    await interaction.deferReply();
-
     try {
       const volumeMultiplier = level / 100;
-      const newVolume = await this.musicService.setVolume(
-        guildId,
-        volumeMultiplier,
-      );
+      const newVolume = this.musicService.setVolume(guildId, volumeMultiplier);
       const displayVolume = Math.round(newVolume * 100);
       const volumeBar = this.createVolumeBar(displayVolume);
 
-      return await interaction.editReply({
+      return interaction.reply({
         content: `${volumeBar} Volume set to **${String(displayVolume)}%**`,
       });
     } catch (error) {
       this.logger.error('Failed to set volume', error);
-      return interaction.editReply({
+      return interaction.reply({
         content: `Failed to set volume: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        flags: MessageFlags.Ephemeral,
       });
     }
   }

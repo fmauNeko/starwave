@@ -3,7 +3,10 @@ import { regex } from 'arkregex';
 import type { Track } from '../music-queue';
 import { YtDlpService } from '../yt-dlp.service';
 import { MusicProvider } from './music-provider.decorator';
-import type { MusicProvider as MusicProviderInterface } from './music-provider.interface';
+import type {
+  AudioInfo,
+  MusicProvider as MusicProviderInterface,
+} from './music-provider.interface';
 
 const YOUTUBE_URL_PATTERN = regex(
   '(?:youtube\\.com/watch\\?v=|youtu\\.be/|youtube\\.com/embed/)([a-zA-Z0-9_-]{11})',
@@ -47,20 +50,22 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
     };
   }
 
-  public async getAudioUrl(url: string): Promise<string> {
+  public async getAudioInfo(url: string): Promise<AudioInfo> {
     const videoId = this.extractVideoId(url);
     if (!videoId) {
       throw new Error('Invalid YouTube URL');
     }
 
-    this.logger.debug(`Getting audio URL for video: ${videoId}`);
+    this.logger.debug(`Getting audio info for video: ${videoId}`);
 
     const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const audioUrl = await this.ytDlpService.getAudioUrl(canonicalUrl);
+    const audioInfo = await this.ytDlpService.getAudioInfo(canonicalUrl);
 
-    this.logger.debug(`Got audio URL (length: ${String(audioUrl.length)})`);
+    this.logger.debug(
+      `Got audio URL (codec: ${audioInfo.codec}, container: ${audioInfo.container})`,
+    );
 
-    return audioUrl;
+    return audioInfo;
   }
 
   private extractVideoId(url: string): string | null {

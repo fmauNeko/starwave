@@ -1,28 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AudioPlayerStatus, StreamType } from '@discordjs/voice';
-import { AudioFilterService } from './audio-filter.service';
 import { VoiceService } from '../voice/voice.service';
-import { ZmqVolumeController } from './zmq-volume-controller.service';
 import { LoopMode, MusicQueue, type Track } from './music-queue';
 import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
-import type { MusicProvider } from './providers/music-provider.interface';
-
-const ZMQ_CONNECT_DELAY_MS = 500;
+import type {
+  AudioInfo,
+  MusicProvider,
+} from './providers/music-provider.interface';
 
 @Injectable()
 export class MusicService {
   private readonly logger = new Logger(MusicService.name);
   private readonly queues = new Map<string, MusicQueue>();
-  private readonly zmqConnectTimers = new Map<
-    string,
-    ReturnType<typeof setTimeout>
-  >();
   private readonly autoPlaySetup = new Set<string>();
 
   public constructor(
-    private readonly audioFilterService: AudioFilterService,
     private readonly voiceService: VoiceService,
-    private readonly volumeController: ZmqVolumeController,
     private readonly providerDiscovery: MusicProviderDiscovery,
   ) {}
 
@@ -152,23 +145,21 @@ export class MusicService {
     return status === AudioPlayerStatus.Paused;
   }
 
-  public async setVolume(guildId: string, volume: number): Promise<number> {
-    if (!this.volumeController.isConnected(guildId)) {
+  public setVolume(guildId: string, volume: number): number {
+    if (!this.isPlaying(guildId) && !this.isPaused(guildId)) {
       throw new Error('No active playback to adjust volume');
     }
-    return this.volumeController.setVolume(guildId, volume);
+    return this.voiceService.setVolume(guildId, volume);
   }
 
   public getVolume(guildId: string): number {
-    return this.volumeController.getVolume(guildId);
+    return this.voiceService.getVolume(guildId);
   }
 
   public cleanup(guildId: string): void {
-    this.clearZmqTimer(guildId);
     this.voiceService.stop(guildId);
     this.autoPlaySetup.delete(guildId);
     this.queues.delete(guildId);
-    this.volumeController.cleanup(guildId);
   }
 
   public setupAutoPlay(guildId: string): void {
@@ -206,50 +197,28 @@ export class MusicService {
 
   private async playTrack(guildId: string, track: Track): Promise<void> {
     const provider = this.getProviderForUrl(track.url);
-    const audioUrl = await provider.getAudioUrl(track.url);
+    const audioInfo = await provider.getAudioInfo(track.url);
+    const streamType = this.getStreamTypeForCodec(audioInfo);
 
-    this.volumeController.allocatePort(guildId);
-    const zmqBindAddress = this.volumeController.getBindAddress(guildId);
-    const currentVolume = this.volumeController.getVolume(guildId);
-
-    const filteredStream = this.audioFilterService.createFilteredStream(
-      audioUrl,
-      {
-        volume: currentVolume,
-        zmqBindAddress,
-      },
-    );
-
-    this.voiceService.play(guildId, filteredStream, {
-      inputType: StreamType.OggOpus,
+    this.voiceService.play(guildId, audioInfo.url, {
+      inputType: streamType,
     });
 
-    this.scheduleZmqConnect(guildId);
-
-    this.logger.log(`Now playing: ${track.title} in guild ${guildId}`);
+    this.logger.log(
+      `Now playing: ${track.title} in guild ${guildId} (codec: ${audioInfo.codec}, container: ${audioInfo.container})`,
+    );
   }
 
-  private scheduleZmqConnect(guildId: string): void {
-    this.clearZmqTimer(guildId);
-
-    const timer = setTimeout(() => {
-      this.zmqConnectTimers.delete(guildId);
-      try {
-        this.volumeController.connect(guildId);
-      } catch (error: unknown) {
-        this.logger.warn(`Failed to connect ZMQ for guild ${guildId}:`, error);
+  private getStreamTypeForCodec(audioInfo: AudioInfo): StreamType {
+    if (audioInfo.codec === 'opus') {
+      if (audioInfo.container === 'webm') {
+        return StreamType.WebmOpus;
       }
-    }, ZMQ_CONNECT_DELAY_MS);
-
-    this.zmqConnectTimers.set(guildId, timer);
-  }
-
-  private clearZmqTimer(guildId: string): void {
-    const timer = this.zmqConnectTimers.get(guildId);
-    if (timer) {
-      clearTimeout(timer);
-      this.zmqConnectTimers.delete(guildId);
+      if (audioInfo.container === 'ogg') {
+        return StreamType.OggOpus;
+      }
     }
+    return StreamType.Arbitrary;
   }
 
   private getOrCreateQueue(guildId: string): MusicQueue {
