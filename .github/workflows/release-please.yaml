@@ -48,7 +48,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.docker_matrix) }}
     steps:
-      - uses: Codex-/return-dispatch@v3
+      - uses: Codex-/return-dispatch@2277c7e64ca38a7350b95cfec2d6715ccebb7108 # v3
         id: dispatch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.helm_matrix) }}
     steps:
-      - uses: Codex-/return-dispatch@v3
+      - uses: Codex-/return-dispatch@2277c7e64ca38a7350b95cfec2d6715ccebb7108 # v3
         id: dispatch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -161,7 +161,7 @@ jobs:
     steps:
       - name: Await Docker release
         if: ${{ needs.docker-release.outputs.run_id != '' }}
-        uses: Codex-/await-remote-run@v1
+        uses: Codex-/await-remote-run@a56c556e6434d2d7ec9438dc656143b39532324e # v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.event.repository.name }}
@@ -170,7 +170,7 @@ jobs:
           run_timeout_seconds: 1800
 
       - name: Await Helm release
-        uses: Codex-/await-remote-run@v1
+        uses: Codex-/await-remote-run@a56c556e6434d2d7ec9438dc656143b39532324e # v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.event.repository.name }}
