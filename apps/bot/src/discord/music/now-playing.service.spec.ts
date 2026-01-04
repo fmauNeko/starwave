@@ -331,6 +331,19 @@ describe('NowPlayingService', () => {
     });
   });
 
+  describe('handleQueueEnd', () => {
+    it('deletes now playing message when queue ends', async () => {
+      service.setChannelForGuild('guild-123', 'channel-123');
+      await service.sendNowPlaying('guild-123');
+      vi.clearAllMocks();
+
+      await service.handleQueueEnd('guild-123');
+
+      expect(mockChannel.messages.fetch).toHaveBeenCalledWith('msg-123');
+      expect(mockMessage.delete).toHaveBeenCalled();
+    });
+  });
+
   describe('button custom IDs', () => {
     it('generates correct button IDs', () => {
       expect(NowPlayingService.BUTTON_IDS.PLAY_PAUSE).toBe('np_playpause');

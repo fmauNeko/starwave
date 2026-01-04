@@ -92,7 +92,6 @@ export class MusicCommands {
     try {
       if (!this.voiceService.isConnected(guildId)) {
         await this.voiceService.join(voiceChannel);
-        this.musicService.setupAutoPlay(guildId);
       }
 
       this.nowPlayingService.setChannelForGuild(guildId, interaction.channelId);
@@ -105,6 +104,8 @@ export class MusicCommands {
             query,
             interaction.user.tag,
           );
+
+      this.musicService.setupAutoPlay(guildId);
 
       const embed = this.createTrackEmbed(track, 'Added to Queue');
       await interaction.editReply({ embeds: [embed] });

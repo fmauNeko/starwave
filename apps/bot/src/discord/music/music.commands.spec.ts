@@ -173,6 +173,7 @@ describe('MusicCommands', () => {
 
       expect(voiceService.join).not.toHaveBeenCalled();
       expect(musicService.play).toHaveBeenCalled();
+      expect(musicService.setupAutoPlay).toHaveBeenCalledWith('guild-123');
     });
 
     it('handles play errors gracefully', async () => {

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { OnEvent } from '@nestjs/event-emitter';
 import {
   ActionRowBuilder,
   ButtonBuilder,
@@ -13,7 +14,7 @@ import {
 } from 'discord.js';
 import type { Config } from '../../config/config.type';
 import { LoopMode } from './music-queue';
-import { MusicService } from './music.service';
+import { MUSIC_EVENTS, MusicService } from './music.service';
 
 export const NOW_PLAYING_BUTTON_IDS = {
   PLAY_PAUSE: 'np_playpause',
@@ -37,6 +38,11 @@ export class NowPlayingService {
     private readonly configService: ConfigService<Config, true>,
     private readonly client: Client,
   ) {}
+
+  @OnEvent(MUSIC_EVENTS.QUEUE_END)
+  public async handleQueueEnd(guildId: string): Promise<void> {
+    await this.deleteNowPlaying(guildId);
+  }
 
   public setChannelForGuild(guildId: string, channelId: string): void {
     this.guildChannels.set(guildId, channelId);

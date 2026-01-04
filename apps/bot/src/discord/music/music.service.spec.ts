@@ -1,8 +1,9 @@
 import { AudioPlayerStatus, type AudioResource } from '@discordjs/voice';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoiceService } from '../voice/voice.service';
 import { LoopMode } from './music-queue';
-import { MusicService } from './music.service';
+import { MUSIC_EVENTS, MusicService } from './music.service';
 import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
 import type { MusicProvider } from './providers/music-provider.interface';
 
@@ -19,6 +20,7 @@ describe('MusicService', () => {
   let service: MusicService;
   let voiceService: VoiceService;
   let providerDiscovery: MusicProviderDiscovery;
+  let eventEmitter: EventEmitter2;
   let mockProvider: MusicProvider;
 
   const mockAudioResource = {} as AudioResource;
@@ -53,7 +55,11 @@ describe('MusicService', () => {
       getVolume: vi.fn().mockReturnValue(0.25),
     } as unknown as VoiceService;
 
-    service = new MusicService(voiceService, providerDiscovery);
+    eventEmitter = {
+      emit: vi.fn(),
+    } as unknown as EventEmitter2;
+
+    service = new MusicService(voiceService, providerDiscovery, eventEmitter);
   });
 
   afterEach(() => {
@@ -595,6 +601,36 @@ describe('MusicService', () => {
       expect(mockPlayer.on).toHaveBeenCalledTimes(1);
     });
 
+    it('clears queue and emits queue end event when no next track', async () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      service.setupAutoPlay('guild-123');
+      vi.clearAllMocks();
+
+      idleCallback();
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(eventEmitter.emit)).toHaveBeenCalledWith(
+          MUSIC_EVENTS.QUEUE_END,
+          'guild-123',
+        );
+      });
+      expect(service.getQueue('guild-123')).toHaveLength(0);
+    });
+
     it('allows new listener after cleanup', () => {
       const mockPlayer = {
         on: vi.fn(),
@@ -606,6 +642,95 @@ describe('MusicService', () => {
       service.setupAutoPlay('guild-123');
 
       expect(mockPlayer.on).toHaveBeenCalledTimes(2);
+    });
+
+    it('plays new track after queue ended naturally and user adds another song', async () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      service.setupAutoPlay('guild-123');
+
+      expect(vi.mocked(voiceService.play)).toHaveBeenCalledTimes(1);
+
+      idleCallback();
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(eventEmitter.emit)).toHaveBeenCalledWith(
+          MUSIC_EVENTS.QUEUE_END,
+          'guild-123',
+        );
+      });
+
+      expect(service.getQueue('guild-123')).toHaveLength(0);
+
+      vi.clearAllMocks();
+
+      const newTrack = { ...mockTrack, title: 'New Track After Queue End' };
+      vi.mocked(mockProvider.fetchTrackInfo).mockResolvedValue(newTrack);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=new',
+        'user#1234',
+      );
+
+      expect(vi.mocked(voiceService.play)).toHaveBeenCalledTimes(1);
+      expect(service.getQueue('guild-123')).toHaveLength(1);
+      expect(service.getNowPlaying('guild-123')).toMatchObject({
+        title: 'New Track After Queue End',
+      });
+    });
+
+    it('ignores concurrent idle events to prevent race conditions', async () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+      service.setupAutoPlay('guild-123');
+      vi.clearAllMocks();
+
+      idleCallback();
+      idleCallback();
+      idleCallback();
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(voiceService.play)).toHaveBeenCalled();
+      });
+
+      expect(vi.mocked(voiceService.play)).toHaveBeenCalledTimes(1);
     });
   });
 
