@@ -159,7 +159,7 @@ Files: `.github/workflows/release-please.yaml`, `docker-release.yaml`, `helm-rel
 Before marking work complete:
 
 - [ ] `pnpm run lint` passes
-- [ ] `pnpm run test` passes (with coverage thresholds met)
+- [ ] `pnpm run test:cov` passes (runs tests with coverage report)
 - [ ] `pnpm run test:e2e` passes
 - [ ] `pnpm run build` succeeds
 - [ ] No secrets in committed code
@@ -169,8 +169,8 @@ Before marking work complete:
 
 ### Coverage Requirements
 
-Test coverage thresholds are enforced in CI. Before finalizing any feature:
+Test coverage thresholds are enforced in CI. **Always run `pnpm run test:cov` when finishing a feature** to verify coverage thresholds are met before considering work complete.
 
-1. Run `pnpm run test -- --coverage` to check coverage
+1. Run `pnpm run test:cov` to check coverage (not just `pnpm run test`)
 2. Ensure all thresholds are met (configured per-package in `vitest.config.ts`)
 3. New code should have tests - coverage should not decrease

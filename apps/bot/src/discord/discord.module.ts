@@ -8,6 +8,7 @@ import { DiscordService } from './discord.service';
 import { MusicModule } from './music/music.module';
 import { PingCommand } from './ping/ping.command';
 import { PresenceModule } from './presence/presence.module';
+import { LeaveCommand } from './voice/leave.command';
 import { VoiceModule } from './voice/voice.module';
 
 @Module({
@@ -32,6 +33,6 @@ import { VoiceModule } from './voice/voice.module';
     PresenceModule,
     VoiceModule,
   ],
-  providers: [DiscordService, PingCommand],
+  providers: [DiscordService, PingCommand, LeaveCommand],
 })
 export class DiscordModule {}

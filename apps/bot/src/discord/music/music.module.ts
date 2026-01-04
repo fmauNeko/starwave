@@ -23,5 +23,6 @@ import { YtDlpService } from './yt-dlp.service';
     MusicService,
     MusicCommands,
   ],
+  exports: [MusicService],
 })
 export class MusicModule {}
