@@ -53,11 +53,13 @@ describe('Module imports', () => {
       Once: () => () => undefined,
       On: () => () => undefined,
       Context: () => () => undefined,
+      Ctx: () => () => undefined,
       SlashCommand: () => () => undefined,
       Options: () => () => undefined,
       StringOption: () => () => undefined,
       IntegerOption: () => () => undefined,
       NumberOption: () => () => undefined,
+      Button: () => () => undefined,
       createCommandGroupDecorator: () => () => (target: unknown) => target,
     }));
 

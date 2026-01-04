@@ -12,6 +12,7 @@ import { VoiceService } from '../voice/voice.service';
 import { LoopMode, type Track } from './music-queue';
 import { MusicCommands } from './music.commands';
 import { MusicService } from './music.service';
+import { NowPlayingService } from './now-playing.service';
 
 const mockTrack: Track = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
@@ -65,6 +66,7 @@ describe('MusicCommands', () => {
   let commands: MusicCommands;
   let musicService: MusicService;
   let voiceService: VoiceService;
+  let nowPlayingService: NowPlayingService;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -97,7 +99,17 @@ describe('MusicCommands', () => {
       leave: vi.fn().mockReturnValue(true),
     } as unknown as VoiceService;
 
-    commands = new MusicCommands(musicService, voiceService);
+    nowPlayingService = {
+      setChannelForGuild: vi.fn(),
+      getChannelForGuild: vi.fn(),
+      getMessageForGuild: vi.fn(),
+      sendNowPlaying: vi.fn().mockResolvedValue(undefined),
+      deleteNowPlaying: vi.fn().mockResolvedValue(undefined),
+      repostIfInSameChannel: vi.fn().mockResolvedValue(undefined),
+      cleanup: vi.fn().mockResolvedValue(undefined),
+    } as unknown as NowPlayingService;
+
+    commands = new MusicCommands(musicService, voiceService, nowPlayingService);
   });
 
   afterEach(() => {
