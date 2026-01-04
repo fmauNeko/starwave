@@ -68,6 +68,22 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
     return audioInfo;
   }
 
+  public async search(query: string, requestedBy: string): Promise<Track> {
+    this.logger.debug(`Searching YouTube for: ${query}`);
+
+    const info = await this.ytDlpService.search(query);
+
+    this.logger.debug(`Found: ${info.title} (${info.url})`);
+
+    return {
+      url: info.url,
+      title: info.title,
+      duration: info.duration,
+      thumbnail: info.thumbnail,
+      requestedBy,
+    };
+  }
+
   private extractVideoId(url: string): string | null {
     const urlMatch = YOUTUBE_URL_PATTERN.exec(url);
     if (urlMatch?.[1]) {

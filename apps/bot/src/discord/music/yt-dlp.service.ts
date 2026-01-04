@@ -147,6 +147,38 @@ export class YtDlpService implements OnModuleInit {
     };
   }
 
+  public async search(query: string): Promise<YtDlpVideoInfo> {
+    this.ensureReady();
+
+    const args = [
+      '--dump-json',
+      '--no-download',
+      ...this.getCookiesArgs(),
+      ...this.getExtractorArgs(),
+      `ytsearch1:${query}`,
+    ];
+
+    const output = await execYtDlp(this.binaryPath, args);
+    const info = JSON.parse(output) as {
+      title?: string;
+      duration?: number;
+      thumbnail?: string;
+      thumbnails?: { url: string }[];
+      webpage_url?: string;
+    };
+
+    if (!info.webpage_url) {
+      throw new Error('No search results found');
+    }
+
+    return {
+      title: info.title ?? 'Unknown Title',
+      duration: info.duration ?? 0,
+      thumbnail: info.thumbnail ?? info.thumbnails?.[0]?.url ?? '',
+      url: info.webpage_url,
+    };
+  }
+
   public async forceUpdate(): Promise<void> {
     const latestVersion = await this.fetchLatestVersion();
     await this.downloadBinary(latestVersion);

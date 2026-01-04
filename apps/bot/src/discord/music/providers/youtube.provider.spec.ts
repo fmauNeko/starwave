@@ -27,6 +27,12 @@ function createMockYtDlpService(
       container: 'webm',
     } satisfies YtDlpAudioInfo),
     forceUpdate: vi.fn().mockResolvedValue(undefined),
+    search: vi.fn().mockResolvedValue({
+      title: 'Search Result Video',
+      duration: 240,
+      thumbnail: 'https://example.com/search-thumb.jpg',
+      url: 'https://www.youtube.com/watch?v=searchResult',
+    } satisfies YtDlpVideoInfo),
     ...overrides,
   } as unknown as YtDlpService;
 }
@@ -154,6 +160,36 @@ describe('YouTubeProvider', () => {
   describe('name', () => {
     it('returns YouTube as provider name', () => {
       expect(provider.name).toBe('YouTube');
+    });
+  });
+
+  describe('search', () => {
+    it('returns track info from search query', async () => {
+      const track = await provider.search('test query', 'user#1234');
+
+      expect(track).toMatchObject({
+        url: 'https://www.youtube.com/watch?v=searchResult',
+        title: 'Search Result Video',
+        duration: 240,
+        thumbnail: 'https://example.com/search-thumb.jpg',
+        requestedBy: 'user#1234',
+      });
+    });
+
+    it('delegates search to yt-dlp service', async () => {
+      await provider.search('my search query', 'user#1234');
+
+      expect(mockYtDlpService.search).toHaveBeenCalledWith('my search query');
+    });
+
+    it('propagates yt-dlp search errors', async () => {
+      vi.mocked(mockYtDlpService.search).mockRejectedValueOnce(
+        new Error('No search results found'),
+      );
+
+      await expect(provider.search('nonexistent', 'user#1234')).rejects.toThrow(
+        'No search results found',
+      );
     });
   });
 });

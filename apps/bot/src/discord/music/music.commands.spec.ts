@@ -71,6 +71,7 @@ describe('MusicCommands', () => {
 
     musicService = {
       play: vi.fn().mockResolvedValue(mockTrack),
+      searchAndPlay: vi.fn().mockResolvedValue(mockTrack),
       skip: vi.fn(),
       stop: vi.fn(),
       pause: vi.fn(),
@@ -108,7 +109,7 @@ describe('MusicCommands', () => {
       const interaction = createMockInteraction({ guildId: null });
 
       await commands.play([interaction], {
-        url: 'https://youtube.com/watch?v=test',
+        query: 'https://youtube.com/watch?v=test',
       });
 
       expect(interaction.reply).toHaveBeenCalledWith({
@@ -121,7 +122,7 @@ describe('MusicCommands', () => {
       const interaction = createMockInteraction({ inVoiceChannel: false });
 
       await commands.play([interaction], {
-        url: 'https://youtube.com/watch?v=test',
+        query: 'https://youtube.com/watch?v=test',
       });
 
       expect(interaction.reply).toHaveBeenCalledWith({
@@ -134,7 +135,7 @@ describe('MusicCommands', () => {
       const interaction = createMockInteraction();
 
       await commands.play([interaction], {
-        url: 'https://youtube.com/watch?v=test',
+        query: 'https://youtube.com/watch?v=test',
       });
 
       expect(interaction.deferReply).toHaveBeenCalled();
@@ -155,7 +156,7 @@ describe('MusicCommands', () => {
       const interaction = createMockInteraction();
 
       await commands.play([interaction], {
-        url: 'https://youtube.com/watch?v=test',
+        query: 'https://youtube.com/watch?v=test',
       });
 
       expect(voiceService.join).not.toHaveBeenCalled();
@@ -169,7 +170,7 @@ describe('MusicCommands', () => {
       const interaction = createMockInteraction();
 
       await commands.play([interaction], {
-        url: 'https://youtube.com/watch?v=test',
+        query: 'https://youtube.com/watch?v=test',
       });
 
       expect(interaction.editReply).toHaveBeenCalledWith({
@@ -182,11 +183,81 @@ describe('MusicCommands', () => {
       const interaction = createMockInteraction();
 
       await commands.play([interaction], {
-        url: 'https://youtube.com/watch?v=test',
+        query: 'https://youtube.com/watch?v=test',
       });
 
       expect(interaction.editReply).toHaveBeenCalledWith({
         content: 'Failed to play: Unknown error',
+      });
+    });
+
+    it('uses searchAndPlay for non-URL queries', async () => {
+      const interaction = createMockInteraction();
+
+      await commands.play([interaction], {
+        query: 'never gonna give you up',
+      });
+
+      expect(musicService.searchAndPlay).toHaveBeenCalledWith(
+        'guild-123',
+        'never gonna give you up',
+        'user#1234',
+      );
+      expect(musicService.play).not.toHaveBeenCalled();
+      expect(interaction.editReply).toHaveBeenCalledWith({
+        embeds: expect.arrayContaining([expect.any(EmbedBuilder)]),
+      });
+    });
+
+    it('uses play for valid YouTube URLs', async () => {
+      const interaction = createMockInteraction();
+
+      await commands.play([interaction], {
+        query: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      });
+
+      expect(musicService.play).toHaveBeenCalledWith(
+        'guild-123',
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        'user#1234',
+      );
+      expect(musicService.searchAndPlay).not.toHaveBeenCalled();
+    });
+
+    it('uses play for valid HTTP URLs', async () => {
+      const interaction = createMockInteraction();
+
+      await commands.play([interaction], {
+        query: 'http://example.com/video',
+      });
+
+      expect(musicService.play).toHaveBeenCalled();
+      expect(musicService.searchAndPlay).not.toHaveBeenCalled();
+    });
+
+    it('uses searchAndPlay for invalid URL-like strings', async () => {
+      const interaction = createMockInteraction();
+
+      await commands.play([interaction], {
+        query: 'not-a-valid-url',
+      });
+
+      expect(musicService.searchAndPlay).toHaveBeenCalled();
+      expect(musicService.play).not.toHaveBeenCalled();
+    });
+
+    it('handles searchAndPlay errors gracefully', async () => {
+      vi.mocked(musicService.searchAndPlay).mockRejectedValue(
+        new Error('No results found'),
+      );
+      const interaction = createMockInteraction();
+
+      await commands.play([interaction], {
+        query: 'some obscure search query',
+      });
+
+      expect(interaction.editReply).toHaveBeenCalledWith({
+        content: 'Failed to play: No results found',
       });
     });
   });
@@ -769,7 +840,7 @@ describe('MusicCommands', () => {
       const interaction = createMockInteraction();
 
       await commands.play([interaction], {
-        url: 'https://youtube.com/watch?v=test',
+        query: 'https://youtube.com/watch?v=test',
       });
 
       expect(interaction.editReply).toHaveBeenCalled();

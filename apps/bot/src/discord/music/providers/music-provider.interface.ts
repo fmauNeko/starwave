@@ -14,6 +14,8 @@ export interface MusicProvider {
   fetchTrackInfo(url: string, requestedBy: string): Promise<Track>;
 
   getAudioInfo(url: string): Promise<AudioInfo>;
+
+  search(query: string, requestedBy: string): Promise<Track>;
 }
 
 export const MUSIC_PROVIDER = Symbol('MUSIC_PROVIDER');

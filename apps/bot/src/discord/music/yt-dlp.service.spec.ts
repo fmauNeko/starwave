@@ -357,6 +357,117 @@ describe('YtDlpService', () => {
     });
   });
 
+  describe('search', () => {
+    beforeEach(async () => {
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readFile).mockResolvedValue('2024.01.01');
+      service = new YtDlpService(configService);
+      await service.onModuleInit();
+    });
+
+    it('returns video info for search query using ytsearch1 prefix', async () => {
+      mockExecYtDlp.mockResolvedValueOnce(
+        JSON.stringify({
+          title: 'Test Video',
+          duration: 300,
+          thumbnail: 'https://example.com/thumb.jpg',
+          webpage_url: 'https://www.youtube.com/watch?v=abc123',
+        }),
+      );
+
+      const info = await service.search('test query');
+
+      expect(info).toEqual({
+        title: 'Test Video',
+        duration: 300,
+        thumbnail: 'https://example.com/thumb.jpg',
+        url: 'https://www.youtube.com/watch?v=abc123',
+      });
+    });
+
+    it('passes ytsearch1 prefix to yt-dlp', async () => {
+      mockExecYtDlp.mockResolvedValueOnce(
+        JSON.stringify({
+          title: 'Test',
+          webpage_url: 'https://www.youtube.com/watch?v=abc123',
+        }),
+      );
+
+      await service.search('my search query');
+
+      expect(mockExecYtDlp).toHaveBeenCalledWith(
+        expect.stringContaining('yt-dlp'),
+        expect.arrayContaining(['ytsearch1:my search query']),
+      );
+    });
+
+    it('uses default values for missing fields', async () => {
+      mockExecYtDlp.mockResolvedValueOnce(
+        JSON.stringify({
+          webpage_url: 'https://www.youtube.com/watch?v=abc123',
+        }),
+      );
+
+      const info = await service.search('test');
+
+      expect(info.title).toBe('Unknown Title');
+      expect(info.duration).toBe(0);
+      expect(info.thumbnail).toBe('');
+    });
+
+    it('uses thumbnails array fallback when thumbnail is missing', async () => {
+      mockExecYtDlp.mockResolvedValueOnce(
+        JSON.stringify({
+          title: 'Test',
+          webpage_url: 'https://www.youtube.com/watch?v=abc123',
+          thumbnails: [{ url: 'https://example.com/fallback.jpg' }],
+        }),
+      );
+
+      const info = await service.search('test');
+
+      expect(info.thumbnail).toBe('https://example.com/fallback.jpg');
+    });
+
+    it('throws if service not ready', async () => {
+      const uninitializedService = new YtDlpService(configService);
+
+      await expect(uninitializedService.search('test')).rejects.toThrow(
+        'yt-dlp binary not ready',
+      );
+    });
+
+    it('throws if no results found (empty webpage_url)', async () => {
+      mockExecYtDlp.mockResolvedValueOnce(JSON.stringify({}));
+
+      await expect(service.search('nonexistent video')).rejects.toThrow(
+        'No search results found',
+      );
+    });
+
+    it('includes cookies when configured', async () => {
+      vi.mocked(existsSync).mockReturnValue(true);
+      const configWithCookies = createMockConfigService('/path/to/cookies.txt');
+      const serviceWithCookies = new YtDlpService(configWithCookies);
+      vi.mocked(readFile).mockResolvedValue('2024.01.01');
+      await serviceWithCookies.onModuleInit();
+
+      mockExecYtDlp.mockResolvedValueOnce(
+        JSON.stringify({
+          title: 'Test',
+          webpage_url: 'https://www.youtube.com/watch?v=abc123',
+        }),
+      );
+
+      await serviceWithCookies.search('test');
+
+      expect(mockExecYtDlp).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining(['--cookies', '/path/to/cookies.txt']),
+      );
+    });
+  });
+
   describe('forceUpdate', () => {
     beforeEach(async () => {
       vi.mocked(existsSync).mockReturnValue(true);

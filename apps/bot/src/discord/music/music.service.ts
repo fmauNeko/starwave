@@ -41,6 +41,28 @@ export class MusicService {
     return track;
   }
 
+  public async searchAndPlay(
+    guildId: string,
+    query: string,
+    requestedBy: string,
+  ): Promise<Track> {
+    const provider = this.providers[0];
+    if (!provider) {
+      throw new Error('No search provider available');
+    }
+
+    const track = await provider.search(query, requestedBy);
+    const queue = this.getOrCreateQueue(guildId);
+
+    queue.add(track);
+
+    if (queue.size() === 1) {
+      await this.playTrack(guildId, track);
+    }
+
+    return track;
+  }
+
   public skip(guildId: string): Track | undefined {
     const queue = this.queues.get(guildId);
     if (!queue) {

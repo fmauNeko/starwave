@@ -16,11 +16,11 @@ import { MusicService } from './music.service';
 
 class PlayDto {
   @StringOption({
-    name: 'url',
-    description: 'YouTube URL to play',
+    name: 'query',
+    description: 'YouTube URL or search query',
     required: true,
   })
-  url!: string;
+  query!: string;
 }
 
 class RemoveDto {
@@ -61,11 +61,11 @@ export class MusicCommands {
 
   @SlashCommand({
     name: 'play',
-    description: 'Play a YouTube video in voice channel',
+    description: 'Play a YouTube video or search for one',
   })
   public async play(
     @Context() [interaction]: SlashCommandContext,
-    @Options() { url }: PlayDto,
+    @Options() { query }: PlayDto,
   ) {
     const guildId = interaction.guildId;
     if (!guildId) {
@@ -93,11 +93,14 @@ export class MusicCommands {
         this.musicService.setupAutoPlay(guildId);
       }
 
-      const track = await this.musicService.play(
-        guildId,
-        url,
-        interaction.user.tag,
-      );
+      const isUrl = this.isValidUrl(query);
+      const track = isUrl
+        ? await this.musicService.play(guildId, query, interaction.user.tag)
+        : await this.musicService.searchAndPlay(
+            guildId,
+            query,
+            interaction.user.tag,
+          );
 
       const embed = this.createTrackEmbed(track, 'Added to Queue');
       return await interaction.editReply({ embeds: [embed] });
@@ -530,5 +533,14 @@ export class MusicCommands {
     }
 
     return `${icon} ${bar}`;
+  }
+
+  private isValidUrl(str: string): boolean {
+    try {
+      const url = new URL(str);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
   }
 }

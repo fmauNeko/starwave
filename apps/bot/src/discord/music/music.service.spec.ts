@@ -35,6 +35,7 @@ describe('MusicService', () => {
         codec: 'opus',
         container: 'webm',
       }),
+      search: vi.fn().mockResolvedValue(mockTrack),
     };
 
     providerDiscovery = {
@@ -629,6 +630,86 @@ describe('MusicService', () => {
       );
 
       expect(vi.mocked(voiceService.play)).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('searchAndPlay', () => {
+    it('searches using first provider and adds track to queue', async () => {
+      const searchResultTrack = {
+        ...mockTrack,
+        title: 'Search Result',
+        url: 'https://youtube.com/watch?v=searchResult',
+      };
+      vi.mocked(mockProvider.search).mockResolvedValue(searchResultTrack);
+
+      const track = await service.searchAndPlay(
+        'guild-123',
+        'test search query',
+        'user#1234',
+      );
+
+      expect(track).toMatchObject({
+        title: 'Search Result',
+        url: 'https://youtube.com/watch?v=searchResult',
+        requestedBy: 'user#1234',
+      });
+      expect(vi.mocked(mockProvider.search)).toHaveBeenCalledWith(
+        'test search query',
+        'user#1234',
+      );
+    });
+
+    it('plays track immediately if queue was empty', async () => {
+      const searchResultTrack = {
+        ...mockTrack,
+        title: 'Search Result',
+        url: 'https://youtube.com/watch?v=searchResult',
+      };
+      vi.mocked(mockProvider.search).mockResolvedValue(searchResultTrack);
+
+      await service.searchAndPlay('guild-123', 'test query', 'user#1234');
+
+      expect(vi.mocked(voiceService.play)).toHaveBeenCalled();
+    });
+
+    it('queues track without playing if queue already has tracks', async () => {
+      // First add a track to the queue
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      vi.clearAllMocks();
+
+      const searchResultTrack = {
+        ...mockTrack,
+        title: 'Search Result',
+        url: 'https://youtube.com/watch?v=searchResult',
+      };
+      vi.mocked(mockProvider.search).mockResolvedValue(searchResultTrack);
+
+      await service.searchAndPlay('guild-123', 'test query', 'user#1234');
+
+      expect(vi.mocked(mockProvider.search)).toHaveBeenCalled();
+      expect(vi.mocked(voiceService.play)).not.toHaveBeenCalled();
+    });
+
+    it('throws error when no providers available', async () => {
+      vi.mocked(providerDiscovery.getProviders).mockReturnValue([]);
+
+      await expect(
+        service.searchAndPlay('guild-123', 'test query', 'user#1234'),
+      ).rejects.toThrow('No search provider available');
+    });
+
+    it('propagates search errors from provider', async () => {
+      vi.mocked(mockProvider.search).mockRejectedValue(
+        new Error('No search results found'),
+      );
+
+      await expect(
+        service.searchAndPlay('guild-123', 'nonexistent', 'user#1234'),
+      ).rejects.toThrow('No search results found');
     });
   });
 });
