@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/fmauNeko/starwave/compare/bot@v1.0.0...bot@v1.1.0) (2026-01-05)
+
+
+### Features
+
+* **bot:** add auto-leave on voice inactivity and /leave command ([bda4899](https://github.com/fmauNeko/starwave/commit/bda489930571f6cd3c843d85377d564ec247f45c))
+* **bot:** add now playing message with interactive controls ([ab02810](https://github.com/fmauNeko/starwave/commit/ab028107360e6eb21cd3e8967e2e0b03ef223987))
+* **bot:** add YouTube search support to /music play command ([56c1a0c](https://github.com/fmauNeko/starwave/commit/56c1a0cd9f59cca406c34d6381271a4b9db0ef50))
+
+
+### Bug Fixes
+
+* **bot:** fix queue stuck after track ends and auto-delete now playing message ([106e955](https://github.com/fmauNeko/starwave/commit/106e95505eb124530c409a4256e6a26d0fbf4991))
+
 ## [1.0.0](https://github.com/fmauNeko/starwave/compare/bot@v0.5.0...bot@v1.0.0) (2026-01-03)
 
 
