@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.5.1...chart-starwave@v0.5.2) (2026-01-05)
+
+
+### Bug Fixes
+
+* **chart:** sync appVersion to 1.1.0 ([77b0c31](https://github.com/fmauNeko/starwave/commit/77b0c315004457ec445343dc5a98919b0c9aa263))
+
 ## [0.5.1](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.5.0...chart-starwave@v0.5.1) (2026-01-03)
 
 
