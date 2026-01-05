@@ -1,7 +1,11 @@
 name: Helm chart release
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      distinct_id:
+        description: "Distinct ID for tracking purposes"
+        required: false
 
 permissions:
   id-token: write
