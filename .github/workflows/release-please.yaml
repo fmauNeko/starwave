@@ -43,31 +43,42 @@ jobs:
     if: ${{ fromJson(needs.release.outputs.docker_matrix).target[0] != null }}
     runs-on: ubuntu-latest
     needs: [release]
+    outputs:
+      run_id: ${{ steps.dispatch.outputs.run_id }}
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.docker_matrix) }}
     steps:
-      - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1
+      - uses: Codex-/return-dispatch@2277c7e64ca38a7350b95cfec2d6715ccebb7108 # v3
+        id: dispatch
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repo: ${{ github.event.repository.name }}
+          owner: ${{ github.repository_owner }}
+          ref: ${{ matrix.target.tag_name }}
           workflow: docker-release.yaml
-          inputs: |
+          workflow_inputs: |
             {
               "target": "${{ matrix.target.name }}"
             }
-          ref: ${{ matrix.target.tag_name }}
 
   helm-release:
     name: Helm chart release
     if: ${{ fromJson(needs.release.outputs.helm_matrix).target[0] != null }}
     runs-on: ubuntu-latest
     needs: [release]
+    outputs:
+      run_id: ${{ steps.dispatch.outputs.run_id }}
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.helm_matrix) }}
     steps:
-      - name: Dispatch Helm chart release
-        uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1
+      - uses: Codex-/return-dispatch@2277c7e64ca38a7350b95cfec2d6715ccebb7108 # v3
+        id: dispatch
         with:
-          workflow: helm-release.yaml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repo: ${{ github.event.repository.name }}
+          owner: ${{ github.repository_owner }}
           ref: ${{ matrix.target.tag_name }}
+          workflow: helm-release.yaml
 
   update-chart-appversion:
     name: Update Helm chart appVersion
@@ -135,6 +146,52 @@ jobs:
           git add charts/starwave/Chart.yaml
           git commit -m "fix(chart): sync appVersion to ${{ steps.extract.outputs.bot_version }}"
           git push
+
+  argocd-sync:
+    name: Sync ArgoCD
+    # Run if: helm release exists, ArgoCD is configured, and neither docker nor helm jobs failed
+    if: |
+      always() &&
+      fromJson(needs.release.outputs.helm_matrix).target[0] != null &&
+      vars.ARGOCD_SERVER != '' &&
+      needs.helm-release.result != 'failure' &&
+      needs.docker-release.result != 'failure'
+    runs-on: ubuntu-latest
+    needs: [release, docker-release, helm-release]
+    steps:
+      - name: Await Docker release
+        if: ${{ needs.docker-release.outputs.run_id != '' }}
+        uses: Codex-/await-remote-run@a56c556e6434d2d7ec9438dc656143b39532324e # v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repo: ${{ github.event.repository.name }}
+          owner: ${{ github.repository_owner }}
+          run_id: ${{ needs.docker-release.outputs.run_id }}
+          run_timeout_seconds: 1800
+
+      - name: Await Helm release
+        uses: Codex-/await-remote-run@a56c556e6434d2d7ec9438dc656143b39532324e # v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repo: ${{ github.event.repository.name }}
+          owner: ${{ github.repository_owner }}
+          run_id: ${{ needs.helm-release.outputs.run_id }}
+          run_timeout_seconds: 1800
+
+      - name: Sync ArgoCD Application
+        env:
+          ARGOCD_SERVER: ${{ vars.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          curl -sSL -o /usr/local/bin/argocd https://${ARGOCD_SERVER}/download/argocd-linux-amd64
+          chmod +x /usr/local/bin/argocd
+
+          argocd app get starwave --hard-refresh
+          argocd app sync starwave
+
+          echo "ArgoCD sync triggered successfully"
 
   backmerge:
     name: Backmerge main into develop

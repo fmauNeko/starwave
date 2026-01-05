@@ -13,14 +13,15 @@ import {
 import { VoiceService } from '../voice/voice.service';
 import { LoopMode, type Track } from './music-queue';
 import { MusicService } from './music.service';
+import { NowPlayingService } from './now-playing.service';
 
 class PlayDto {
   @StringOption({
-    name: 'url',
-    description: 'YouTube URL to play',
+    name: 'query',
+    description: 'YouTube URL or search query',
     required: true,
   })
-  url!: string;
+  query!: string;
 }
 
 class RemoveDto {
@@ -57,15 +58,16 @@ export class MusicCommands {
   public constructor(
     private readonly musicService: MusicService,
     private readonly voiceService: VoiceService,
+    private readonly nowPlayingService: NowPlayingService,
   ) {}
 
   @SlashCommand({
     name: 'play',
-    description: 'Play a YouTube video in voice channel',
+    description: 'Play a YouTube video or search for one',
   })
   public async play(
     @Context() [interaction]: SlashCommandContext,
-    @Options() { url }: PlayDto,
+    @Options() { query }: PlayDto,
   ) {
     const guildId = interaction.guildId;
     if (!guildId) {
@@ -90,17 +92,25 @@ export class MusicCommands {
     try {
       if (!this.voiceService.isConnected(guildId)) {
         await this.voiceService.join(voiceChannel);
-        this.musicService.setupAutoPlay(guildId);
       }
 
-      const track = await this.musicService.play(
-        guildId,
-        url,
-        interaction.user.tag,
-      );
+      this.nowPlayingService.setChannelForGuild(guildId, interaction.channelId);
+
+      const isUrl = this.isValidUrl(query);
+      const track = isUrl
+        ? await this.musicService.play(guildId, query, interaction.user.tag)
+        : await this.musicService.searchAndPlay(
+            guildId,
+            query,
+            interaction.user.tag,
+          );
+
+      this.musicService.setupAutoPlay(guildId);
 
       const embed = this.createTrackEmbed(track, 'Added to Queue');
-      return await interaction.editReply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed] });
+      await this.nowPlayingService.sendNowPlaying(guildId);
+      return;
     } catch (error) {
       this.logger.error('Failed to play track', error);
       return interaction.editReply({
@@ -113,7 +123,7 @@ export class MusicCommands {
     name: 'skip',
     description: 'Skip the current track',
   })
-  public skip(@Context() [interaction]: SlashCommandContext) {
+  public async skip(@Context() [interaction]: SlashCommandContext) {
     const guildId = interaction.guildId;
     if (!guildId) {
       return interaction.reply({
@@ -126,9 +136,12 @@ export class MusicCommands {
 
     if (nextTrack) {
       const embed = this.createTrackEmbed(nextTrack, 'Now Playing');
-      return interaction.reply({ embeds: [embed] });
+      await interaction.reply({ embeds: [embed] });
+      await this.nowPlayingService.sendNowPlaying(guildId);
+      return;
     }
 
+    await this.nowPlayingService.deleteNowPlaying(guildId);
     return interaction.reply({ content: 'Skipped. No more tracks in queue.' });
   }
 
@@ -136,7 +149,7 @@ export class MusicCommands {
     name: 'stop',
     description: 'Stop playback and clear the queue',
   })
-  public stop(@Context() [interaction]: SlashCommandContext) {
+  public async stop(@Context() [interaction]: SlashCommandContext) {
     const guildId = interaction.guildId;
     if (!guildId) {
       return interaction.reply({
@@ -154,6 +167,7 @@ export class MusicCommands {
       });
     }
 
+    await this.nowPlayingService.deleteNowPlaying(guildId);
     return interaction.reply({
       content: 'Stopped playback and cleared the queue.',
     });
@@ -163,7 +177,7 @@ export class MusicCommands {
     name: 'pause',
     description: 'Pause the current track',
   })
-  public pause(@Context() [interaction]: SlashCommandContext) {
+  public async pause(@Context() [interaction]: SlashCommandContext) {
     const guildId = interaction.guildId;
     if (!guildId) {
       return interaction.reply({
@@ -181,14 +195,16 @@ export class MusicCommands {
       });
     }
 
-    return interaction.reply({ content: '⏸️ Paused.' });
+    await interaction.reply({ content: '⏸️ Paused.' });
+    await this.nowPlayingService.sendNowPlaying(guildId);
+    return;
   }
 
   @SlashCommand({
     name: 'resume',
     description: 'Resume playback',
   })
-  public resume(@Context() [interaction]: SlashCommandContext) {
+  public async resume(@Context() [interaction]: SlashCommandContext) {
     const guildId = interaction.guildId;
     if (!guildId) {
       return interaction.reply({
@@ -206,7 +222,9 @@ export class MusicCommands {
       });
     }
 
-    return interaction.reply({ content: '▶️ Resumed.' });
+    await interaction.reply({ content: '▶️ Resumed.' });
+    await this.nowPlayingService.sendNowPlaying(guildId);
+    return;
   }
 
   @SlashCommand({
@@ -325,7 +343,7 @@ export class MusicCommands {
     name: 'shuffle',
     description: 'Shuffle the queue',
   })
-  public shuffle(@Context() [interaction]: SlashCommandContext) {
+  public async shuffle(@Context() [interaction]: SlashCommandContext) {
     const guildId = interaction.guildId;
     if (!guildId) {
       return interaction.reply({
@@ -343,14 +361,16 @@ export class MusicCommands {
       });
     }
 
-    return interaction.reply({ content: '🔀 Queue shuffled.' });
+    await interaction.reply({ content: '🔀 Queue shuffled.' });
+    await this.nowPlayingService.sendNowPlaying(guildId);
+    return;
   }
 
   @SlashCommand({
     name: 'loop',
     description: 'Cycle through loop modes (none → track → queue)',
   })
-  public loop(@Context() [interaction]: SlashCommandContext) {
+  public async loop(@Context() [interaction]: SlashCommandContext) {
     const guildId = interaction.guildId;
     if (!guildId) {
       return interaction.reply({
@@ -362,7 +382,9 @@ export class MusicCommands {
     const newMode = this.musicService.cycleLoopMode(guildId);
     const emoji = this.getLoopModeEmoji(newMode);
 
-    return interaction.reply({ content: `${emoji} Loop mode: **${newMode}**` });
+    await interaction.reply({ content: `${emoji} Loop mode: **${newMode}**` });
+    await this.nowPlayingService.sendNowPlaying(guildId);
+    return;
   }
 
   @SlashCommand({
@@ -444,7 +466,7 @@ export class MusicCommands {
     name: 'disconnect',
     description: 'Disconnect from voice and clear queue',
   })
-  public disconnect(@Context() [interaction]: SlashCommandContext) {
+  public async disconnect(@Context() [interaction]: SlashCommandContext) {
     const guildId = interaction.guildId;
     if (!guildId) {
       return interaction.reply({
@@ -454,6 +476,7 @@ export class MusicCommands {
     }
 
     this.musicService.cleanup(guildId);
+    await this.nowPlayingService.cleanup(guildId);
     const disconnected = this.voiceService.leave(guildId);
 
     if (!disconnected) {
@@ -530,5 +553,14 @@ export class MusicCommands {
     }
 
     return `${icon} ${bar}`;
+  }
+
+  private isValidUrl(str: string): boolean {
+    try {
+      const url = new URL(str);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
   }
 }

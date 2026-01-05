@@ -18,6 +18,9 @@ export class MusicQueue {
   private loopMode: LoopMode = LoopMode.None;
 
   public add(track: Track): number {
+    if (this.tracks.length === 0) {
+      this.currentIndex = 0;
+    }
     this.tracks.push(track);
     return this.tracks.length;
   }

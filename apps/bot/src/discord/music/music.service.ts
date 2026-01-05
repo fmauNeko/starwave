@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AudioPlayerStatus, StreamType } from '@discordjs/voice';
 import { VoiceService } from '../voice/voice.service';
 import { LoopMode, MusicQueue, type Track } from './music-queue';
@@ -8,15 +9,21 @@ import type {
   MusicProvider,
 } from './providers/music-provider.interface';
 
+export const MUSIC_EVENTS = {
+  QUEUE_END: 'music.queue.end',
+} as const;
+
 @Injectable()
 export class MusicService {
   private readonly logger = new Logger(MusicService.name);
   private readonly queues = new Map<string, MusicQueue>();
   private readonly autoPlaySetup = new Set<string>();
+  private readonly handlingTrackEnd = new Set<string>();
 
   public constructor(
     private readonly voiceService: VoiceService,
     private readonly providerDiscovery: MusicProviderDiscovery,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private get providers(): MusicProvider[] {
@@ -32,9 +39,33 @@ export class MusicService {
     const track = await provider.fetchTrackInfo(url, requestedBy);
     const queue = this.getOrCreateQueue(guildId);
 
+    const shouldStartPlayback = queue.isEmpty();
     queue.add(track);
 
-    if (queue.size() === 1) {
+    if (shouldStartPlayback) {
+      await this.playTrack(guildId, track);
+    }
+
+    return track;
+  }
+
+  public async searchAndPlay(
+    guildId: string,
+    query: string,
+    requestedBy: string,
+  ): Promise<Track> {
+    const provider = this.providers[0];
+    if (!provider) {
+      throw new Error('No search provider available');
+    }
+
+    const track = await provider.search(query, requestedBy);
+    const queue = this.getOrCreateQueue(guildId);
+
+    const shouldStartPlayback = queue.isEmpty();
+    queue.add(track);
+
+    if (shouldStartPlayback) {
       await this.playTrack(guildId, track);
     }
 
@@ -159,6 +190,7 @@ export class MusicService {
   public cleanup(guildId: string): void {
     this.voiceService.stop(guildId);
     this.autoPlaySetup.delete(guildId);
+    this.handlingTrackEnd.delete(guildId);
     this.queues.delete(guildId);
   }
 
@@ -173,18 +205,40 @@ export class MusicService {
     }
 
     player.on(AudioPlayerStatus.Idle, () => {
+      void this.handleTrackEnd(guildId);
+    });
+
+    this.autoPlaySetup.add(guildId);
+  }
+
+  private async handleTrackEnd(guildId: string): Promise<void> {
+    if (this.handlingTrackEnd.has(guildId)) {
+      return;
+    }
+
+    this.handlingTrackEnd.add(guildId);
+
+    try {
       const queue = this.queues.get(guildId);
       if (!queue) {
         return;
       }
 
       const nextTrack = queue.getNext();
-      if (nextTrack) {
-        void this.playTrack(guildId, nextTrack);
-      }
-    });
 
-    this.autoPlaySetup.add(guildId);
+      if (nextTrack) {
+        try {
+          await this.playTrack(guildId, nextTrack);
+        } catch (error) {
+          this.logger.error(`Auto-play failed for guild ${guildId}`, error);
+        }
+      } else {
+        queue.clear();
+        this.eventEmitter.emit(MUSIC_EVENTS.QUEUE_END, guildId);
+      }
+    } finally {
+      this.handlingTrackEnd.delete(guildId);
+    }
   }
 
   private getProviderForUrl(url: string): MusicProvider {
@@ -196,17 +250,25 @@ export class MusicService {
   }
 
   private async playTrack(guildId: string, track: Track): Promise<void> {
-    const provider = this.getProviderForUrl(track.url);
-    const audioInfo = await provider.getAudioInfo(track.url);
-    const streamType = this.getStreamTypeForCodec(audioInfo);
+    try {
+      const provider = this.getProviderForUrl(track.url);
+      const audioInfo = await provider.getAudioInfo(track.url);
+      const streamType = this.getStreamTypeForCodec(audioInfo);
 
-    this.voiceService.play(guildId, audioInfo.url, {
-      inputType: streamType,
-    });
+      this.voiceService.play(guildId, audioInfo.url, {
+        inputType: streamType,
+      });
 
-    this.logger.log(
-      `Now playing: ${track.title} in guild ${guildId} (codec: ${audioInfo.codec}, container: ${audioInfo.container})`,
-    );
+      this.logger.log(
+        `Now playing: ${track.title} in guild ${guildId} (codec: ${audioInfo.codec}, container: ${audioInfo.container})`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to play track "${track.title}" in guild ${guildId}`,
+        error,
+      );
+      throw error;
+    }
   }
 
   private getStreamTypeForCodec(audioInfo: AudioInfo): StreamType {
