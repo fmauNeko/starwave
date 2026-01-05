@@ -6,6 +6,9 @@ on:
       target:
         description: "The target application to build the Docker image for"
         required: true
+      distinct_id:
+        description: "Distinct ID for tracking purposes"
+        required: false
 
 permissions:
   id-token: write
