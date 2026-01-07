@@ -12,6 +12,7 @@ import {
   type SendableChannels,
   type TextChannel,
 } from 'discord.js';
+import { Context, On, type ContextOf } from 'necord';
 import type { Config } from '../../config/config.type';
 import { LoopMode } from './music-queue';
 import { MUSIC_EVENTS, MusicService } from './music.service';
@@ -42,6 +43,28 @@ export class NowPlayingService {
   @OnEvent(MUSIC_EVENTS.QUEUE_END)
   public async handleQueueEnd(guildId: string): Promise<void> {
     await this.deleteNowPlaying(guildId);
+  }
+
+  @OnEvent(MUSIC_EVENTS.TRACK_START)
+  public async handleTrackStart(guildId: string): Promise<void> {
+    await this.sendNowPlaying(guildId);
+  }
+
+  @On('messageCreate')
+  public async handleMessageCreate(
+    @Context() [message]: ContextOf<'messageCreate'>,
+  ): Promise<void> {
+    const guildId = message.guildId;
+    if (!guildId) {
+      return;
+    }
+
+    const currentMessageId = this.guildMessages.get(guildId);
+    if (message.id === currentMessageId) {
+      return;
+    }
+
+    await this.repostIfInSameChannel(guildId, message.channelId);
   }
 
   public setChannelForGuild(guildId: string, channelId: string): void {
