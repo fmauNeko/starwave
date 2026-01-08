@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Track } from '../music-queue';
 import type {
   YtDlpAudioInfo,
   YtDlpService,
   YtDlpVideoInfo,
 } from '../yt-dlp.service';
+import { ProviderType } from './provider-types';
 import { YouTubeProvider } from './youtube.provider';
 
 function createMockYtDlpService(
@@ -33,6 +35,7 @@ function createMockYtDlpService(
       thumbnail: 'https://example.com/search-thumb.jpg',
       url: 'https://www.youtube.com/watch?v=searchResult',
     } satisfies YtDlpVideoInfo),
+    getPlaylistTracks: vi.fn().mockResolvedValue([]),
     ...overrides,
   } as unknown as YtDlpService;
 }
@@ -165,9 +168,10 @@ describe('YouTubeProvider', () => {
 
   describe('search', () => {
     it('returns track info from search query', async () => {
-      const track = await provider.search('test query', 'user#1234');
+      const tracks = await provider.search('test query', 'user#1234');
 
-      expect(track).toMatchObject({
+      expect(tracks).toHaveLength(1);
+      expect(tracks[0]).toMatchObject({
         url: 'https://www.youtube.com/watch?v=searchResult',
         title: 'Search Result Video',
         duration: 240,
@@ -182,14 +186,131 @@ describe('YouTubeProvider', () => {
       expect(mockYtDlpService.search).toHaveBeenCalledWith('my search query');
     });
 
-    it('propagates yt-dlp search errors', async () => {
+    it('returns empty array when yt-dlp search fails', async () => {
       vi.mocked(mockYtDlpService.search).mockRejectedValueOnce(
         new Error('No search results found'),
       );
 
-      await expect(provider.search('nonexistent', 'user#1234')).rejects.toThrow(
-        'No search results found',
+      const results = await provider.search('nonexistent', 'user#1234');
+      expect(results).toEqual([]);
+    });
+  });
+
+  describe('fetchPlaylist', () => {
+    it('returns playlist tracks from yt-dlp', async () => {
+      const mockTracks: Track[] = [
+        {
+          url: 'https://www.youtube.com/watch?v=video1',
+          title: 'Playlist Video 1',
+          duration: 180,
+          thumbnail: 'https://example.com/thumb1.jpg',
+          requestedBy: 'user#1234',
+          provider: ProviderType.YouTube,
+          isLive: false,
+          addedAt: new Date(),
+        },
+        {
+          url: 'https://www.youtube.com/watch?v=video2',
+          title: 'Playlist Video 2',
+          duration: 240,
+          thumbnail: 'https://example.com/thumb2.jpg',
+          requestedBy: 'user#1234',
+          provider: ProviderType.YouTube,
+          isLive: false,
+          addedAt: new Date(),
+        },
+      ];
+      vi.mocked(mockYtDlpService.getPlaylistTracks).mockResolvedValueOnce(
+        mockTracks,
       );
+
+      const tracks = await provider.fetchPlaylist(
+        'https://www.youtube.com/playlist?list=PLtest123',
+        'user#1234',
+        10,
+      );
+
+      expect(tracks).toHaveLength(2);
+      expect(tracks[0]).toMatchObject({
+        url: 'https://www.youtube.com/watch?v=video1',
+        title: 'Playlist Video 1',
+      });
+      expect(mockYtDlpService.getPlaylistTracks).toHaveBeenCalledWith(
+        'https://www.youtube.com/playlist?list=PLtest123',
+        'user#1234',
+        10,
+        ProviderType.YouTube,
+      );
+    });
+
+    it('throws error for non-playlist URL', async () => {
+      await expect(
+        provider.fetchPlaylist(
+          'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          'user#1234',
+        ),
+      ).rejects.toThrow('Not a YouTube playlist URL');
+    });
+
+    it('handles playlist URL in watch format', async () => {
+      vi.mocked(mockYtDlpService.getPlaylistTracks).mockResolvedValueOnce([]);
+
+      await provider.fetchPlaylist(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLtest123',
+        'user#1234',
+        30,
+      );
+
+      expect(mockYtDlpService.getPlaylistTracks).toHaveBeenCalledWith(
+        'https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLtest123',
+        'user#1234',
+        30,
+        ProviderType.YouTube,
+      );
+    });
+
+    it('uses default maxTracks of 30', async () => {
+      vi.mocked(mockYtDlpService.getPlaylistTracks).mockResolvedValueOnce([]);
+
+      await provider.fetchPlaylist(
+        'https://www.youtube.com/playlist?list=PLtest123',
+        'user#1234',
+      );
+
+      expect(mockYtDlpService.getPlaylistTracks).toHaveBeenCalledWith(
+        'https://www.youtube.com/playlist?list=PLtest123',
+        'user#1234',
+        30,
+        ProviderType.YouTube,
+      );
+    });
+  });
+
+  describe('canHandle playlist URLs', () => {
+    it('returns true for playlist URL', () => {
+      expect(
+        provider.canHandle('https://www.youtube.com/playlist?list=PLtest123'),
+      ).toBe(true);
+    });
+
+    it('returns true for watch URL with list parameter', () => {
+      expect(
+        provider.canHandle(
+          'https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PLtest123',
+        ),
+      ).toBe(true);
+    });
+  });
+
+  describe('type', () => {
+    it('returns correct provider type', () => {
+      expect(provider.type).toBe(ProviderType.YouTube);
+    });
+  });
+
+  describe('priority', () => {
+    it('has priority of 10', () => {
+      expect(provider.priority).toBe(10);
     });
   });
 });

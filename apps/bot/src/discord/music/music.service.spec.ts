@@ -6,6 +6,7 @@ import { LoopMode } from './music-queue';
 import { MUSIC_EVENTS, MusicService } from './music.service';
 import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
 import type { MusicProvider } from './providers/music-provider.interface';
+import { ProviderType } from './providers/provider-types';
 
 const mockTrack = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
@@ -13,6 +14,8 @@ const mockTrack = {
   duration: 180,
   thumbnail: 'https://example.com/thumb.jpg',
   requestedBy: 'user#1234',
+  provider: ProviderType.YouTube,
+  addedAt: new Date(),
 };
 
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
@@ -30,6 +33,8 @@ describe('MusicService', () => {
 
     mockProvider = {
       name: 'MockProvider',
+      type: ProviderType.YouTube,
+      priority: 10,
       canHandle: vi.fn().mockReturnValue(true),
       fetchTrackInfo: vi.fn().mockResolvedValue(mockTrack),
       getAudioInfo: vi.fn().mockResolvedValue({
@@ -37,7 +42,7 @@ describe('MusicService', () => {
         codec: 'opus',
         container: 'webm',
       }),
-      search: vi.fn().mockResolvedValue(mockTrack),
+      search: vi.fn().mockResolvedValue([mockTrack]),
     };
 
     providerDiscovery = {
@@ -817,7 +822,7 @@ describe('MusicService', () => {
         title: 'Search Result',
         url: 'https://youtube.com/watch?v=searchResult',
       };
-      vi.mocked(mockProvider.search).mockResolvedValue(searchResultTrack);
+      vi.mocked(mockProvider.search).mockResolvedValue([searchResultTrack]);
 
       const track = await service.searchAndPlay(
         'guild-123',
@@ -833,6 +838,7 @@ describe('MusicService', () => {
       expect(vi.mocked(mockProvider.search)).toHaveBeenCalledWith(
         'test search query',
         'user#1234',
+        1,
       );
     });
 
@@ -842,7 +848,7 @@ describe('MusicService', () => {
         title: 'Search Result',
         url: 'https://youtube.com/watch?v=searchResult',
       };
-      vi.mocked(mockProvider.search).mockResolvedValue(searchResultTrack);
+      vi.mocked(mockProvider.search).mockResolvedValue([searchResultTrack]);
 
       await service.searchAndPlay('guild-123', 'test query', 'user#1234');
 
@@ -855,7 +861,7 @@ describe('MusicService', () => {
         title: 'Search Result',
         url: 'https://youtube.com/watch?v=searchResult',
       };
-      vi.mocked(mockProvider.search).mockResolvedValue(searchResultTrack);
+      vi.mocked(mockProvider.search).mockResolvedValue([searchResultTrack]);
 
       await service.searchAndPlay('guild-123', 'test query', 'user#1234');
 
@@ -879,7 +885,7 @@ describe('MusicService', () => {
         title: 'Search Result',
         url: 'https://youtube.com/watch?v=searchResult',
       };
-      vi.mocked(mockProvider.search).mockResolvedValue(searchResultTrack);
+      vi.mocked(mockProvider.search).mockResolvedValue([searchResultTrack]);
 
       await service.searchAndPlay('guild-123', 'test query', 'user#1234');
 
@@ -895,10 +901,8 @@ describe('MusicService', () => {
       ).rejects.toThrow('No search provider available');
     });
 
-    it('propagates search errors from provider', async () => {
-      vi.mocked(mockProvider.search).mockRejectedValue(
-        new Error('No search results found'),
-      );
+    it('throws error when search returns empty results', async () => {
+      vi.mocked(mockProvider.search).mockResolvedValue([]);
 
       await expect(
         service.searchAndPlay('guild-123', 'nonexistent', 'user#1234'),

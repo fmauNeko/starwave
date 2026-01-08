@@ -60,7 +60,12 @@ export class MusicService {
       throw new Error('No search provider available');
     }
 
-    const track = await provider.search(query, requestedBy);
+    const tracks = await provider.search(query, requestedBy, 1);
+    const track = tracks[0];
+    if (!track) {
+      throw new Error('No search results found');
+    }
+
     const queue = this.getOrCreateQueue(guildId);
 
     const shouldStartPlayback = queue.isEmpty();

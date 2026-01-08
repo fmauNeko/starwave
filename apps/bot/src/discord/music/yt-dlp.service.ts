@@ -15,6 +15,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import type { Config } from '../../config/config.type';
+import type { Track } from './music-queue';
+import type { ProviderType } from './providers/provider-types';
 import { execYtDlp } from './yt-dlp.util';
 
 const YT_DLP_GITHUB_API =
@@ -313,5 +315,57 @@ export class YtDlpService implements OnModuleInit {
 
   private getExtractorArgs(): string[] {
     return ['--js-runtimes', 'node'];
+  }
+
+  public async getPlaylistTracks(
+    url: string,
+    requestedBy: string,
+    maxTracks: number,
+    provider: ProviderType,
+  ): Promise<Track[]> {
+    this.ensureReady();
+
+    const args = [
+      '--dump-json',
+      '--flat-playlist',
+      '--no-download',
+      '--playlist-end',
+      String(maxTracks),
+      ...this.getCookiesArgs(),
+      ...this.getExtractorArgs(),
+      url,
+    ];
+
+    const output = await execYtDlp(this.binaryPath, args);
+    const lines = output.trim().split('\n');
+
+    const tracks: Track[] = [];
+    for (const line of lines) {
+      try {
+        const info = JSON.parse(line) as {
+          title?: string;
+          duration?: number;
+          thumbnail?: string;
+          thumbnails?: { url: string }[];
+          url?: string;
+          webpage_url?: string;
+        };
+
+        tracks.push({
+          url: info.webpage_url ?? info.url ?? '',
+          title: info.title ?? 'Unknown Title',
+          duration: info.duration ?? 0,
+          thumbnail: info.thumbnail ?? info.thumbnails?.[0]?.url ?? '',
+          requestedBy,
+          provider,
+          isLive: info.duration === 0,
+          addedAt: new Date(),
+        });
+      } catch {
+        // Skip malformed JSON entries
+      }
+    }
+
+    return tracks;
   }
 }

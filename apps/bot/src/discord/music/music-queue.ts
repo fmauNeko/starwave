@@ -1,9 +1,17 @@
+import { ProviderType } from './providers/provider-types';
+
 export interface Track {
   url: string;
   title: string;
   duration: number;
   thumbnail: string;
   requestedBy: string;
+  provider: ProviderType;
+  artist?: string;
+  isLive?: boolean;
+  addedAt: Date;
+  streamUrl?: string;
+  streamExpiresAt?: Date;
 }
 
 export enum LoopMode {

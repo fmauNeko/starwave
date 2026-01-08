@@ -17,5 +17,9 @@
   },
   "youtube": {
     "cookiesPath": "./cookies.txt"
+  },
+  "spotify": {
+    "clientId": "your-spotify-client-id",
+    "clientSecret": "your-spotify-client-secret"
   }
 }

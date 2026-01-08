@@ -3,6 +3,7 @@ import { regex } from 'arkregex';
 import type { Track } from '../music-queue';
 import { YtDlpService } from '../yt-dlp.service';
 import { MusicProvider } from './music-provider.decorator';
+import { ProviderType } from './provider-types';
 import type {
   AudioInfo,
   MusicProvider as MusicProviderInterface,
@@ -12,11 +13,17 @@ const YOUTUBE_URL_PATTERN = regex(
   '(?:youtube\\.com/watch\\?v=|youtu\\.be/|youtube\\.com/embed/)([a-zA-Z0-9_-]{11})',
 );
 const VIDEO_ID_PATTERN = regex('^([a-zA-Z0-9_-]{11})$');
+const YOUTUBE_PLAYLIST_PATTERN = regex(
+  '(?:youtube\\.com/playlist\\?list=|youtube\\.com/watch\\?.*list=)([a-zA-Z0-9_-]+)',
+);
 
 @MusicProvider()
 @Injectable()
 export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
   public readonly name = 'YouTube';
+  public readonly type = ProviderType.YouTube;
+  public readonly priority = 10;
+
   private readonly logger = new Logger(YouTubeProvider.name);
 
   public constructor(private readonly ytDlpService: YtDlpService) {}
@@ -26,7 +33,9 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
   }
 
   public canHandle(url: string): boolean {
-    return this.extractVideoId(url) !== null;
+    return (
+      this.extractVideoId(url) !== null || YOUTUBE_PLAYLIST_PATTERN.test(url)
+    );
   }
 
   public async fetchTrackInfo(
@@ -47,6 +56,9 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
       duration: info.duration,
       thumbnail: info.thumbnail,
       requestedBy,
+      provider: this.type,
+      isLive: info.duration === 0,
+      addedAt: new Date(),
     };
   }
 
@@ -68,20 +80,55 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
     return audioInfo;
   }
 
-  public async search(query: string, requestedBy: string): Promise<Track> {
+  public async search(
+    query: string,
+    requestedBy: string,
+    limit = 1,
+  ): Promise<Track[]> {
     this.logger.debug(`Searching YouTube for: ${query}`);
 
-    const info = await this.ytDlpService.search(query);
+    const results: Track[] = [];
 
-    this.logger.debug(`Found: ${info.title} (${info.url})`);
+    for (let i = 0; i < limit; i++) {
+      try {
+        const info = await this.ytDlpService.search(query);
 
-    return {
-      url: info.url,
-      title: info.title,
-      duration: info.duration,
-      thumbnail: info.thumbnail,
+        this.logger.debug(`Found: ${info.title} (${info.url})`);
+
+        results.push({
+          url: info.url,
+          title: info.title,
+          duration: info.duration,
+          thumbnail: info.thumbnail,
+          requestedBy,
+          provider: this.type,
+          isLive: info.duration === 0,
+          addedAt: new Date(),
+        });
+        break; // yt-dlp search returns single result, break after first
+      } catch (error) {
+        this.logger.warn(`Search iteration ${String(i + 1)} failed`, error);
+      }
+    }
+
+    return results;
+  }
+
+  public async fetchPlaylist(
+    url: string,
+    requestedBy: string,
+    maxTracks = 30,
+  ): Promise<Track[]> {
+    if (!YOUTUBE_PLAYLIST_PATTERN.test(url)) {
+      throw new Error('Not a YouTube playlist URL');
+    }
+
+    return this.ytDlpService.getPlaylistTracks(
+      url,
       requestedBy,
-    };
+      maxTracks,
+      this.type,
+    );
   }
 
   private extractVideoId(url: string): string | null {

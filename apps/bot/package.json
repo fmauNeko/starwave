@@ -31,13 +31,16 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/schedule": "^6.1.0",
     "@snazzah/davey": "^0.1.9",
+    "@spotify/web-api-ts-sdk": "^1.2.0",
     "arkregex": "^0.0.5",
     "arktype": "^2.1.29",
+    "bandcamp-fetch": "^3.0.0",
     "discord-api-types": "^0.38.0",
     "discord.js": "^14.25.1",
     "necord": "^6.11.2",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "soundcloud.ts": "^0.7.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.3",

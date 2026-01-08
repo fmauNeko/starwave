@@ -66,6 +66,21 @@
           "type": "string"
         }
       }
+    },
+    "spotify": {
+      "description": "Spotify configuration for metadata and search.",
+      "type": "object",
+      "properties": {
+        "clientId": {
+          "description": "Spotify application client ID from developer dashboard.",
+          "type": "string"
+        },
+        "clientSecret": {
+          "description": "Spotify application client secret from developer dashboard.",
+          "type": "string"
+        }
+      },
+      "required": ["clientId", "clientSecret"]
     }
   },
   "required": ["discord"]

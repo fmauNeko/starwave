@@ -22,6 +22,10 @@ export const configSchema = type.module({
     'youtube?': {
       'cookiesPath?': 'string',
     },
+    'spotify?': {
+      clientId: 'string',
+      clientSecret: 'string',
+    },
   },
   env: {
     NODE_ENV: "'development' | 'production' | 'test'",
