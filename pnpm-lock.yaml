@@ -106,7 +106,7 @@ importers:
         version: 14.25.1
       necord:
         specifier: ^6.11.2
-        version: 6.12.0(@nestjs/common@11.1.13(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(discord-api-types@0.38.38)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 6.12.4(@nestjs/common@11.1.13(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(discord-api-types@0.38.38)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -4134,8 +4134,8 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
 
-  necord@6.12.0:
-    resolution: {integrity: sha512-LfLGqd6jjrbYorUS6LJKeUUT2TG3LbjCPSzHGrh5UFY9xXWzIZMAewIGhOSxQZrKXHCndgiigVX+P9rbc2+4pA==}
+  necord@6.12.4:
+    resolution: {integrity: sha512-h8qjugtG25qGkEAzcDl5hshmV/YABVflOshVb1iNKhW5kqxblMWIzZ2qDdOzbP9JjyEXKkg2fTSxxrxwSr6RcQ==}
     engines: {node: '>=18', npm: '>=8.6.0'}
     peerDependencies:
       '@nestjs/common': ^10.2.0 || ^11.0.0
@@ -9635,7 +9635,7 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  necord@6.12.0(@nestjs/common@11.1.13(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(discord-api-types@0.38.38)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2):
+  necord@6.12.4(@nestjs/common@11.1.13(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.13)(discord-api-types@0.38.38)(discord.js@14.25.1)(reflect-metadata@0.2.2)(rxjs@7.8.2):
     dependencies:
       '@nestjs/common': 11.1.13(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/core': 11.1.13(@nestjs/common@11.1.13(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.1.13)(reflect-metadata@0.2.2)(rxjs@7.8.2)
