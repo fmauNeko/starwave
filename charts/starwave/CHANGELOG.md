@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.5.2...chart-starwave@v0.6.0) (2026-02-25)
+
+
+### Features
+
+* **helm:** add explicit namespace override to starwave chart ([50e44a3](https://github.com/fmauNeko/starwave/commit/50e44a315a9f00e9a840e625c1f4423ad61eb6e3))
+
+
+### Bug Fixes
+
+* **chart:** sync appVersion to 1.2.0 ([16b4efe](https://github.com/fmauNeko/starwave/commit/16b4efe75d8dc646813de1d62bbf3754cc284f28))
+
 ## [0.5.2](https://github.com/fmauNeko/starwave/compare/chart-starwave@v0.5.1...chart-starwave@v0.5.2) (2026-01-05)
 
 
