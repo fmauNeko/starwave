@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/fmauNeko/starwave/compare/bot@v1.1.0...bot@v1.2.0) (2026-02-25)
+
+
+### Features
+
+* **bot:** auto-repost now-playing message on channel activity ([a2281d9](https://github.com/fmauNeko/starwave/commit/a2281d95e786d06a0725bdd5b36241a6ba326838))
+
 ## [1.1.0](https://github.com/fmauNeko/starwave/compare/bot@v1.0.0...bot@v1.1.0) (2026-01-05)
 
 
