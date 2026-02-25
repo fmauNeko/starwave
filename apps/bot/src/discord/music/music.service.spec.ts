@@ -107,6 +107,19 @@ describe('MusicService', () => {
       );
     });
 
+    it('emits TRACK_START event when playing track', async () => {
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        'user#1234',
+      );
+
+      expect(vi.mocked(eventEmitter.emit)).toHaveBeenCalledWith(
+        MUSIC_EVENTS.TRACK_START,
+        'guild-123',
+      );
+    });
+
     it('throws error when no provider can handle URL', async () => {
       vi.mocked(mockProvider.canHandle).mockReturnValue(false);
 
@@ -570,6 +583,45 @@ describe('MusicService', () => {
       });
     });
 
+    it('emits TRACK_START event when auto-playing next track', async () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+      service.setupAutoPlay('guild-123');
+      vi.clearAllMocks();
+
+      idleCallback();
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(eventEmitter.emit)).toHaveBeenCalledWith(
+          MUSIC_EVENTS.TRACK_START,
+          'guild-123',
+        );
+      });
+    });
+
     it('does nothing on idle when queue does not exist', () => {
       let idleCallback: () => void = vi.fn();
       const mockPlayer = {
@@ -795,6 +847,22 @@ describe('MusicService', () => {
       await service.searchAndPlay('guild-123', 'test query', 'user#1234');
 
       expect(vi.mocked(voiceService.play)).toHaveBeenCalled();
+    });
+
+    it('emits TRACK_START event when playing search result', async () => {
+      const searchResultTrack = {
+        ...mockTrack,
+        title: 'Search Result',
+        url: 'https://youtube.com/watch?v=searchResult',
+      };
+      vi.mocked(mockProvider.search).mockResolvedValue(searchResultTrack);
+
+      await service.searchAndPlay('guild-123', 'test query', 'user#1234');
+
+      expect(vi.mocked(eventEmitter.emit)).toHaveBeenCalledWith(
+        MUSIC_EVENTS.TRACK_START,
+        'guild-123',
+      );
     });
 
     it('queues track without playing if queue already has tracks', async () => {

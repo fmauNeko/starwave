@@ -11,6 +11,7 @@ import type {
 
 export const MUSIC_EVENTS = {
   QUEUE_END: 'music.queue.end',
+  TRACK_START: 'music.track.start',
 } as const;
 
 @Injectable()
@@ -258,6 +259,8 @@ export class MusicService {
       this.voiceService.play(guildId, audioInfo.url, {
         inputType: streamType,
       });
+
+      this.eventEmitter.emit(MUSIC_EVENTS.TRACK_START, guildId);
 
       this.logger.log(
         `Now playing: ${track.title} in guild ${guildId} (codec: ${audioInfo.codec}, container: ${audioInfo.container})`,

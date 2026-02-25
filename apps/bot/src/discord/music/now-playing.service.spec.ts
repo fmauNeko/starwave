@@ -344,6 +344,140 @@ describe('NowPlayingService', () => {
     });
   });
 
+  describe('handleTrackStart', () => {
+    it('sends now playing message when track starts', async () => {
+      service.setChannelForGuild('guild-123', 'channel-123');
+
+      await service.handleTrackStart('guild-123');
+
+      expect(mockClient.channels.fetch).toHaveBeenCalledWith('channel-123');
+      expect(mockChannel.send).toHaveBeenCalled();
+    });
+
+    it('updates existing message when track starts', async () => {
+      service.setChannelForGuild('guild-123', 'channel-123');
+      await service.sendNowPlaying('guild-123');
+      vi.clearAllMocks();
+
+      const newMessage = {
+        id: 'msg-456',
+        delete: vi.fn(),
+      } as unknown as Message<true>;
+      vi.mocked(mockChannel.send).mockResolvedValue(newMessage);
+
+      await service.handleTrackStart('guild-123');
+
+      expect(mockChannel.messages.fetch).toHaveBeenCalledWith('msg-123');
+      expect(mockMessage.delete).toHaveBeenCalled();
+      expect(mockChannel.send).toHaveBeenCalled();
+      expect(service.getMessageForGuild('guild-123')).toBe('msg-456');
+    });
+  });
+
+  describe('handleMessageCreate', () => {
+    it('reposts now playing when user sends message in same channel', async () => {
+      service.setChannelForGuild('guild-123', 'channel-123');
+      await service.sendNowPlaying('guild-123');
+      vi.clearAllMocks();
+
+      const newMessage = {
+        id: 'msg-456',
+        delete: vi.fn(),
+      } as unknown as Message<true>;
+      vi.mocked(mockChannel.send).mockResolvedValue(newMessage);
+
+      const userMessage = {
+        id: 'user-msg-789',
+        author: { bot: false },
+        guildId: 'guild-123',
+        channelId: 'channel-123',
+      };
+
+      await service.handleMessageCreate([userMessage] as never);
+
+      expect(mockMessage.delete).toHaveBeenCalled();
+      expect(mockChannel.send).toHaveBeenCalled();
+    });
+
+    it('reposts now playing when another bot sends message in same channel', async () => {
+      service.setChannelForGuild('guild-123', 'channel-123');
+      await service.sendNowPlaying('guild-123');
+      vi.clearAllMocks();
+
+      const newMessage = {
+        id: 'msg-456',
+        delete: vi.fn(),
+      } as unknown as Message<true>;
+      vi.mocked(mockChannel.send).mockResolvedValue(newMessage);
+
+      const botMessage = {
+        id: 'other-bot-msg-999',
+        author: { bot: true },
+        guildId: 'guild-123',
+        channelId: 'channel-123',
+      };
+
+      await service.handleMessageCreate([botMessage] as never);
+
+      expect(mockMessage.delete).toHaveBeenCalled();
+      expect(mockChannel.send).toHaveBeenCalled();
+    });
+
+    it('ignores own now-playing message to prevent infinite loop', async () => {
+      service.setChannelForGuild('guild-123', 'channel-123');
+      await service.sendNowPlaying('guild-123');
+      vi.clearAllMocks();
+
+      const ownNowPlayingMessage = {
+        id: 'msg-123',
+        author: { bot: true },
+        guildId: 'guild-123',
+        channelId: 'channel-123',
+      };
+
+      await service.handleMessageCreate([ownNowPlayingMessage] as never);
+
+      expect(mockMessage.delete).not.toHaveBeenCalled();
+      expect(mockChannel.send).not.toHaveBeenCalled();
+    });
+
+    it('ignores messages without guild ID', async () => {
+      service.setChannelForGuild('guild-123', 'channel-123');
+      await service.sendNowPlaying('guild-123');
+      vi.clearAllMocks();
+
+      const dmMessage = {
+        id: 'dm-msg-123',
+        author: { bot: false },
+        guildId: null,
+        channelId: 'dm-channel',
+      };
+
+      await service.handleMessageCreate([dmMessage] as never);
+
+      expect(mockMessage.delete).not.toHaveBeenCalled();
+      expect(mockChannel.send).not.toHaveBeenCalled();
+    });
+
+    it('ignores messages in different channel', async () => {
+      service.setChannelForGuild('guild-123', 'channel-123');
+      await service.sendNowPlaying('guild-123');
+      vi.clearAllMocks();
+
+      const userMessage = {
+        id: 'user-msg-789',
+        author: { bot: false },
+        guildId: 'guild-123',
+        channelId: 'different-channel',
+      };
+
+      await service.handleMessageCreate([userMessage] as never);
+
+      expect(mockMessage.delete).not.toHaveBeenCalled();
+      expect(mockChannel.send).not.toHaveBeenCalled();
+    });
+  });
+
   describe('button custom IDs', () => {
     it('generates correct button IDs', () => {
       expect(NowPlayingService.BUTTON_IDS.PLAY_PAUSE).toBe('np_playpause');

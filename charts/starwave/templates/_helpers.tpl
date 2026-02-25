@@ -2,6 +2,19 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
+{{/*
+Construct the namespace for all namespaced resources
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+Preserve the default behavior of the Release namespace if no override is provided
+*/}}
+{{- define "starwave.namespace" -}}
+{{- if .Values.global.namespaceOverride -}}
+{{- .Values.global.namespaceOverride | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- .Release.Namespace -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "starwave.fullname" -}}
 {{- $name := include "starwave.name" . -}}
 {{- if contains $name .Release.Name -}}
