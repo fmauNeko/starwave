@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=./values.schema.json
 
 global:
+  namespaceOverride: ''
   imagePullSecrets: []
   podAnnotations: {}
   podLabels: {}

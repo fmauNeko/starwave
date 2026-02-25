@@ -50,6 +50,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "starwave.bot.fullname" . }}
+  namespace: {{ include "starwave.namespace" . }}
   labels:
 {{ include "starwave.bot.labels" . | indent 4 }}
 spec:

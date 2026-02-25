@@ -21,6 +21,10 @@
     "global": {
       "type": "object",
       "properties": {
+        "namespaceOverride": {
+          "type": "string",
+          "description": "Override the namespace for all namespaced resources. If empty, uses the release namespace."
+        },
         "imagePullSecrets": {
           "type": "array",
           "items": {

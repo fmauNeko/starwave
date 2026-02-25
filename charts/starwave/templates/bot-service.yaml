@@ -3,6 +3,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "starwave.bot.fullname" . }}
+  namespace: {{ include "starwave.namespace" . }}
   labels:
 {{ include "starwave.bot.labels" . | indent 4 }}
 {{- with .Values.apps.bot.service.annotations }}

@@ -14,6 +14,7 @@
 
 ```yaml
 global: # Shared defaults across all apps
+  namespaceOverride: '' # Override namespace for all resources (defaults to release namespace)
   imagePullSecrets: []
   podAnnotations: {}
   serviceAccount:
@@ -47,14 +48,15 @@ apps:
 
 ### Key Value Paths
 
-| Path                                     | Purpose                       | Required                     |
-| ---------------------------------------- | ----------------------------- | ---------------------------- |
-| `apps.bot.enabled`                       | Enable/disable bot deployment | No (default: true)           |
-| `apps.bot.image.repository`              | Container image               | No (has default)             |
-| `apps.bot.image.tag`                     | Image tag                     | No (defaults to appVersion)  |
-| `apps.bot.config.discord.guildsSettings` | Guild configurations          | **Yes**                      |
-| `apps.bot.secret.value`                  | Discord token                 | **Yes** (if `create: true`)  |
-| `apps.bot.secret.existingSecret`         | Existing secret name          | **Yes** (if `create: false`) |
+| Path                                     | Purpose                              | Required                           |
+| ---------------------------------------- | ------------------------------------ | ---------------------------------- |
+| `global.namespaceOverride`               | Override namespace for all resources | No (defaults to release namespace) |
+| `apps.bot.enabled`                       | Enable/disable bot deployment        | No (default: true)                 |
+| `apps.bot.image.repository`              | Container image                      | No (has default)                   |
+| `apps.bot.image.tag`                     | Image tag                            | No (defaults to appVersion)        |
+| `apps.bot.config.discord.guildsSettings` | Guild configurations                 | **Yes**                            |
+| `apps.bot.secret.value`                  | Discord token                        | **Yes** (if `create: true`)        |
+| `apps.bot.secret.existingSecret`         | Existing secret name                 | **Yes** (if `create: false`)       |
 
 ### Value Inheritance
 
@@ -110,6 +112,15 @@ helm template starwave ./charts/starwave -f my-values.yaml
 ```
 
 ## How To...
+
+### Override Namespace
+
+By default, resources are created in the Helm release namespace. To deploy to a different namespace:
+
+```yaml
+global:
+  namespaceOverride: my-custom-namespace
+```
 
 ### Use an Existing Token Secret
 
@@ -194,15 +205,17 @@ apps:
 
 ## Template Files
 
-| File                      | Purpose                                     |
-| ------------------------- | ------------------------------------------- |
-| `_helpers.tpl`            | Template functions (fullname, labels, etc.) |
-| `bot-deployment.yaml`     | Bot Deployment spec                         |
-| `bot-configmap.yaml`      | Config JSON from values (excludes token)    |
-| `bot-secret.yaml`         | Discord token Secret (if `create: true`)    |
-| `bot-service.yaml`        | ClusterIP Service                           |
-| `bot-serviceaccount.yaml` | ServiceAccount                              |
-| `NOTES.txt`               | Post-install instructions                   |
+| File                      | Purpose                                                |
+| ------------------------- | ------------------------------------------------------ |
+| `_helpers.tpl`            | Template functions (fullname, labels, namespace, etc.) |
+| `bot-deployment.yaml`     | Bot Deployment spec                                    |
+| `bot-configmap.yaml`      | Config JSON from values (excludes token)               |
+| `bot-secret.yaml`         | Discord token Secret (if `create: true`)               |
+| `bot-service.yaml`        | ClusterIP Service                                      |
+| `bot-serviceaccount.yaml` | ServiceAccount                                         |
+| `bot-cookies-secret.yaml` | YouTube cookies Secret (if enabled)                    |
+| `bot-cookies-pvc.yaml`    | YouTube cookies PersistentVolumeClaim (if enabled)     |
+| `NOTES.txt`               | Post-install instructions                              |
 
 ## Architecture Notes
 
@@ -233,6 +246,10 @@ This triggers pod restart when config/secret changes.
 ### No Ingress
 
 Chart intentionally omits Ingress. Bot only needs outbound Discord API access. If you need HTTP access (health checks from outside cluster), add your own Ingress resource.
+
+### Namespace Configuration
+
+All namespaced resources (Deployment, Service, ConfigMap, Secret, ServiceAccount, PersistentVolumeClaim) explicitly specify their namespace using the `starwave.namespace` helper. This respects the `global.namespaceOverride` value if set, otherwise defaults to the Helm release namespace. This ensures resources are created in the correct namespace regardless of the `helm install --namespace` flag used.
 
 ## Schema Validation
 
