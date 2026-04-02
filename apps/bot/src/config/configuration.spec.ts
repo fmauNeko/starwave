@@ -96,13 +96,13 @@ describe('configuration loader', () => {
     };
     vol.fromJSON({ [configPath]: JSON.stringify(invalidConfig) });
 
-    await expect(loadConfig()).rejects.toThrowError();
+    await expect(loadConfig()).rejects.toThrow();
   });
 
   it('throws when config root is not an object', async () => {
     vol.fromJSON({ [configPath]: '"oops"' });
 
-    await expect(loadConfig()).rejects.toThrowError();
+    await expect(loadConfig()).rejects.toThrow();
   });
 
   it('ignores BOT__ env entries with empty values', async () => {
@@ -154,7 +154,7 @@ describe('configuration loader', () => {
       validateEnv: (env: Record<string, unknown>) => unknown;
     };
 
-    expect(() => validateEnv({ NODE_ENV: 'invalid' })).toThrowError();
+    expect(() => validateEnv({ NODE_ENV: 'invalid' })).toThrow();
   });
 });
 
