@@ -161,7 +161,7 @@ jobs:
     steps:
       - name: Await Docker release
         if: ${{ needs.docker-release.outputs.run_id != '' }}
-        uses: Codex-/await-remote-run@a56c556e6434d2d7ec9438dc656143b39532324e # v1
+        uses: Codex-/await-remote-run@2512346665df8818ec7ad6aca3cdceb7626cd384 # v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.event.repository.name }}
@@ -170,7 +170,7 @@ jobs:
           run_timeout_seconds: 1800
 
       - name: Await Helm release
-        uses: Codex-/await-remote-run@a56c556e6434d2d7ec9438dc656143b39532324e # v1
+        uses: Codex-/await-remote-run@2512346665df8818ec7ad6aca3cdceb7626cd384 # v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.event.repository.name }}
