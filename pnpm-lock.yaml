@@ -133,8 +133,8 @@ importers:
         specifier: 11.1.19
         version: 11.1.19(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@nestjs/platform-express@11.1.19)
       '@suites/di.nestjs':
-        specifier: 3.0.1
-        version: 3.0.1(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)
+        specifier: 3.1.0
+        version: 3.1.0(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)
       '@suites/doubles.vitest':
         specifier: 3.0.1
         version: 3.0.1(@vitest/spy@4.1.5)(vitest@4.1.5)
@@ -1511,8 +1511,8 @@ packages:
     resolution: {integrity: sha512-X5xNg5EK1zAKXo4WS1fyBcViyvWvUWCEaA1fv/3ow5mD9AkKnIQajqm9pLAkUl/BM73baLQv9biLnmEHje1ghA==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
-  '@suites/di.nestjs@3.0.1':
-    resolution: {integrity: sha512-mcXq9GgaE1hC/5Qu69tJZrhSE7dcWJAWHzRvnRyx6UV9XP2Ze6aRK4/uCkviG84A1il4QLNQy+NvhOf0LooDgA==}
+  '@suites/di.nestjs@3.1.0':
+    resolution: {integrity: sha512-SKPdfqZRqjDKRfte8Id1xvmhCNOSSnDSFS68Qcw04IirnUEAAm/wjJBv3Bo8tH/YjzlZkAjzpapZTiWePSM9qg==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
     peerDependencies:
       '@nestjs/common': '>= 8.0'
@@ -1529,8 +1529,16 @@ packages:
     resolution: {integrity: sha512-+kCWmVAyEI01P4d/t3LbrOCq1xXQlh3SsPstn1uBuC/MDMW/pENHkU5xVC9G8VOW/pkXh53KXwbHIxpJImp4Zw==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
+  '@suites/types.common@3.1.0':
+    resolution: {integrity: sha512-4OW/FKP78HZiUjSeAq6ix/lj2s4vEU4IqFr09LLmQC77v1Rv5vEW1LZLxrRVlP2jeWsxuVka6WX2k7k3HJDu9A==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
+
   '@suites/types.di@3.0.0':
     resolution: {integrity: sha512-RzvgfTsjg3KrJ3SRbo9J84g5mRfkMZMzinLTjAQO+yCBBz+YMhbwaUXDBX70RcFGiAHjTNPg0jWjis3FHPH8Dg==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
+
+  '@suites/types.di@3.1.0':
+    resolution: {integrity: sha512-ng/so6i2dbvSUyCAN/UhLO0N/72B08XycXBCUGmE6CK2OgzNGPjTjcIN1moljyUzZQBYHvYSdUju2aZ6Fh2tOA==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
   '@suites/types.doubles@3.0.0':
@@ -6616,11 +6624,11 @@ snapshots:
       '@suites/types.di': 3.0.0
       lodash.isequal: 4.5.0
 
-  '@suites/di.nestjs@3.0.1(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)':
+  '@suites/di.nestjs@3.1.0(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)':
     dependencies:
       '@nestjs/common': 11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@suites/types.common': 3.0.0
-      '@suites/types.di': 3.0.0
+      '@suites/types.common': 3.1.0
+      '@suites/types.di': 3.1.0
       reflect-metadata: 0.2.2
 
   '@suites/doubles.vitest@3.0.1(@vitest/spy@4.1.5)(vitest@4.1.5)':
@@ -6633,9 +6641,15 @@ snapshots:
 
   '@suites/types.common@3.0.0': {}
 
+  '@suites/types.common@3.1.0': {}
+
   '@suites/types.di@3.0.0':
     dependencies:
       '@suites/types.common': 3.0.0
+
+  '@suites/types.di@3.1.0':
+    dependencies:
+      '@suites/types.common': 3.1.0
 
   '@suites/types.doubles@3.0.0': {}
 
