@@ -136,8 +136,8 @@ importers:
         specifier: 3.1.0
         version: 3.1.0(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)
       '@suites/doubles.vitest':
-        specifier: 3.0.1
-        version: 3.0.1(@vitest/spy@4.1.5)(vitest@4.1.5)
+        specifier: 3.1.0
+        version: 3.1.0(@vitest/spy@4.1.5)(vitest@4.1.5)
       '@suites/unit':
         specifier: 3.0.1
         version: 3.0.1
@@ -1511,6 +1511,10 @@ packages:
     resolution: {integrity: sha512-X5xNg5EK1zAKXo4WS1fyBcViyvWvUWCEaA1fv/3ow5mD9AkKnIQajqm9pLAkUl/BM73baLQv9biLnmEHje1ghA==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
+  '@suites/core.unit@3.1.0':
+    resolution: {integrity: sha512-2aG83BiIuOOVwu8Joisi4soSMI2isYBR8wJXWq+jInWOFCtQq+6cFwhXmpqRheMX0aKk7kb14HpclclMvpK3nQ==}
+    engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
+
   '@suites/di.nestjs@3.1.0':
     resolution: {integrity: sha512-SKPdfqZRqjDKRfte8Id1xvmhCNOSSnDSFS68Qcw04IirnUEAAm/wjJBv3Bo8tH/YjzlZkAjzpapZTiWePSM9qg==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
@@ -1518,8 +1522,8 @@ packages:
       '@nestjs/common': '>= 8.0'
       reflect-metadata: <1.0.0
 
-  '@suites/doubles.vitest@3.0.1':
-    resolution: {integrity: sha512-CldGybIRIUNR88CXWb9ofCAoIg7RnBQ3uItpe7b0YGFhSl5fFwuzQuqBjUVkof0Fe9PyloCZ0U1lAzcxwgfwww==}
+  '@suites/doubles.vitest@3.1.0':
+    resolution: {integrity: sha512-SToF97cTcDjaMbzyUh+pLj33e/dHo2fqoPCcU0OXG2OX+hu+WACruS2xDwj5l/UruA3ckBJmtvVgOvpo1TKbUg==}
     engines: {node: ^18.12.0 || >=20.0.0}
     peerDependencies:
       '@vitest/spy': '>= 1.0'
@@ -1543,6 +1547,9 @@ packages:
 
   '@suites/types.doubles@3.0.0':
     resolution: {integrity: sha512-B5sHH98qU7Fq+ozA42J3LLv846xRJn2ndx1xfLr0oaKxEG6Xud/vmdJpH65F/2P7DNMJkxWo/VDIqXrN4UDcvg==}
+
+  '@suites/types.doubles@3.1.0':
+    resolution: {integrity: sha512-VhEtcgUPYe1L0xLie2VrqO8b+EPCdVnU30qS//nQA9UtRYA3dRqENNGI6ktmfKAvUKC9ToJdwE/B/TohZt290A==}
 
   '@suites/unit@3.0.1':
     resolution: {integrity: sha512-28RLtgxG8NH6zcBvfiMGqbToWNTs2WnTPa9GWQ2k1laXueGILDTTRjQrsApIAlbtRF5lGuGPynRFEMBAL+90Mw==}
@@ -6620,9 +6627,15 @@ snapshots:
 
   '@suites/core.unit@3.0.1':
     dependencies:
-      '@suites/types.common': 3.0.0
-      '@suites/types.di': 3.0.0
+      '@suites/types.common': 3.1.0
+      '@suites/types.di': 3.1.0
       lodash.isequal: 4.5.0
+
+  '@suites/core.unit@3.1.0':
+    dependencies:
+      '@suites/types.common': 3.1.0
+      '@suites/types.di': 3.1.0
+      '@suites/types.doubles': 3.1.0
 
   '@suites/di.nestjs@3.1.0(@nestjs/common@11.1.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)':
     dependencies:
@@ -6631,11 +6644,12 @@ snapshots:
       '@suites/types.di': 3.1.0
       reflect-metadata: 0.2.2
 
-  '@suites/doubles.vitest@3.0.1(@vitest/spy@4.1.5)(vitest@4.1.5)':
+  '@suites/doubles.vitest@3.1.0(@vitest/spy@4.1.5)(vitest@4.1.5)':
     dependencies:
-      '@suites/core.unit': 3.0.1
-      '@suites/types.common': 3.0.0
-      '@suites/types.doubles': 3.0.0
+      '@suites/core.unit': 3.1.0
+      '@suites/types.common': 3.1.0
+      '@suites/types.di': 3.1.0
+      '@suites/types.doubles': 3.1.0
       '@vitest/spy': 4.1.5
       vitest: 4.1.5(@types/node@25.6.0)(@vitest/coverage-v8@4.1.5)(vite@8.0.10(@types/node@25.6.0)(jiti@2.6.1)(terser@5.46.2))
 
@@ -6645,13 +6659,17 @@ snapshots:
 
   '@suites/types.di@3.0.0':
     dependencies:
-      '@suites/types.common': 3.0.0
+      '@suites/types.common': 3.1.0
 
   '@suites/types.di@3.1.0':
     dependencies:
       '@suites/types.common': 3.1.0
 
   '@suites/types.doubles@3.0.0': {}
+
+  '@suites/types.doubles@3.1.0':
+    dependencies:
+      '@suites/types.common': 3.1.0
 
   '@suites/unit@3.0.1':
     dependencies:
