@@ -2,15 +2,11 @@ packages:
   - apps/*
   - packages/*
 
-ignoredBuiltDependencies:
-  - necord
-
-onlyBuiltDependencies:
-  - '@discordjs/opus'
-  - '@nestjs/core'
-  - '@suites/di.nestjs'
-  - '@suites/doubles.vitest'
-  - '@swc/core'
-  - esbuild
-  - unrs-resolver
-  - zeromq
+allowBuilds:
+  '@discordjs/opus': true
+  '@nestjs/core': true
+  '@suites/di.nestjs': true
+  '@suites/doubles.vitest': true
+  '@swc/core': true
+  necord: true
+  unrs-resolver: true
