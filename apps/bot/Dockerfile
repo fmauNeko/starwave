@@ -33,7 +33,7 @@ FROM base AS builder
 RUN apk add --no-cache make gcc g++ python3
 
 COPY --from=prepare /app/out/json/ .
-RUN pnpm install --frozen-lockfile
+RUN pnpm ci
 
 COPY --from=prepare /app/out/full/ .
 RUN pnpm run build
