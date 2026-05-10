@@ -18,7 +18,7 @@ describe('PresenceService', () => {
 
     const { unit } = await TestBed.solitary(PresenceService)
       .mock(Client)
-      .final(client as unknown as Client)
+      .final(client)
       .compile();
 
     service = unit;
@@ -35,7 +35,7 @@ describe('PresenceService', () => {
 
     const { unit } = await TestBed.solitary(PresenceService)
       .mock(Client)
-      .final(client as unknown as Client)
+      .final(client)
       .compile();
 
     service = unit;

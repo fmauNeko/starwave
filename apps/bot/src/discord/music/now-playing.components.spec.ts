@@ -2,7 +2,7 @@
 import type { ButtonInteraction, GuildMember, VoiceChannel } from 'discord.js';
 import { MessageFlags } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { LoopMode, Track } from './music-queue';
+import type { Track } from './music-queue';
 import { MusicService } from './music.service';
 import { NowPlayingComponents } from './now-playing.components';
 import { NowPlayingService } from './now-playing.service';
@@ -61,7 +61,7 @@ describe('NowPlayingComponents', () => {
       skip: vi.fn().mockReturnValue(mockTrack),
       stop: vi.fn().mockReturnValue(true),
       shuffle: vi.fn().mockReturnValue(true),
-      cycleLoopMode: vi.fn().mockReturnValue('track' as LoopMode),
+      cycleLoopMode: vi.fn().mockReturnValue('track'),
       isPlaying: vi.fn().mockReturnValue(true),
       isPaused: vi.fn().mockReturnValue(false),
     } as unknown as MusicService;

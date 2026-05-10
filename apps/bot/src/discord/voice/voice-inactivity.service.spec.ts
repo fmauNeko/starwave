@@ -92,7 +92,7 @@ function createMockClient(
               },
             },
           },
-        } as unknown as Guild),
+        }),
       },
     },
   } as unknown as Client<true>;
@@ -475,7 +475,7 @@ describe('VoiceInactivityService', () => {
                   },
                 },
               },
-            } as unknown as Guild),
+            }),
           },
         },
       } as unknown as Client<true>;
