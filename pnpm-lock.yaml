@@ -139,8 +139,8 @@ importers:
         specifier: 3.1.0
         version: 3.1.0(@vitest/spy@4.1.5)(vitest@4.1.5)
       '@suites/unit':
-        specifier: 3.1.0
-        version: 3.1.0
+        specifier: 3.1.1
+        version: 3.1.1
       '@swc/cli':
         specifier: 0.8.1
         version: 0.8.1(@swc/core@1.15.33)(chokidar@4.0.3)
@@ -1536,8 +1536,8 @@ packages:
   '@suites/types.doubles@3.1.0':
     resolution: {integrity: sha512-VhEtcgUPYe1L0xLie2VrqO8b+EPCdVnU30qS//nQA9UtRYA3dRqENNGI6ktmfKAvUKC9ToJdwE/B/TohZt290A==}
 
-  '@suites/unit@3.1.0':
-    resolution: {integrity: sha512-fuFve407vJ/fXbptW+TnOodTY7hFpy2958Qayw5NF7mv2p6TNSDwaq8aIA4DU5ubbjYwnUnf6muhsXb4sfEwbA==}
+  '@suites/unit@3.1.1':
+    resolution: {integrity: sha512-gHnAj4Xx5ckFjpo8jhHyriiqdpDXjFmwBTDht1T/czhTv1P3U2rZdEtwyWQISkgJFvxQjC6hfS7GftAKYgehjA==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
   '@swc/cli@0.8.1':
@@ -6608,7 +6608,7 @@ snapshots:
     dependencies:
       '@suites/types.common': 3.1.0
 
-  '@suites/unit@3.1.0':
+  '@suites/unit@3.1.1':
     dependencies:
       '@suites/core.unit': 3.1.0
       '@suites/types.common': 3.1.0
