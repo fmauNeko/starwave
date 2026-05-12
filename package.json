@@ -39,7 +39,7 @@
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@11.0.8",
+  "packageManager": "pnpm@11.0.9",
   "workspaces": [
     "apps/*",
     "packages/*"
