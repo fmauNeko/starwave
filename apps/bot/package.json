@@ -50,7 +50,7 @@
     "@suites/doubles.vitest": "3.1.0",
     "@suites/unit": "3.1.1",
     "@swc/cli": "0.8.1",
-    "@swc/core": "1.15.33",
+    "@swc/core": "1.15.40",
     "@types/express": "5.0.6",
     "@types/node": "25.9.1",
     "@types/supertest": "7.2.0",
