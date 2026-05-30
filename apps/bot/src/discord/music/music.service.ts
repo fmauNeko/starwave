@@ -258,9 +258,7 @@ export class MusicService {
 
       this.eventEmitter.emit(MUSIC_EVENTS.TRACK_START, guildId);
 
-      this.logger.log(
-        `Now playing: ${track.title} in guild ${guildId}`,
-      );
+      this.logger.log(`Now playing: ${track.title} in guild ${guildId}`);
     } catch (error) {
       this.logger.error(
         `Failed to play track "${track.title}" in guild ${guildId}`,
