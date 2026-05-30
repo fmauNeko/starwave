@@ -1,13 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AudioPlayerStatus, StreamType } from '@discordjs/voice';
+import { AudioPlayerStatus } from '@discordjs/voice';
 import { VoiceService } from '../voice/voice.service';
 import { LoopMode, MusicQueue, type Track } from './music-queue';
 import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
-import type {
-  AudioInfo,
-  MusicProvider,
-} from './providers/music-provider.interface';
+import type { MusicProvider } from './providers/music-provider.interface';
 
 export const MUSIC_EVENTS = {
   QUEUE_END: 'music.queue.end',
@@ -254,16 +251,15 @@ export class MusicService {
     try {
       const provider = this.getProviderForUrl(track.url);
       const audioInfo = await provider.getAudioInfo(track.url);
-      const streamType = this.getStreamTypeForCodec(audioInfo);
 
-      this.voiceService.play(guildId, audioInfo.url, {
-        inputType: streamType,
+      this.voiceService.play(guildId, audioInfo.source, {
+        inputType: audioInfo.streamType,
       });
 
       this.eventEmitter.emit(MUSIC_EVENTS.TRACK_START, guildId);
 
       this.logger.log(
-        `Now playing: ${track.title} in guild ${guildId} (codec: ${audioInfo.codec}, container: ${audioInfo.container})`,
+        `Now playing: ${track.title} in guild ${guildId}`,
       );
     } catch (error) {
       this.logger.error(
@@ -272,18 +268,6 @@ export class MusicService {
       );
       throw error;
     }
-  }
-
-  private getStreamTypeForCodec(audioInfo: AudioInfo): StreamType {
-    if (audioInfo.codec === 'opus') {
-      if (audioInfo.container === 'webm') {
-        return StreamType.WebmOpus;
-      }
-      if (audioInfo.container === 'ogg') {
-        return StreamType.OggOpus;
-      }
-    }
-    return StreamType.Arbitrary;
   }
 
   private getOrCreateQueue(guildId: string): MusicQueue {

@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { StreamType } from '@discordjs/voice';
 import { regex } from 'arkregex';
 import type { Track } from '../music-queue';
 import { YtDlpService } from '../yt-dlp.service';
@@ -59,13 +60,16 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
     this.logger.debug(`Getting audio info for video: ${videoId}`);
 
     const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const audioInfo = await this.ytDlpService.getAudioInfo(canonicalUrl);
+    const ytDlpInfo = await this.ytDlpService.getAudioInfo(canonicalUrl);
 
     this.logger.debug(
-      `Got audio URL (codec: ${audioInfo.codec}, container: ${audioInfo.container})`,
+      `Got audio URL (codec: ${ytDlpInfo.codec}, container: ${ytDlpInfo.container})`,
     );
 
-    return audioInfo;
+    return {
+      source: ytDlpInfo.url,
+      streamType: this.resolveStreamType(ytDlpInfo.codec, ytDlpInfo.container),
+    };
   }
 
   public async search(query: string, requestedBy: string): Promise<Track> {
@@ -82,6 +86,18 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
       thumbnail: info.thumbnail,
       requestedBy,
     };
+  }
+
+  private resolveStreamType(codec: string, container: string): StreamType {
+    if (codec === 'opus') {
+      if (container === 'webm') {
+        return StreamType.WebmOpus;
+      }
+      if (container === 'ogg') {
+        return StreamType.OggOpus;
+      }
+    }
+    return StreamType.Arbitrary;
   }
 
   private extractVideoId(url: string): string | null {

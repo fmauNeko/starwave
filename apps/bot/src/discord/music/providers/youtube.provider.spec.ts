@@ -1,3 +1,4 @@
+import { StreamType } from '@discordjs/voice';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   YtDlpAudioInfo,
@@ -22,7 +23,7 @@ function createMockYtDlpService(
       .fn()
       .mockResolvedValue('https://example.com/audio.webm?token=abc'),
     getAudioInfo: vi.fn().mockResolvedValue({
-      url: 'https://example.com/audio.webm?token=abc',
+      url: 'https://fake.stream.url',
       codec: 'opus',
       container: 'webm',
     } satisfies YtDlpAudioInfo),
@@ -122,9 +123,8 @@ describe('YouTubeProvider', () => {
       );
 
       expect(audioInfo).toEqual({
-        url: 'https://example.com/audio.webm?token=abc',
-        codec: 'opus',
-        container: 'webm',
+        source: 'https://fake.stream.url',
+        streamType: StreamType.WebmOpus,
       });
       expect(mockYtDlpService.getAudioInfo).toHaveBeenCalledWith(
         'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
