@@ -30,7 +30,9 @@ describe('Module imports', () => {
         public onModuleInit = vi.fn().mockResolvedValue(undefined);
         public getClient = vi.fn().mockReturnValue(undefined);
         public getSessionPoToken = vi.fn().mockReturnValue(undefined);
-        public generateContentPoToken = vi.fn().mockResolvedValue('mock-po-token');
+        public generateContentPoToken = vi
+          .fn()
+          .mockResolvedValue('mock-po-token');
         public refresh = vi.fn().mockResolvedValue(undefined);
       },
     }));
