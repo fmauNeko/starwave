@@ -114,6 +114,7 @@ export class InnertubeSessionService implements OnModuleInit {
       window: this.dom.window,
     });
 
+    /* v8 ignore next 6 */
     if (!Reflect.has(globalThis, 'navigator')) {
       Object.defineProperty(globalThis, 'navigator', {
         configurable: true,

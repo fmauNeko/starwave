@@ -318,6 +318,25 @@ describe('InnertubeSessionService', () => {
       expect(service.getClient()).toBeUndefined();
     });
 
+    it('rejects if the attestation interpreter URL is missing', async () => {
+      const client = createClient('visitor-data-1', 'missing-interpreter-url');
+      client.getAttestationChallenge.mockResolvedValueOnce({
+        bg_challenge: {
+          interpreter_url: {
+            private_do_not_access_or_else_trusted_resource_url_wrapped_value:
+              '',
+          },
+          global_name: 'BG_VM',
+          program: 'program',
+        },
+      });
+      mockInnertubeCreate.mockResolvedValueOnce(client);
+
+      await expect(service.onModuleInit()).rejects.toThrow(
+        'Innertube attestation interpreter URL missing',
+      );
+    });
+
     it('rejects if the BotGuard interpreter fetch fails', async () => {
       mockInnertubeCreate.mockResolvedValueOnce(
         createClient('visitor-data-1', 'bad-interpreter'),
@@ -326,6 +345,17 @@ describe('InnertubeSessionService', () => {
 
       await expect(service.onModuleInit()).rejects.toThrow(
         'Failed to fetch BotGuard interpreter: 503',
+      );
+    });
+
+    it('rejects if the BotGuard interpreter script is empty', async () => {
+      mockInnertubeCreate.mockResolvedValueOnce(
+        createClient('visitor-data-1', 'empty-interpreter'),
+      );
+      mockFetch.mockResolvedValueOnce(createTextResponse(''));
+
+      await expect(service.onModuleInit()).rejects.toThrow(
+        'BotGuard interpreter was empty',
       );
     });
 
