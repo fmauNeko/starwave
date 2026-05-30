@@ -1,8 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { StreamType } from '@discordjs/voice';
 import { regex } from 'arkregex';
 import type { Track } from '../music-queue';
-import { YtDlpService } from '../yt-dlp.service';
+import { YouTubeStreamService } from '../youtube/youtube-stream.service';
 import { MusicProvider } from './music-provider.decorator';
 import type {
   AudioInfo,
@@ -20,10 +19,10 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
   public readonly name = 'YouTube';
   private readonly logger = new Logger(YouTubeProvider.name);
 
-  public constructor(private readonly ytDlpService: YtDlpService) {}
+  public constructor(private readonly streamService: YouTubeStreamService) {}
 
   public onModuleInit(): void {
-    this.logger.log('YouTube provider initialized with yt-dlp backend');
+    this.logger.log('YouTube provider initialized with youtubei.js backend');
   }
 
   public canHandle(url: string): boolean {
@@ -39,14 +38,13 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
       throw new Error('Invalid YouTube URL');
     }
 
-    const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const info = await this.ytDlpService.getVideoInfo(canonicalUrl);
+    const metadata = await this.streamService.getMetadata(videoId);
 
     return {
-      url: canonicalUrl,
-      title: info.title,
-      duration: info.duration,
-      thumbnail: info.thumbnail,
+      url: metadata.url,
+      title: metadata.title,
+      duration: metadata.duration,
+      thumbnail: metadata.thumbnail,
       requestedBy,
     };
   }
@@ -57,47 +55,19 @@ export class YouTubeProvider implements MusicProviderInterface, OnModuleInit {
       throw new Error('Invalid YouTube URL');
     }
 
-    this.logger.debug(`Getting audio info for video: ${videoId}`);
-
-    const canonicalUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    const ytDlpInfo = await this.ytDlpService.getAudioInfo(canonicalUrl);
-
-    this.logger.debug(
-      `Got audio URL (codec: ${ytDlpInfo.codec}, container: ${ytDlpInfo.container})`,
-    );
-
-    return {
-      source: ytDlpInfo.url,
-      streamType: this.resolveStreamType(ytDlpInfo.codec, ytDlpInfo.container),
-    };
+    return this.streamService.getAudioStream(videoId);
   }
 
   public async search(query: string, requestedBy: string): Promise<Track> {
-    this.logger.debug(`Searching YouTube for: ${query}`);
-
-    const info = await this.ytDlpService.search(query);
-
-    this.logger.debug(`Found: ${info.title} (${info.url})`);
+    const metadata = await this.streamService.search(query);
 
     return {
-      url: info.url,
-      title: info.title,
-      duration: info.duration,
-      thumbnail: info.thumbnail,
+      url: metadata.url,
+      title: metadata.title,
+      duration: metadata.duration,
+      thumbnail: metadata.thumbnail,
       requestedBy,
     };
-  }
-
-  private resolveStreamType(codec: string, container: string): StreamType {
-    if (codec === 'opus') {
-      if (container === 'webm') {
-        return StreamType.WebmOpus;
-      }
-      if (container === 'ogg') {
-        return StreamType.OggOpus;
-      }
-    }
-    return StreamType.Arbitrary;
   }
 
   private extractVideoId(url: string): string | null {
