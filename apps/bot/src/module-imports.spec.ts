@@ -25,6 +25,37 @@ describe('Module imports', () => {
       },
     }));
 
+    vi.doMock('./discord/music/youtube/innertube-session.service', () => ({
+      InnertubeSessionService: class MockInnertubeSessionService {
+        public onModuleInit = vi.fn().mockResolvedValue(undefined);
+        public getClient = vi.fn().mockReturnValue(undefined);
+        public getSessionPoToken = vi.fn().mockReturnValue(undefined);
+        public generateContentPoToken = vi.fn().mockResolvedValue('mock-po-token');
+        public refresh = vi.fn().mockResolvedValue(undefined);
+      },
+    }));
+
+    vi.doMock('./discord/music/youtube/youtube-stream.service', () => ({
+      YouTubeStreamService: class MockYouTubeStreamService {
+        public getMetadata = vi.fn().mockResolvedValue({
+          title: 'Mock Video',
+          duration: 180,
+          thumbnail: '',
+          url: 'https://www.youtube.com/watch?v=mock',
+        });
+        public search = vi.fn().mockResolvedValue({
+          title: 'Mock Search',
+          duration: 120,
+          thumbnail: '',
+          url: 'https://www.youtube.com/watch?v=mock2',
+        });
+        public getAudioStream = vi.fn().mockResolvedValue({
+          source: 'https://mock.stream.url',
+          streamType: 0,
+        });
+      },
+    }));
+
     vi.doMock('@nestjs/schedule', () => ({
       ScheduleModule: {
         forRoot: () => ({
