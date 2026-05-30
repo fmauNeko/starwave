@@ -56,6 +56,9 @@ interface MockInnertubeClient {
         clientVersion: string;
       };
     };
+    player: {
+      decipher: ReturnType<typeof vi.fn>;
+    };
   };
 }
 
@@ -147,6 +150,9 @@ function createClient(): MockInnertubeClient {
           clientName: 'WEB',
           clientVersion: '1.20240530.00.00',
         },
+      },
+      player: {
+        decipher: vi.fn((url: string) => `${url}&deciphered=1`),
       },
     },
   };
@@ -431,7 +437,8 @@ describe('YouTubeStreamService', () => {
         bitrate: 128_000,
       });
       expect(mockSabrConfigs[0]).toMatchObject({
-        serverAbrStreamingUrl: 'https://rr.googlevideo.com/videoplayback/sabr',
+        serverAbrStreamingUrl:
+          'https://rr.googlevideo.com/videoplayback/sabr&deciphered=1',
         videoPlaybackUstreamerConfig: 'ustreamer-config',
         poToken: 'content-po-token',
         clientInfo: {
@@ -439,6 +446,9 @@ describe('YouTubeStreamService', () => {
           clientVersion: '1.20240530.00.00',
         },
       });
+      expect(client.session.player.decipher).toHaveBeenCalledWith(
+        'https://rr.googlevideo.com/videoplayback/sabr',
+      );
       expect(logSpy).toHaveBeenCalledWith(
         expect.stringMatching(
           /^youtube\.stream\.acquired: dQw4w9WgXcQ \[\d+ms\]$/,
@@ -533,6 +543,18 @@ describe('YouTubeStreamService', () => {
       await expect(service.getAudioStream('dQw4w9WgXcQ')).rejects.toThrow(
         'No SABR streaming URL available',
       );
+    });
+
+    it('throws when the SABR streaming URL cannot be deciphered', async () => {
+      client.session.player.decipher.mockReturnValueOnce(undefined);
+
+      await expect(service.getAudioStream('dQw4w9WgXcQ')).rejects.toThrow(
+        'Could not decipher SABR streaming URL',
+      );
+      expect(client.session.player.decipher).toHaveBeenCalledWith(
+        'https://rr.googlevideo.com/videoplayback/sabr',
+      );
+      expect(MockSabrStream).not.toHaveBeenCalled();
     });
 
     it('throws when no SABR ustreamer config is available', async () => {

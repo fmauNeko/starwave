@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { StreamType } from '@discordjs/voice';
-import { Constants } from 'youtubei.js';
+import { Constants, Platform, type Types } from 'youtubei.js';
 import { SabrStream } from 'googlevideo/sabr-stream';
 import { buildSabrFormat, EnabledTrackTypes } from 'googlevideo/utils';
 import { Readable } from 'node:stream';
@@ -162,6 +162,14 @@ export class YouTubeStreamService {
       throw new Error('No SABR streaming URL available');
     }
 
+    this.ensureJavascriptEvaluator();
+    const serverAbrStreamingUrl = await client.session.player?.decipher(
+      streamingData.server_abr_streaming_url,
+    );
+    if (!serverAbrStreamingUrl) {
+      throw new Error('Could not decipher SABR streaming URL');
+    }
+
     const videoPlaybackUstreamerConfig =
       info.player_config?.media_common_config?.media_ustreamer_request_config
         ?.video_playback_ustreamer_config;
@@ -174,7 +182,7 @@ export class YouTubeStreamService {
         streamingData.adaptive_formats?.map((format) =>
           buildSabrFormat(format as Parameters<typeof buildSabrFormat>[0]),
         ) ?? [],
-      serverAbrStreamingUrl: streamingData.server_abr_streaming_url,
+      serverAbrStreamingUrl,
       videoPlaybackUstreamerConfig,
       poToken,
       clientInfo: this.getSabrClientInfo(client),
@@ -255,6 +263,15 @@ export class YouTubeStreamService {
     return {
       clientName,
       clientVersion: innertubeClient.clientVersion,
+    };
+  }
+
+  private ensureJavascriptEvaluator(): void {
+    Platform.shim.eval = (data: Types.BuildScriptResult) => {
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval
+      const evaluate = new Function(data.output) as () => Types.EvalResult;
+
+      return evaluate();
     };
   }
 
