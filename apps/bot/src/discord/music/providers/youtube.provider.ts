@@ -9,7 +9,7 @@ import type {
 } from './music-provider.interface';
 
 const YOUTUBE_URL_PATTERN = regex(
-  '(?:youtube\\.com/watch\\?v=|youtu\\.be/|youtube\\.com/embed/)([a-zA-Z0-9_-]{11})',
+  '(?:youtube\\.com/(?:watch\\?v=|embed/|shorts/)|youtu\\.be/)([a-zA-Z0-9_-]{11})',
 );
 const VIDEO_ID_PATTERN = regex('^([a-zA-Z0-9_-]{11})$');
 
