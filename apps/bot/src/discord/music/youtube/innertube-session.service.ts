@@ -10,6 +10,7 @@ import { JSDOM } from 'jsdom';
 import { Innertube } from 'youtubei.js';
 
 const REQUEST_KEY = 'O43z0dpjhgX20SCx4KAo';
+const BOTGUARD_FETCH_TIMEOUT_MS = 10_000;
 
 type WebPoMinter = Awaited<ReturnType<typeof BG.WebPoMinter.create>>;
 
@@ -150,7 +151,9 @@ export class InnertubeSessionService implements OnModuleInit {
       throw new Error('Innertube attestation interpreter URL missing');
     }
 
-    const bgScriptResponse = await fetch(`https:${interpreterUrl}`);
+    const bgScriptResponse = await fetch(`https:${interpreterUrl}`, {
+      signal: AbortSignal.timeout(BOTGUARD_FETCH_TIMEOUT_MS),
+    });
     if (!bgScriptResponse.ok) {
       throw new Error(
         `Failed to fetch BotGuard interpreter: ${String(bgScriptResponse.status)}`,
@@ -181,6 +184,7 @@ export class InnertubeSessionService implements OnModuleInit {
         'x-user-agent': 'grpc-web-javascript/0.1',
       },
       method: 'POST',
+      signal: AbortSignal.timeout(BOTGUARD_FETCH_TIMEOUT_MS),
     });
     const integrityTokenJson =
       (await integrityTokenResponse.json()) as unknown[];

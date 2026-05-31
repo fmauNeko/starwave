@@ -250,6 +250,7 @@ describe('InnertubeSessionService', () => {
       expect(mockFetch).toHaveBeenNthCalledWith(
         1,
         'https://example.com/interpreter.js',
+        expect.anything(),
       );
       expect(mockBotGuardCreate).toHaveBeenCalledWith({
         globalName: 'BG_VM',
