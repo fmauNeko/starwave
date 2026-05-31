@@ -1,5 +1,7 @@
 import { Logger } from '@nestjs/common';
+import type { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Config } from '../../../config/config.type';
 
 interface InnertubeCreateOptions {
   enable_session_cache?: boolean;
@@ -7,12 +9,14 @@ interface InnertubeCreateOptions {
   po_token?: string;
   user_agent?: string;
   visitor_data?: string;
+  cookie?: string;
 }
 
 interface MockInnertubeClient {
   readonly label: string;
   readonly getAttestationChallenge: ReturnType<typeof vi.fn>;
   readonly session: {
+    readonly logged_in: boolean;
     readonly context: {
       readonly client: {
         readonly visitorData?: string;
@@ -41,20 +45,29 @@ const {
   mockBotGuardCreate,
   mockBuildURL,
   mockFetch,
+  mockExistsSync,
   mockInnertubeCreate,
   mockJSDOMConstructor,
   mockMintAsWebsafeString,
+  mockReadFileSync,
   mockSnapshot,
   mockWebPoMinterCreate,
 } = vi.hoisted(() => ({
   mockBotGuardCreate: vi.fn(),
   mockBuildURL: vi.fn(),
   mockFetch: vi.fn(),
+  mockExistsSync: vi.fn(),
   mockInnertubeCreate: vi.fn(),
   mockJSDOMConstructor: vi.fn(),
   mockMintAsWebsafeString: vi.fn(),
+  mockReadFileSync: vi.fn(),
   mockSnapshot: vi.fn(),
   mockWebPoMinterCreate: vi.fn(),
+}));
+
+vi.mock('node:fs', () => ({
+  existsSync: mockExistsSync,
+  readFileSync: mockReadFileSync,
 }));
 
 vi.mock('youtubei.js', () => ({
@@ -89,6 +102,7 @@ function createClient(
   visitorData: string | undefined,
   label: string,
   bgChallenge: unknown = createChallenge(),
+  loggedIn = false,
 ): MockInnertubeClient {
   const client = visitorData === undefined ? {} : { visitorData };
 
@@ -98,6 +112,7 @@ function createClient(
       bg_challenge: bgChallenge,
     }),
     session: {
+      logged_in: loggedIn,
       context: {
         client,
       },
@@ -170,9 +185,15 @@ function queueSessionBuild(
   visitorData: string,
   sessionPoToken: string,
   label: string,
+  loggedIn = false,
 ): MockInnertubeClient {
   const bootstrapClient = createClient(visitorData, `${label}-bootstrap`);
-  const tokenizedClient = createClient(visitorData, `${label}-tokenized`);
+  const tokenizedClient = createClient(
+    visitorData,
+    `${label}-tokenized`,
+    createChallenge(),
+    loggedIn,
+  );
 
   mockInnertubeCreate
     .mockResolvedValueOnce(bootstrapClient)
@@ -188,6 +209,8 @@ describe('InnertubeSessionService', () => {
   let logSpy: ReturnType<typeof vi.spyOn>;
   let warnSpy: ReturnType<typeof vi.spyOn>;
   let errorSpy: ReturnType<typeof vi.spyOn>;
+  let mockConfigGet: ReturnType<typeof vi.fn>;
+  let configService: ConfigService<Config>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -199,6 +222,12 @@ describe('InnertubeSessionService', () => {
 
     global.fetch = mockFetch;
     mockBuildURL.mockReturnValue('https://jnn-pa.example/GenerateIT');
+    mockExistsSync.mockReturnValue(false);
+    mockReadFileSync.mockReturnValue('');
+    mockConfigGet = vi.fn().mockReturnValue({ cookiesPath: undefined });
+    configService = {
+      get: mockConfigGet,
+    } as unknown as ConfigService<Config>;
     dom = createDom('innertube');
     mockJSDOMConstructor.mockImplementation(function MockJSDOM() {
       return dom;
@@ -214,7 +243,7 @@ describe('InnertubeSessionService', () => {
       .spyOn(Logger.prototype, 'error')
       .mockImplementation(() => undefined);
 
-    service = new InnertubeSessionService();
+    service = new InnertubeSessionService(configService);
   });
 
   afterEach(() => {
@@ -247,6 +276,9 @@ describe('InnertubeSessionService', () => {
         generate_session_locally: true,
         user_agent: 'test-user-agent',
       } satisfies InnertubeCreateOptions);
+      expect(mockInnertubeCreate.mock.calls[0]?.[0]).not.toHaveProperty(
+        'cookie',
+      );
       expect(mockFetch).toHaveBeenNthCalledWith(
         1,
         'https://example.com/interpreter.js',
@@ -282,16 +314,123 @@ describe('InnertubeSessionService', () => {
         user_agent: 'test-user-agent',
         visitor_data: 'visitor-data-1',
       } satisfies InnertubeCreateOptions);
+      expect(mockInnertubeCreate.mock.calls[1]?.[0]).not.toHaveProperty(
+        'cookie',
+      );
       expect(service.getClient()).toBe(client);
       expect(service.getSessionPoToken()).toBe('session-po-token-1');
       expect(logSpy).toHaveBeenCalledWith(
-        expect.stringMatching(/^innertube\.session\.init \[\d+ms\]$/),
+        expect.stringMatching(
+          /^innertube\.session\.init \[\d+ms, logged_in=false\]$/,
+        ),
       );
       expect(logSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('session-po-token-1'),
       );
       expect(logSpy).not.toHaveBeenCalledWith(
         expect.stringContaining('visitor-data-1'),
+      );
+    });
+
+    it('passes a parsed cookies.txt header to both Innertube clients when cookiesPath is readable', async () => {
+      mockConfigGet.mockReturnValue({ cookiesPath: 'D:/cookies.txt' });
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(
+        [
+          '# Netscape HTTP Cookie File',
+          '',
+          '#HttpOnly_.youtube.com\tTRUE\t/\tTRUE\t0\t__Secure-3PSID\tabc',
+          '.google.com\tTRUE\t/\tTRUE\t0\tSAPISID\tgoogle-token',
+          '.example.com\tTRUE\t/\tFALSE\t0\tIGNORED\tnope',
+          '.youtube.com\tTRUE\t/\tFALSE\t0\tTOO_SHORT',
+        ].join('\n'),
+      );
+      queueSessionBuild(
+        'visitor-data-1',
+        'session-po-token-1',
+        'authenticated',
+        true,
+      );
+
+      await service.onModuleInit();
+
+      const expectedCookie = '__Secure-3PSID=abc; SAPISID=google-token';
+      expect(mockConfigGet).toHaveBeenCalledWith('youtube', { infer: true });
+      expect(mockReadFileSync).toHaveBeenCalledWith('D:/cookies.txt', 'utf8');
+      expect(mockInnertubeCreate.mock.calls[0]?.[0]).toEqual(
+        expect.objectContaining({ cookie: expectedCookie }),
+      );
+      expect(mockInnertubeCreate.mock.calls[1]?.[0]).toEqual(
+        expect.objectContaining({ cookie: expectedCookie }),
+      );
+      expect(expectedCookie).not.toContain('IGNORED=nope');
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringMatching(
+          /^innertube\.session\.init \[\d+ms, logged_in=true\]$/,
+        ),
+      );
+    });
+
+    it('falls back to anonymous when cookiesPath is set but the file is missing', async () => {
+      mockConfigGet.mockReturnValue({ cookiesPath: 'D:/missing-cookies.txt' });
+      mockExistsSync.mockReturnValue(false);
+      queueSessionBuild('visitor-data-1', 'session-po-token-1', 'missing');
+
+      await service.onModuleInit();
+
+      expect(mockReadFileSync).not.toHaveBeenCalled();
+      expect(mockInnertubeCreate.mock.calls[0]?.[0]).not.toHaveProperty(
+        'cookie',
+      );
+      expect(mockInnertubeCreate.mock.calls[1]?.[0]).not.toHaveProperty(
+        'cookie',
+      );
+    });
+
+    it('falls back to anonymous when cookies.txt has no usable YouTube or Google cookies', async () => {
+      mockConfigGet.mockReturnValue({ cookiesPath: 'D:/empty-cookies.txt' });
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockReturnValue(
+        [
+          '',
+          '# comment',
+          '.example.com\tTRUE\t/\tFALSE\t0\tSID\tuntrusted',
+          '.youtube.com\tTRUE\t/\tFALSE\t0\tMALFORMED',
+        ].join('\n'),
+      );
+      queueSessionBuild('visitor-data-1', 'session-po-token-1', 'empty');
+
+      await service.onModuleInit();
+
+      expect(mockInnertubeCreate.mock.calls[0]?.[0]).not.toHaveProperty(
+        'cookie',
+      );
+      expect(mockInnertubeCreate.mock.calls[1]?.[0]).not.toHaveProperty(
+        'cookie',
+      );
+    });
+
+    it('warns and falls back to anonymous when cookies.txt cannot be read', async () => {
+      const readFailure = new Error('permission denied');
+      mockConfigGet.mockReturnValue({
+        cookiesPath: 'D:/unreadable-cookies.txt',
+      });
+      mockExistsSync.mockReturnValue(true);
+      mockReadFileSync.mockImplementation(() => {
+        throw readFailure;
+      });
+      queueSessionBuild('visitor-data-1', 'session-po-token-1', 'unreadable');
+
+      await service.onModuleInit();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'innertube.cookies.read_failed: permission denied',
+      );
+      expect(mockInnertubeCreate.mock.calls[0]?.[0]).not.toHaveProperty(
+        'cookie',
+      );
+      expect(mockInnertubeCreate.mock.calls[1]?.[0]).not.toHaveProperty(
+        'cookie',
       );
     });
 
@@ -443,7 +582,9 @@ describe('InnertubeSessionService', () => {
       expect(service.getClient()).toBe(refreshedClient);
       expect(logSpy).toHaveBeenCalledTimes(2);
       expect(logSpy).toHaveBeenLastCalledWith(
-        expect.stringMatching(/^innertube\.session\.init \[\d+ms\]$/),
+        expect.stringMatching(
+          /^innertube\.session\.init \[\d+ms, logged_in=false\]$/,
+        ),
       );
     });
 
