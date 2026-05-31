@@ -4,8 +4,9 @@ ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME/bin:$PATH
 WORKDIR /app
 
+COPY package.json ./
 RUN corepack enable && \
-  corepack prepare pnpm@latest --activate
+  corepack prepare --activate
 
 # ---
 FROM base AS prepare
@@ -53,4 +54,4 @@ COPY --from=prod-deps --chown=node:node /dependencies/node_modules ./node_module
 RUN chown -R node:node /app
 USER node
 EXPOSE 3000
-CMD ["pnpm", "run", "start:prod"]
+CMD ["node", "dist/main"]
