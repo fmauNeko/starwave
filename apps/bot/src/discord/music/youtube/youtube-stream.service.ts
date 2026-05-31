@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { StreamType } from '@discordjs/voice';
-import { Constants, Platform, type Types } from 'youtubei.js';
+import { Constants, Platform, YTNodes, type Types } from 'youtubei.js';
 import { SabrStream } from 'googlevideo/sabr-stream';
+import type { ReloadPlaybackContext } from 'googlevideo/protos';
 import { buildSabrFormat, EnabledTrackTypes } from 'googlevideo/utils';
 import { Readable } from 'node:stream';
 import { regex } from 'arkregex';
@@ -61,6 +62,11 @@ interface SearchResultLike {
 interface SearchResultsLike {
   videos?: SearchResultLike[];
   results?: SearchResultLike[];
+}
+
+interface ReloadedSabrConfig {
+  serverAbrStreamingUrl: string | undefined;
+  videoPlaybackUstreamerConfig: string | undefined;
 }
 
 export interface VideoMetadata {
@@ -188,6 +194,15 @@ export class YouTubeStreamService {
       clientInfo: this.getSabrClientInfo(client),
     });
 
+    sabrStream.on('reloadPlayerResponse', (reloadPlaybackContext) => {
+      void this.handleSabrReload(
+        client,
+        videoId,
+        sabrStream,
+        reloadPlaybackContext,
+      );
+    });
+
     const { audioStream } = await sabrStream.start({
       enabledTrackTypes: EnabledTrackTypes.AUDIO_ONLY,
       preferOpus: true,
@@ -201,6 +216,71 @@ export class YouTubeStreamService {
     );
 
     return { source: nodeStream, streamType: StreamType.WebmOpus };
+  }
+
+  private async handleSabrReload(
+    client: NonNullable<ReturnType<InnertubeSessionService['getClient']>>,
+    videoId: string,
+    sabrStream: SabrStream,
+    reloadPlaybackContext: ReloadPlaybackContext,
+  ): Promise<void> {
+    this.logger.warn(`youtube.stream.reload: ${videoId}`);
+
+    try {
+      const { serverAbrStreamingUrl, videoPlaybackUstreamerConfig } =
+        await this.reloadSabrConfig(client, videoId, reloadPlaybackContext);
+
+      if (serverAbrStreamingUrl && videoPlaybackUstreamerConfig) {
+        sabrStream.setStreamingURL(serverAbrStreamingUrl);
+        sabrStream.setUstreamerConfig(videoPlaybackUstreamerConfig);
+        this.logger.log(`youtube.stream.reloaded: ${videoId}`);
+        return;
+      }
+
+      this.logger.error(
+        `youtube.stream.reload.failed: ${videoId}`,
+        'missing url or config',
+      );
+    } catch (error: unknown) {
+      this.logger.error(
+        `youtube.stream.reload.failed: ${videoId}`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  private async reloadSabrConfig(
+    client: NonNullable<ReturnType<InnertubeSessionService['getClient']>>,
+    videoId: string,
+    reloadPlaybackContext: ReloadPlaybackContext,
+  ): Promise<ReloadedSabrConfig> {
+    const watchEndpoint = new YTNodes.NavigationEndpoint({
+      watchEndpoint: { videoId },
+    });
+    const playerResponse = (await watchEndpoint.call(client.actions, {
+      playbackContext: {
+        adPlaybackContext: { pyv: true },
+        contentPlaybackContext: {
+          vis: 0,
+          splay: false,
+          lactMilliseconds: '-1',
+          signatureTimestamp: client.session.player?.signature_timestamp,
+        },
+        reloadPlaybackContext,
+      },
+      contentCheckOk: true,
+      racyCheckOk: true,
+      parse: true,
+    })) as VideoInfoLike;
+
+    const serverAbrStreamingUrl = await client.session.player?.decipher(
+      playerResponse.streaming_data?.server_abr_streaming_url,
+    );
+    const videoPlaybackUstreamerConfig =
+      playerResponse.player_config?.media_common_config
+        ?.media_ustreamer_request_config?.video_playback_ustreamer_config;
+
+    return { serverAbrStreamingUrl, videoPlaybackUstreamerConfig };
   }
 
   private getClient(): NonNullable<

@@ -47,6 +47,7 @@ interface MockSearchResults {
 }
 
 interface MockInnertubeClient {
+  actions: Record<string, never>;
   getInfo: ReturnType<typeof vi.fn>;
   search: ReturnType<typeof vi.fn>;
   session: {
@@ -58,28 +59,79 @@ interface MockInnertubeClient {
     };
     player: {
       decipher: ReturnType<typeof vi.fn>;
+      signature_timestamp: number;
     };
   };
 }
 
-const { MockSabrStream, mockBuildSabrFormat, mockSabrStart, mockSabrConfigs } =
-  vi.hoisted(() => {
-    const mockSabrConfigs: unknown[] = [];
-    const mockSabrStart = vi.fn();
+interface MockSabrStreamInstance {
+  on: ReturnType<typeof vi.fn>;
+  start: ReturnType<typeof vi.fn>;
+  setStreamingURL: ReturnType<typeof vi.fn>;
+  setUstreamerConfig: ReturnType<typeof vi.fn>;
+  handlers: Map<string, (reloadPlaybackContext: unknown) => void>;
+}
 
-    return {
-      mockBuildSabrFormat: vi.fn((format: unknown) => ({ format })),
-      mockSabrStart,
-      mockSabrConfigs,
-      MockSabrStream: vi.fn(function MockSabrStream(
-        this: { start: typeof mockSabrStart },
-        config: unknown,
-      ) {
-        mockSabrConfigs.push(config);
-        this.start = mockSabrStart;
-      }),
-    };
-  });
+const {
+  MockSabrStream,
+  MockNavigationEndpoint,
+  mockBuildSabrFormat,
+  mockSabrStart,
+  mockSabrConfigs,
+  mockSabrInstances,
+  mockWatchEndpointCall,
+} = vi.hoisted(() => {
+  const mockSabrConfigs: unknown[] = [];
+  const mockSabrInstances: MockSabrStreamInstance[] = [];
+  const mockSabrStart = vi.fn();
+  const mockWatchEndpointCall = vi.fn();
+
+  return {
+    mockBuildSabrFormat: vi.fn((format: unknown) => ({ format })),
+    mockSabrStart,
+    mockSabrConfigs,
+    mockSabrInstances,
+    mockWatchEndpointCall,
+    MockNavigationEndpoint: vi.fn(function MockNavigationEndpoint(this: {
+      call: typeof mockWatchEndpointCall;
+    }) {
+      this.call = mockWatchEndpointCall;
+    }),
+    MockSabrStream: vi.fn(function MockSabrStream(
+      this: MockSabrStreamInstance,
+      config: unknown,
+    ) {
+      mockSabrConfigs.push(config);
+      this.handlers = new Map<
+        string,
+        (reloadPlaybackContext: unknown) => void
+      >();
+      this.on = vi.fn(
+        (event: string, handler: (reloadPlaybackContext: unknown) => void) => {
+          this.handlers.set(event, handler);
+        },
+      );
+      this.start = mockSabrStart;
+      this.setStreamingURL = vi.fn();
+      this.setUstreamerConfig = vi.fn();
+      mockSabrInstances.push(this);
+    }),
+  };
+});
+
+vi.mock('youtubei.js', () => ({
+  Constants: {
+    CLIENT_NAME_IDS: {
+      WEB: '1',
+    },
+  },
+  Platform: {
+    shim: {},
+  },
+  YTNodes: {
+    NavigationEndpoint: MockNavigationEndpoint,
+  },
+}));
 
 vi.mock('googlevideo/sabr-stream', () => ({
   SabrStream: MockSabrStream,
@@ -133,6 +185,7 @@ function createAudioStream(): ReadableStream<Uint8Array> {
 
 function createClient(): MockInnertubeClient {
   return {
+    actions: {},
     getInfo: vi.fn().mockResolvedValue(createInfo()),
     search: vi.fn().mockResolvedValue({
       videos: [
@@ -153,6 +206,7 @@ function createClient(): MockInnertubeClient {
       },
       player: {
         decipher: vi.fn((url: string) => `${url}&deciphered=1`),
+        signature_timestamp: 12345,
       },
     },
   };
@@ -179,6 +233,8 @@ describe('YouTubeStreamService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSabrConfigs.length = 0;
+    mockSabrInstances.length = 0;
+    mockWatchEndpointCall.mockResolvedValue(createInfo());
     client = createClient();
     session = createSession(client);
     service = new YouTubeStreamService(session);
@@ -454,6 +510,105 @@ describe('YouTubeStreamService', () => {
           /^youtube\.stream\.acquired: dQw4w9WgXcQ \[\d+ms\]$/,
         ),
       );
+      audioInfo.source.destroy();
+    });
+
+    it('registers a reloadPlayerResponse handler before starting SABR', async () => {
+      mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
+
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+
+      expect(mockSabrInstances[0]?.on).toHaveBeenCalledWith(
+        'reloadPlayerResponse',
+        expect.any(Function),
+      );
+      expect(mockSabrInstances[0]?.on.mock.invocationCallOrder[0]).toBeLessThan(
+        mockSabrStart.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY,
+      );
+      audioInfo.source.destroy();
+    });
+
+    it('updates SABR streaming URL and ustreamer config after a successful player reload', async () => {
+      mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
+      mockWatchEndpointCall.mockResolvedValueOnce(
+        createInfo({
+          streaming_data: {
+            adaptive_formats: [{ itag: 251, bitrate: 128_000 }],
+            server_abr_streaming_url:
+              'https://rr.googlevideo.com/videoplayback/fresh-sabr',
+          },
+          player_config: {
+            media_common_config: {
+              media_ustreamer_request_config: {
+                video_playback_ustreamer_config: 'fresh-ustreamer-config',
+              },
+            },
+          },
+        }),
+      );
+      const reloadPlaybackContext = { reload: true };
+
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+      mockSabrInstances[0]?.handlers.get('reloadPlayerResponse')?.(
+        reloadPlaybackContext,
+      );
+
+      await vi.waitFor(() => {
+        expect(mockSabrInstances[0]?.setStreamingURL).toHaveBeenCalledWith(
+          'https://rr.googlevideo.com/videoplayback/fresh-sabr&deciphered=1',
+        );
+      });
+      expect(mockSabrInstances[0]?.setUstreamerConfig).toHaveBeenCalledWith(
+        'fresh-ustreamer-config',
+      );
+      expect(MockNavigationEndpoint).toHaveBeenCalledWith({
+        watchEndpoint: { videoId: 'dQw4w9WgXcQ' },
+      });
+      expect(mockWatchEndpointCall).toHaveBeenCalledWith(client.actions, {
+        playbackContext: {
+          adPlaybackContext: { pyv: true },
+          contentPlaybackContext: {
+            vis: 0,
+            splay: false,
+            lactMilliseconds: '-1',
+            signatureTimestamp: 12345,
+          },
+          reloadPlaybackContext,
+        },
+        contentCheckOk: true,
+        racyCheckOk: true,
+        parse: true,
+      });
+      expect(warnSpy).toHaveBeenCalledWith(
+        'youtube.stream.reload: dQw4w9WgXcQ',
+      );
+      expect(logSpy).toHaveBeenCalledWith(
+        'youtube.stream.reloaded: dQw4w9WgXcQ',
+      );
+      audioInfo.source.destroy();
+    });
+
+    it('logs and keeps the process alive when a player reload has no deciphered URL', async () => {
+      mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
+      client.session.player.decipher
+        .mockReturnValueOnce(
+          'https://rr.googlevideo.com/videoplayback/sabr&deciphered=1',
+        )
+        .mockReturnValueOnce(undefined);
+
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+      expect(() => {
+        mockSabrInstances[0]?.handlers.get('reloadPlayerResponse')?.({});
+      }).not.toThrow();
+
+      await vi.waitFor(() => {
+        expect(errorSpy).toHaveBeenCalledWith(
+          'youtube.stream.reload.failed: dQw4w9WgXcQ',
+          'missing url or config',
+        );
+      });
+      expect(mockSabrInstances[0]?.setStreamingURL).not.toHaveBeenCalled();
+      expect(mockSabrInstances[0]?.setUstreamerConfig).not.toHaveBeenCalled();
       audioInfo.source.destroy();
     });
 
