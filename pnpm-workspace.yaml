@@ -8,6 +8,7 @@ allowBuilds:
   '@suites/di.nestjs': true
   '@suites/doubles.vitest': true
   '@swc/core': true
+  canvas: true
   esbuild: true
   necord: true
   unrs-resolver: true
