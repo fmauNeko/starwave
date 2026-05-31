@@ -1,6 +1,7 @@
 FROM node:lts-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14 AS base
 
-ENV PNPM_HOME=/usr/local/bin
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME/bin:$PATH
 WORKDIR /app
 
 RUN corepack enable && \
