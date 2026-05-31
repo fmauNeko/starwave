@@ -1,4 +1,8 @@
-import { AudioPlayerStatus, type AudioResource } from '@discordjs/voice';
+import {
+  AudioPlayerStatus,
+  StreamType,
+  type AudioResource,
+} from '@discordjs/voice';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoiceService } from '../voice/voice.service';
@@ -33,9 +37,8 @@ describe('MusicService', () => {
       canHandle: vi.fn().mockReturnValue(true),
       fetchTrackInfo: vi.fn().mockResolvedValue(mockTrack),
       getAudioInfo: vi.fn().mockResolvedValue({
-        url: 'https://example.com/audio.webm',
-        codec: 'opus',
-        container: 'webm',
+        source: 'https://mock.audio.url/stream',
+        streamType: StreamType.WebmOpus,
       }),
       search: vi.fn().mockResolvedValue(mockTrack),
     };
@@ -79,7 +82,11 @@ describe('MusicService', () => {
         duration: 180,
         requestedBy: 'user#1234',
       });
-      expect(vi.mocked(voiceService.play)).toHaveBeenCalled();
+      expect(vi.mocked(voiceService.play)).toHaveBeenCalledWith(
+        'guild-123',
+        'https://mock.audio.url/stream',
+        { inputType: StreamType.WebmOpus },
+      );
     });
 
     it('uses provider to fetch track info', async () => {

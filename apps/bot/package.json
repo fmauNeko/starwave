@@ -33,11 +33,16 @@
     "@snazzah/davey": "^0.1.9",
     "arkregex": "^0.0.5",
     "arktype": "^2.1.29",
+    "bgutils-js": "3.2.0",
+    "canvas": "^3.2.3",
     "discord-api-types": "^0.38.0",
     "discord.js": "^14.25.1",
+    "googlevideo": "4.0.4",
+    "jsdom": "28.1.0",
     "necord": "^6.11.2",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "youtubei.js": "17.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.5",
@@ -52,6 +57,7 @@
     "@swc/cli": "0.8.1",
     "@swc/core": "1.15.40",
     "@types/express": "5.0.6",
+    "@types/jsdom": "28.0.3",
     "@types/node": "25.9.1",
     "@types/supertest": "7.2.0",
     "@vitest/coverage-v8": "4.1.7",
@@ -69,6 +75,7 @@
     "ts-loader": "9.5.7",
     "ts-node": "10.9.2",
     "tsconfig-paths": "4.2.0",
+    "tsx": "4.22.3",
     "typescript": "6.0.3",
     "typescript-eslint": "8.60.0",
     "unplugin-swc": "1.5.9",
