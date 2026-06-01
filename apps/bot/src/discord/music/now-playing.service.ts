@@ -269,7 +269,7 @@ export class NowPlayingService {
       channel !== null &&
       typeof channel === 'object' &&
       'send' in channel &&
-      typeof (channel as { send: unknown }).send === 'function' &&
+      typeof channel.send === 'function' &&
       'isSendable' in channel &&
       typeof (channel as { isSendable: unknown }).isSendable === 'function' &&
       (channel as { isSendable: () => boolean }).isSendable()

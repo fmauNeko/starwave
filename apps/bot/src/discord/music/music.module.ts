@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DiscoveryModule } from '@nestjs/core';
 import { VoiceModule } from '../voice/voice.module';
+import { InnertubeSessionService } from './youtube/innertube-session.service';
+import { YouTubeStreamService } from './youtube/youtube-stream.service';
 import { MusicCommands } from './music.commands';
 import { MusicService } from './music.service';
 import { NowPlayingComponents } from './now-playing.components';
@@ -14,6 +16,8 @@ import { YtDlpService } from './yt-dlp.service';
   imports: [ConfigModule, VoiceModule, DiscoveryModule],
   providers: [
     YtDlpService,
+    InnertubeSessionService,
+    YouTubeStreamService,
     YouTubeProvider,
     MusicProviderDiscovery,
     MusicService,

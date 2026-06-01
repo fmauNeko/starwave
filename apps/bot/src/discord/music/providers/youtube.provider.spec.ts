@@ -1,50 +1,44 @@
+import { StreamType } from '@discordjs/voice';
+import { Readable } from 'node:stream';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
-  YtDlpAudioInfo,
-  YtDlpService,
-  YtDlpVideoInfo,
-} from '../yt-dlp.service';
+  VideoMetadata,
+  YouTubeStreamService,
+} from '../youtube/youtube-stream.service';
 import { YouTubeProvider } from './youtube.provider';
 
-function createMockYtDlpService(
-  overrides: Partial<YtDlpService> = {},
-): YtDlpService {
+function createMockStreamService(
+  overrides: Partial<YouTubeStreamService> = {},
+): YouTubeStreamService {
   return {
-    onModuleInit: vi.fn().mockResolvedValue(undefined),
-    checkForUpdates: vi.fn().mockResolvedValue(undefined),
-    getVideoInfo: vi.fn().mockResolvedValue({
+    getMetadata: vi.fn().mockResolvedValue({
       title: 'Test Video',
       duration: 180,
       thumbnail: 'https://example.com/thumb.jpg',
       url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    } satisfies YtDlpVideoInfo),
-    getAudioUrl: vi
-      .fn()
-      .mockResolvedValue('https://example.com/audio.webm?token=abc'),
-    getAudioInfo: vi.fn().mockResolvedValue({
-      url: 'https://example.com/audio.webm?token=abc',
-      codec: 'opus',
-      container: 'webm',
-    } satisfies YtDlpAudioInfo),
-    forceUpdate: vi.fn().mockResolvedValue(undefined),
+    } satisfies VideoMetadata),
     search: vi.fn().mockResolvedValue({
       title: 'Search Result Video',
       duration: 240,
       thumbnail: 'https://example.com/search-thumb.jpg',
       url: 'https://www.youtube.com/watch?v=searchResult',
-    } satisfies YtDlpVideoInfo),
+    } satisfies VideoMetadata),
+    getAudioStream: vi.fn().mockResolvedValue({
+      source: Readable.from([]),
+      streamType: StreamType.WebmOpus,
+    }),
     ...overrides,
-  } as unknown as YtDlpService;
+  } as unknown as YouTubeStreamService;
 }
 
 describe('YouTubeProvider', () => {
   let provider: YouTubeProvider;
-  let mockYtDlpService: YtDlpService;
+  let mockStreamService: YouTubeStreamService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockYtDlpService = createMockYtDlpService();
-    provider = new YouTubeProvider(mockYtDlpService);
+    mockStreamService = createMockStreamService();
+    provider = new YouTubeProvider(mockStreamService);
     provider.onModuleInit();
   });
 
@@ -94,65 +88,50 @@ describe('YouTubeProvider', () => {
         thumbnail: 'https://example.com/thumb.jpg',
         requestedBy: 'user#1234',
       });
-      expect(mockYtDlpService.getVideoInfo).toHaveBeenCalledWith(
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      );
+      expect(mockStreamService.getMetadata).toHaveBeenCalledWith('dQw4w9WgXcQ');
     });
 
-    it('normalizes video ID to canonical URL', async () => {
+    it('normalizes video ID to canonical URL via getMetadata', async () => {
       await provider.fetchTrackInfo('dQw4w9WgXcQ', 'user#1234');
 
-      expect(mockYtDlpService.getVideoInfo).toHaveBeenCalledWith(
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      );
+      expect(mockStreamService.getMetadata).toHaveBeenCalledWith('dQw4w9WgXcQ');
     });
 
     it('throws error for invalid URL', async () => {
       await expect(
         provider.fetchTrackInfo('https://example.com/not-youtube', 'user#1234'),
       ).rejects.toThrow('Invalid YouTube URL');
-      expect(mockYtDlpService.getVideoInfo).not.toHaveBeenCalled();
+      expect(mockStreamService.getMetadata).not.toHaveBeenCalled();
     });
   });
 
   describe('getAudioInfo', () => {
-    it('returns audio info for valid video URL', async () => {
+    it('delegates to YouTubeStreamService.getAudioStream and returns Readable source', async () => {
       const audioInfo = await provider.getAudioInfo(
         'https://youtube.com/watch?v=dQw4w9WgXcQ',
       );
 
-      expect(audioInfo).toEqual({
-        url: 'https://example.com/audio.webm?token=abc',
-        codec: 'opus',
-        container: 'webm',
-      });
-      expect(mockYtDlpService.getAudioInfo).toHaveBeenCalledWith(
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      expect(audioInfo.source).toBeInstanceOf(Readable);
+      expect(audioInfo.streamType).toBe(StreamType.WebmOpus);
+      expect(mockStreamService.getAudioStream).toHaveBeenCalledWith(
+        'dQw4w9WgXcQ',
       );
     });
 
-    it('normalizes video ID to canonical URL', async () => {
-      await provider.getAudioInfo('dQw4w9WgXcQ');
-
-      expect(mockYtDlpService.getAudioInfo).toHaveBeenCalledWith(
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      );
-    });
-
-    it('throws error for invalid URL', async () => {
+    it('throws error for invalid URL without calling stream service', async () => {
       await expect(
         provider.getAudioInfo('https://example.com/not-youtube'),
       ).rejects.toThrow('Invalid YouTube URL');
-      expect(mockYtDlpService.getAudioInfo).not.toHaveBeenCalled();
+      expect(mockStreamService.getAudioStream).not.toHaveBeenCalled();
     });
 
-    it('propagates yt-dlp errors', async () => {
-      vi.mocked(mockYtDlpService.getAudioInfo).mockRejectedValueOnce(
-        new Error('yt-dlp exited with code 1'),
+    it('propagates stream service errors', async () => {
+      vi.mocked(mockStreamService.getAudioStream).mockRejectedValueOnce(
+        new Error('SABR stream failed'),
       );
 
       await expect(provider.getAudioInfo('dQw4w9WgXcQ')).rejects.toThrow(
-        'yt-dlp exited with code 1',
+        'SABR stream failed',
       );
     });
   });
@@ -176,14 +155,14 @@ describe('YouTubeProvider', () => {
       });
     });
 
-    it('delegates search to yt-dlp service', async () => {
+    it('delegates search to YouTubeStreamService', async () => {
       await provider.search('my search query', 'user#1234');
 
-      expect(mockYtDlpService.search).toHaveBeenCalledWith('my search query');
+      expect(mockStreamService.search).toHaveBeenCalledWith('my search query');
     });
 
-    it('propagates yt-dlp search errors', async () => {
-      vi.mocked(mockYtDlpService.search).mockRejectedValueOnce(
+    it('propagates stream service search errors', async () => {
+      vi.mocked(mockStreamService.search).mockRejectedValueOnce(
         new Error('No search results found'),
       );
 

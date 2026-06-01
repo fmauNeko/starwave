@@ -1,10 +1,12 @@
-FROM node:lts-alpine@sha256:4f696fbf39f383c1e486030ba6b289a5d9af541642fc78ab197e584a113b9c03 AS base
+FROM node:lts-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14 AS base
 
-ENV PNPM_HOME=/usr/local/bin
+ENV PNPM_HOME=/pnpm
+ENV PATH=$PNPM_HOME/bin:$PATH
 WORKDIR /app
 
+COPY package.json ./
 RUN corepack enable && \
-  corepack prepare pnpm@latest --activate
+  corepack prepare --activate
 
 # ---
 FROM base AS prepare
@@ -17,7 +19,7 @@ RUN turbo prune bot --docker
 # ---
 FROM base AS prod-deps
 
-RUN apk add --no-cache curl make gcc g++ python3
+RUN apk add --no-cache curl build-base python3 pango-dev
 
 COPY --from=prepare /app/out/json/ .
 RUN pnpm --filter=./apps/bot deploy --legacy --prod /dependencies && \
@@ -30,10 +32,10 @@ RUN curl -sf https://gobinaries.com/tj/node-prune | sh && \
 # ---
 FROM base AS builder
 
-RUN apk add --no-cache make gcc g++ python3
+RUN apk add --no-cache build-base python3 pango-dev
 
 COPY --from=prepare /app/out/json/ .
-RUN pnpm install --frozen-lockfile
+RUN pnpm ci
 
 COPY --from=prepare /app/out/full/ .
 RUN pnpm run build
@@ -43,7 +45,7 @@ FROM base AS runner
 
 ENV NODE_ENV=production
 
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg pango
 
 COPY --from=builder --chown=node:node /app/apps/bot/package.json ./
 COPY --from=builder --chown=node:node /app/apps/bot/dist ./dist
@@ -52,4 +54,4 @@ COPY --from=prod-deps --chown=node:node /dependencies/node_modules ./node_module
 RUN chown -R node:node /app
 USER node
 EXPOSE 3000
-CMD ["pnpm", "run", "start:prod"]
+CMD ["node", "dist/main"]
