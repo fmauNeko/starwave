@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.3.0](https://github.com/fmauNeko/starwave/compare/bot@v1.2.0...bot@v1.3.0) (2026-06-01)
+
+
+### Features
+
+* **music:** add InnertubeSessionService with in-process PoToken ([d308da2](https://github.com/fmauNeko/starwave/commit/d308da269fa83b53a42af0e6d21afdad61e515f2))
+* **music:** add YouTubeStreamService (SABR audio acquisition) ([24f423a](https://github.com/fmauNeko/starwave/commit/24f423a3891aa3e94ffdbd31a52aa475d3b96ce4))
+* **music:** authenticate Innertube with cookies to bypass LOGIN_REQUIRED ([9437c00](https://github.com/fmauNeko/starwave/commit/9437c0047571af80937efada3fad374be30417a2))
+* **music:** handle SABR reloadPlayerResponse to keep long streams alive ([78c3e48](https://github.com/fmauNeko/starwave/commit/78c3e4897e520be7569803b845f84afea616b5d9))
+* **music:** migrate youtube from yt-dlp to youtubei.js ([df52ab7](https://github.com/fmauNeko/starwave/commit/df52ab792cabc30092e9bd8e67e50ba69c980219))
+* **music:** stream YouTube via youtubei.js, keep yt-dlp dormant ([1d76f06](https://github.com/fmauNeko/starwave/commit/1d76f06a8d51cbd7b04081208ed65d00f80a88b0))
+* **music:** switch to using InnerTube and SABR for Youtube ([57e9e48](https://github.com/fmauNeko/starwave/commit/57e9e4824c331bce935264952e02031761c106e4))
+
+
+### Bug Fixes
+
+* **bot:** remove deprecated baseUrl form tsconfig ([4aa4562](https://github.com/fmauNeko/starwave/commit/4aa4562fe05ee435b266a98c12454d5947df66c1))
+* **deps:** align jsdom with @types/jsdom v28 ([7d9b604](https://github.com/fmauNeko/starwave/commit/7d9b604d89870c23fc5b9905b99be9fcf9b16ead))
+* **deps:** update dependency jsdom to v29 ([fcdb11e](https://github.com/fmauNeko/starwave/commit/fcdb11e9205252c7483288304a5062b75d13c588))
+* **deps:** update dependency jsdom to v29 ([e586918](https://github.com/fmauNeko/starwave/commit/e586918b14b7c43a794f2ecda9089e2ba2e173bc))
+* **docker:** fix wrong pnpm version being used, skip corepack in runner ([2c41cf0](https://github.com/fmauNeko/starwave/commit/2c41cf0d6b2eb528afb1958d48348b017c780dbf))
+* **music:** add timeout to BotGuard fetches to prevent hung session refresh ([0197e9c](https://github.com/fmauNeko/starwave/commit/0197e9c3f95b46193685d73a6044235a9336be2d))
+* **music:** decipher SABR streaming URL to prevent 403 on media segments ([6cd94fc](https://github.com/fmauNeko/starwave/commit/6cd94fc8c5edfbb749b3211badba136e2ab7db37))
+* **music:** match YouTube Shorts URLs in provider pattern ([721e275](https://github.com/fmauNeko/starwave/commit/721e27543d8a8886a77e41002f50a3222eb3649c))
+
 ## [1.2.0](https://github.com/fmauNeko/starwave/compare/bot@v1.1.0...bot@v1.2.0) (2026-02-25)
 
 
