@@ -60,7 +60,7 @@
     "@types/jsdom": "28.0.3",
     "@types/node": "25.9.3",
     "@types/supertest": "7.2.0",
-    "@vitest/coverage-v8": "4.1.8",
+    "@vitest/coverage-v8": "4.1.9",
     "@vitest/eslint-plugin": "1.6.20",
     "eslint": "10.5.0",
     "eslint-config-prettier": "10.1.8",
@@ -79,6 +79,6 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.61.0",
     "unplugin-swc": "1.5.9",
-    "vitest": "4.1.8"
+    "vitest": "4.1.9"
   }
 }
