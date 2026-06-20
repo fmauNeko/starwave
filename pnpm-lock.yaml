@@ -93,8 +93,8 @@ importers:
         specifier: ^0.1.9
         version: 0.1.11(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)
       arkregex:
-        specifier: ^0.0.5
-        version: 0.0.5
+        specifier: ^0.0.6
+        version: 0.0.6
       arktype:
         specifier: ^2.1.29
         version: 2.2.1
@@ -2554,9 +2554,6 @@ packages:
 
   argparse@2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
-
-  arkregex@0.0.5:
-    resolution: {integrity: sha512-ncYjBdLlh5/QnVsAA8De16Tc9EqmYM7y/WU9j+236KcyYNUXogpz3sC4ATIZYzzLxwI+0sEOaQLEmLmRleaEXw==}
 
   arkregex@0.0.6:
     resolution: {integrity: sha512-9mvuMKQuibfWhBrsNYhsKhNb6k9oEHoAJ/FvDiqe8h+E9Siwe0/cro1WVOGgpajXQ9ZHd24yCOf2k35Q/QqUQw==}
@@ -8191,10 +8188,6 @@ snapshots:
       sprintf-js: 1.0.3
 
   argparse@2.0.1: {}
-
-  arkregex@0.0.5:
-    dependencies:
-      '@ark/util': 0.56.0
 
   arkregex@0.0.6:
     dependencies:
