@@ -31,7 +31,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/schedule": "^6.1.0",
     "@snazzah/davey": "^0.1.9",
-    "arkregex": "^0.0.5",
+    "arkregex": "^0.0.6",
     "arktype": "^2.1.29",
     "bgutils-js": "3.2.0",
     "canvas": "^3.2.3",
