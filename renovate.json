@@ -9,8 +9,5 @@
     ":automergeDigest"
   ],
   "baseBranchPatterns": ["develop"],
-  "ignorePaths": ["charts/starwave/values.yaml"],
-  "statusCheckNames": {
-    "minimumReleaseAge": null
-  }
+  "ignorePaths": ["charts/starwave/values.yaml"]
 }
