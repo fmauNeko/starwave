@@ -42,7 +42,7 @@
     "necord": "^6.11.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "youtubei.js": "17.1.0"
+    "youtubei.js": "17.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.5",
