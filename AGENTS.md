@@ -2,16 +2,16 @@
 
 ## Project Snapshot
 
-| Aspect      | Details                                            |
-| ----------- | -------------------------------------------------- |
-| Type        | Turborepo + pnpm workspaces monorepo               |
-| Structure   | `apps/*` (deployables), `packages/*` (shared libs) |
-| Active Apps | `apps/bot` - NestJS Discord bot                    |
-| Stack       | TypeScript (ESM), Node >=18, pnpm 10+              |
-| Testing     | Vitest + SWC                                       |
-| Linting     | ESLint 9 flat config + Prettier                    |
-| Commits     | Conventional Commits via Husky + Commitlint        |
-| CI/CD       | GitHub Actions → GHCR (Docker + Helm)              |
+| Aspect      | Details                                                             |
+| ----------- | ------------------------------------------------------------------- |
+| Type        | Turborepo + pnpm workspaces monorepo                                |
+| Structure   | `apps/*` (deployables), `packages/*` (shared libs)                  |
+| Active Apps | `apps/bot` - NestJS Discord bot · `apps/web` - Vue 3 SPA (scaffold) |
+| Stack       | TypeScript (ESM), Node >=24, pnpm 11+                               |
+| Testing     | Vitest (unit); bot e2e via Vitest, web e2e via Playwright           |
+| Linting     | ESLint 10 flat config + Prettier; oxlint also on `apps/web`         |
+| Commits     | Conventional Commits via Husky + Commitlint                         |
+| CI/CD       | GitHub Actions → GHCR (Docker + Helm)                               |
 
 Each app/package maintains its own AGENTS.md with domain-specific guidance. Always use the nearest one.
 
@@ -22,7 +22,7 @@ Each app/package maintains its own AGENTS.md with domain-specific guidance. Alwa
 pnpm install
 
 # Development
-pnpm run dev              # All apps in watch mode
+pnpm run start:dev        # All apps in watch mode
 pnpm run build            # Build all
 pnpm run lint             # Lint all
 pnpm run test             # Unit tests all
@@ -32,6 +32,7 @@ pnpm run format           # Prettier format all
 # Package-specific (faster iteration)
 cd apps/bot && pnpm run start:dev   # Bot in watch mode
 cd apps/bot && pnpm run test        # Bot unit tests only
+cd apps/web && pnpm run start:dev   # Web dev server (Vite, port 5173)
 ```
 
 ## Universal Conventions
@@ -114,6 +115,7 @@ Local setup: Copy `apps/bot/config.example.json` → `apps/bot/config.json` and 
 | Package        | Path               | AGENTS.md                                              | Description                    |
 | -------------- | ------------------ | ------------------------------------------------------ | ------------------------------ |
 | bot            | `apps/bot/`        | [apps/bot/AGENTS.md](apps/bot/AGENTS.md)               | NestJS Discord bot with Necord |
+| web            | `apps/web/`        | [apps/web/AGENTS.md](apps/web/AGENTS.md)               | Vue 3 + Vite SPA (scaffold)    |
 | starwave chart | `charts/starwave/` | [charts/starwave/AGENTS.md](charts/starwave/AGENTS.md) | Helm chart for K8s deployment  |
 | (packages)     | `packages/*`       | Add per package                                        | Shared libraries (none active) |
 
@@ -143,8 +145,9 @@ lint → unit-tests ─┬→ docker build+push (dev tags)
 ```
 
 - Runs: lint, unit tests (with coverage), e2e tests
-- Builds: Docker images for each app, pushes to GHCR with branch tags
-- Matrix: Auto-discovers apps via `turbo ls`
+- Builds: Docker image per app via matrix, pushes to GHCR with branch tags
+- Matrix: Auto-discovers apps via `turbo ls --filter=./apps/*`, builds `./apps/<app>/Dockerfile`
+- `apps/bot` ships a production Dockerfile; `apps/web` has only a placeholder stub Dockerfile (not a real image yet, and not Helm-deployed)
 
 ### On Push to `main` (Release)
 

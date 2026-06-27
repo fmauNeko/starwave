@@ -2,7 +2,7 @@
   "$schema": "https://turborepo.com/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "tasks": {
-    "dev": {
+    "start:dev": {
       "cache": false,
       "persistent": true
     },
