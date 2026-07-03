@@ -71,7 +71,11 @@ jobs:
       - name: Install dependencies
         run: pnpm ci
 
-      - name: Run unit tests
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+        working-directory: apps/web
+
+      - name: Run e2e tests
         run: pnpm run test:e2e
 
   generate-matrix:
