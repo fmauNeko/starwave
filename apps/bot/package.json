@@ -59,7 +59,7 @@
     "@types/express": "5.0.6",
     "@types/jsdom": "28.0.3",
     "@types/node": "25.9.5",
-    "@types/supertest": "7.2.0",
+    "@types/supertest": "7.2.1",
     "@vitest/coverage-v8": "4.1.10",
     "@vitest/eslint-plugin": "1.6.23",
     "eslint": "10.7.0",
