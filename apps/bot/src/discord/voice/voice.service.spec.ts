@@ -1,8 +1,9 @@
 import * as discordVoice from '@discordjs/voice';
-import { TestBed } from '@suites/unit';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { TestBed, type Mocked } from '@suites/unit';
 import type { Guild, VoiceBasedChannel } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { VoiceService } from './voice.service';
+import { VOICE_EVENTS, VoiceService } from './voice.service';
 
 vi.mock('@discordjs/voice', () => ({
   joinVoiceChannel: vi.fn(),
@@ -34,11 +35,13 @@ vi.mock('@discordjs/voice', () => ({
 /* eslint-disable @typescript-eslint/no-unsafe-enum-comparison */
 describe('VoiceService', () => {
   let service: VoiceService;
+  let eventEmitter: Mocked<EventEmitter2>;
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    const { unit } = await TestBed.solitary(VoiceService).compile();
+    const { unit, unitRef } = await TestBed.solitary(VoiceService).compile();
     service = unit;
+    eventEmitter = unitRef.get(EventEmitter2);
   });
 
   afterEach(() => {
@@ -137,6 +140,31 @@ describe('VoiceService', () => {
       const result = service.leave('guild-123');
 
       expect(result).toBe(false);
+    });
+
+    it('emits voice.left when leaving an existing connection', () => {
+      const mockConnection = {
+        destroy: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+
+      service.leave('guild-123');
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        VOICE_EVENTS.LEFT,
+        'guild-123',
+      );
+    });
+
+    it('does not emit voice.left when no connection exists', () => {
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(undefined);
+
+      service.leave('guild-123');
+
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
   });
 

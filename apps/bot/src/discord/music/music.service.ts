@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { AudioPlayerStatus } from '@discordjs/voice';
-import { VoiceService } from '../voice/voice.service';
+import { VOICE_EVENTS, VoiceService } from '../voice/voice.service';
 import { LoopMode, MusicQueue, type Track } from './music-queue';
 import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
 import type { MusicProvider } from './providers/music-provider.interface';
@@ -78,7 +78,13 @@ export class MusicService {
 
     const nextTrack = queue.skip();
     if (nextTrack) {
-      void this.playTrack(guildId, nextTrack);
+      this.playTrack(guildId, nextTrack).catch((error: unknown) => {
+        this.logger.error(
+          `Failed to play skipped-to track in guild ${guildId}`,
+          error,
+        );
+        this.voiceService.stop(guildId);
+      });
     } else {
       this.voiceService.stop(guildId);
     }
@@ -192,6 +198,11 @@ export class MusicService {
     this.queues.delete(guildId);
   }
 
+  @OnEvent(VOICE_EVENTS.LEFT)
+  public handleVoiceLeft(guildId: string): void {
+    this.cleanup(guildId);
+  }
+
   public setupAutoPlay(guildId: string): void {
     if (this.autoPlaySetup.has(guildId)) {
       return;
@@ -222,18 +233,32 @@ export class MusicService {
         return;
       }
 
-      const nextTrack = queue.getNext();
+      const maxAttempts = queue.size();
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        const nextTrack = queue.getNext();
 
-      if (nextTrack) {
+        if (!nextTrack) {
+          queue.clear();
+          this.eventEmitter.emit(MUSIC_EVENTS.QUEUE_END, guildId);
+          return;
+        }
+
         try {
           await this.playTrack(guildId, nextTrack);
+          return;
         } catch (error) {
-          this.logger.error(`Auto-play failed for guild ${guildId}`, error);
+          this.logger.error(
+            `Auto-play failed for "${nextTrack.title}" in guild ${guildId}, skipping`,
+            error,
+          );
+          if (queue.getLoopMode() !== LoopMode.None) {
+            break;
+          }
         }
-      } else {
-        queue.clear();
-        this.eventEmitter.emit(MUSIC_EVENTS.QUEUE_END, guildId);
       }
+
+      queue.clear();
+      this.eventEmitter.emit(MUSIC_EVENTS.QUEUE_END, guildId);
     } finally {
       this.handlingTrackEnd.delete(guildId);
     }

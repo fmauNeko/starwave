@@ -232,6 +232,16 @@ describe('NowPlayingService', () => {
     });
   });
 
+  describe('handleVoiceLeft', () => {
+    it('delegates to cleanup', async () => {
+      const cleanupSpy = vi.spyOn(service, 'cleanup').mockResolvedValue();
+
+      await service.handleVoiceLeft('guild-123');
+
+      expect(cleanupSpy).toHaveBeenCalledWith('guild-123');
+    });
+  });
+
   describe('buildNowPlayingComponents', () => {
     it('includes track title in message', async () => {
       service.setChannelForGuild('guild-123', 'channel-123');
