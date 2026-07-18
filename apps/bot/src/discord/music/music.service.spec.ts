@@ -183,6 +183,38 @@ describe('MusicService', () => {
       expect(next).toBeUndefined();
       expect(vi.mocked(voiceService.stop)).toHaveBeenCalledWith('guild-123');
     });
+
+    it('does not reject and stops voice when the skipped-to track fails to play', async () => {
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+
+      vi.clearAllMocks();
+      vi.mocked(mockProvider.getAudioInfo).mockRejectedValueOnce(
+        new Error('stream failure'),
+      );
+
+      const next = service.skip('guild-123');
+
+      expect(next).toMatchObject({ title: 'Track 2' });
+
+      // Awaiting here proves no unhandled rejection escaped skip().
+      await vi.waitFor(() => {
+        expect(vi.mocked(voiceService.stop)).toHaveBeenCalledWith('guild-123');
+      });
+    });
   });
 
   describe('stop', () => {
@@ -790,6 +822,156 @@ describe('MusicService', () => {
       });
 
       expect(vi.mocked(voiceService.play)).toHaveBeenCalledTimes(1);
+    });
+
+    it('skips an unplayable track and auto-plays the next one', async () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      const mockTrack3 = { ...mockTrack, title: 'Track 3' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2)
+        .mockResolvedValueOnce(mockTrack3);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=3',
+        'user#1234',
+      );
+      service.setupAutoPlay('guild-123');
+
+      vi.clearAllMocks();
+      vi.mocked(mockProvider.getAudioInfo)
+        .mockRejectedValueOnce(new Error('stream failure'))
+        .mockResolvedValueOnce({
+          source: 'https://mock.audio.url/stream',
+          streamType: StreamType.WebmOpus,
+        });
+
+      idleCallback();
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(voiceService.play)).toHaveBeenCalledWith(
+          'guild-123',
+          'https://mock.audio.url/stream',
+          expect.anything(),
+        );
+      });
+      expect(service.getNowPlaying('guild-123')).toMatchObject({
+        title: 'Track 3',
+      });
+    });
+
+    it('stops playback and emits QUEUE_END when a track fails while a loop mode is active', async () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      service.cycleLoopMode('guild-123'); // LoopMode.Track
+      service.setupAutoPlay('guild-123');
+      vi.clearAllMocks();
+      vi.mocked(mockProvider.getAudioInfo).mockRejectedValue(
+        new Error('stream failure'),
+      );
+
+      idleCallback();
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(eventEmitter.emit)).toHaveBeenCalledWith(
+          MUSIC_EVENTS.QUEUE_END,
+          'guild-123',
+        );
+      });
+      expect(vi.mocked(mockProvider.getAudioInfo)).toHaveBeenCalledTimes(1);
+      expect(service.getQueue('guild-123')).toHaveLength(0);
+    });
+
+    it('ends cleanly when the whole queue is unplayable', async () => {
+      let idleCallback: () => void = vi.fn();
+      const mockPlayer = {
+        on: vi.fn((event: string, callback: () => void) => {
+          if (event === AudioPlayerStatus.Idle) {
+            idleCallback = callback;
+          }
+        }),
+      };
+      vi.mocked(voiceService.getPlayer).mockReturnValue(mockPlayer as never);
+
+      const mockTrack2 = { ...mockTrack, title: 'Track 2' };
+      vi.mocked(mockProvider.fetchTrackInfo)
+        .mockResolvedValueOnce(mockTrack)
+        .mockResolvedValueOnce(mockTrack2);
+
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=2',
+        'user#1234',
+      );
+      service.setupAutoPlay('guild-123');
+      vi.clearAllMocks();
+      vi.mocked(mockProvider.getAudioInfo).mockRejectedValue(
+        new Error('stream failure'),
+      );
+
+      idleCallback();
+
+      await vi.waitFor(() => {
+        expect(vi.mocked(eventEmitter.emit)).toHaveBeenCalledWith(
+          MUSIC_EVENTS.QUEUE_END,
+          'guild-123',
+        );
+      });
+      expect(service.getQueue('guild-123')).toHaveLength(0);
+    });
+  });
+
+  describe('handleVoiceLeft', () => {
+    it('resets music state for the guild', async () => {
+      await service.play(
+        'guild-123',
+        'https://youtube.com/watch?v=1',
+        'user#1234',
+      );
+      expect(service.getQueue('guild-123')).toHaveLength(1);
+
+      service.handleVoiceLeft('guild-123');
+
+      expect(service.getQueue('guild-123')).toHaveLength(0);
     });
   });
 

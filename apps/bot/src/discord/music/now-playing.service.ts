@@ -14,6 +14,7 @@ import {
 } from 'discord.js';
 import { Context, On, type ContextOf } from 'necord';
 import type { Config } from '../../config/config.type';
+import { VOICE_EVENTS } from '../voice/voice.service';
 import { LoopMode } from './music-queue';
 import { MUSIC_EVENTS, MusicService } from './music.service';
 
@@ -48,6 +49,11 @@ export class NowPlayingService {
   @OnEvent(MUSIC_EVENTS.TRACK_START)
   public async handleTrackStart(guildId: string): Promise<void> {
     await this.sendNowPlaying(guildId);
+  }
+
+  @OnEvent(VOICE_EVENTS.LEFT)
+  public async handleVoiceLeft(guildId: string): Promise<void> {
+    await this.cleanup(guildId);
   }
 
   @On('messageCreate')

@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   AudioPlayer,
   AudioPlayerStatus,
@@ -21,6 +22,10 @@ export interface PlayOptions {
   inlineVolume?: boolean;
 }
 
+export const VOICE_EVENTS = {
+  LEFT: 'voice.left',
+} as const;
+
 const DEFAULT_VOLUME = 0.25;
 
 @Injectable()
@@ -29,6 +34,8 @@ export class VoiceService {
   private readonly players = new Map<string, AudioPlayer>();
   private readonly resources = new Map<string, AudioResource>();
   private readonly volumes = new Map<string, number>();
+
+  public constructor(private readonly eventEmitter: EventEmitter2) {}
 
   public async join(channel: VoiceBasedChannel): Promise<VoiceConnection> {
     const guild = channel.guild;
@@ -63,6 +70,7 @@ export class VoiceService {
 
     this.cleanupPlayer(guildId);
     connection.destroy();
+    this.eventEmitter.emit(VOICE_EVENTS.LEFT, guildId);
     this.logger.log(`Left voice channel in guild ${guildId}`);
     return true;
   }
@@ -233,6 +241,7 @@ export class VoiceService {
     } catch {
       this.cleanupPlayer(guildId);
       connection.destroy();
+      this.eventEmitter.emit(VOICE_EVENTS.LEFT, guildId);
       this.logger.log(`Disconnected from voice in guild ${guildId}`);
     }
   }
