@@ -9,6 +9,16 @@ import {
 import { Config } from '../../config/config.type';
 import { DiscordForbiddenException } from './discord-forbidden.exception';
 
+const DEFAULT_ACCENT_COLOR = 0x5865f2;
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
+
+function parseAccentColor(value: string): number {
+  if (!HEX_COLOR_PATTERN.test(value)) {
+    return DEFAULT_ACCENT_COLOR;
+  }
+  return Number.parseInt(value.slice(1), 16);
+}
+
 @Catch(DiscordForbiddenException)
 export class DiscordForbiddenFilter implements ExceptionFilter {
   private readonly guildsSettings: Config['discord']['guildsSettings'];
@@ -27,23 +37,28 @@ export class DiscordForbiddenFilter implements ExceptionFilter {
     }
 
     if (!interaction.member || !interaction.guildId) {
-      throw new DiscordForbiddenException(
-        'Cette fonctionnalité ne peut pas être utilisée en message privé car elle nécessite des rôles spécifiques.',
-      );
+      await interaction.reply({
+        content:
+          'Cette fonctionnalité ne peut pas être utilisée en message privé car elle nécessite des rôles spécifiques.',
+        flags: [MessageFlags.Ephemeral],
+      });
+      return;
     }
 
     const guildId = interaction.guildId;
     const settings = this.guildsSettings[guildId];
 
     if (!settings) {
-      throw new DiscordForbiddenException(
-        "Cette fonctionnalité n'est pas configurée pour ce serveur.",
-      );
+      await interaction.reply({
+        content: "Cette fonctionnalité n'est pas configurée pour ce serveur.",
+        flags: [MessageFlags.Ephemeral],
+      });
+      return;
     }
 
     const components = [
       new ContainerBuilder()
-        .setAccentColor(Number(settings.theme.accentColor.replace('#', '0x')))
+        .setAccentColor(parseAccentColor(settings.theme.accentColor))
         .addTextDisplayComponents(
           new TextDisplayBuilder().setContent(exception.message),
         ),
