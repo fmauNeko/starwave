@@ -13,7 +13,9 @@ export const configSchema = type.module({
             '[roles]': 'string',
           },
           theme: {
-            accentColor: 'string',
+            accentColor: type('""').or(
+              type.string.matching(/^#[0-9a-fA-F]{6}$/),
+            ),
           },
         },
       },

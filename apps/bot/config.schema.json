@@ -41,7 +41,8 @@
                 "properties": {
                   "accentColor": {
                     "description": "Accent color for the guild theme.",
-                    "type": "string"
+                    "type": "string",
+                    "pattern": "^(#[0-9a-fA-F]{6})?$"
                   }
                 },
                 "required": ["accentColor"]
