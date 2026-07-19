@@ -3,6 +3,7 @@ import {
   StreamType,
   type AudioResource,
 } from '@discordjs/voice';
+import { Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VoiceService } from '../voice/voice.service';
@@ -31,6 +32,8 @@ describe('MusicService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    vi.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
 
     mockProvider = {
       name: 'MockProvider',
