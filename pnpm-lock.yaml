@@ -99,8 +99,8 @@ importers:
         specifier: ^2.1.29
         version: 2.2.3
       bgutils-js:
-        specifier: 3.2.0
-        version: 3.2.0
+        specifier: 4.0.0
+        version: 4.0.0
       canvas:
         specifier: ^3.2.3
         version: 3.2.3
@@ -3096,8 +3096,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  bgutils-js@3.2.0:
-    resolution: {integrity: sha512-CacO15JvxbclbLeCAAm9DETGlLuisRGWpPigoRvNsccSCPEC4pwYwA2g2x/pv7Om/sk79d4ib35V5HHmxPBpDg==}
+  bgutils-js@4.0.0:
+    resolution: {integrity: sha512-8olJkAmpldWlrmLy3hMpIHrQEVNY7keBZD3BM8L1fkinjtBfDgT68Ndhipwq97nOhU3JHKRTEWFLmn5dNgw1ew==}
 
   bidi-js@1.0.3:
     resolution: {integrity: sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw==}
@@ -9502,7 +9502,7 @@ snapshots:
 
   baseline-browser-mapping@2.10.43: {}
 
-  bgutils-js@3.2.0: {}
+  bgutils-js@4.0.0: {}
 
   bidi-js@1.0.3:
     dependencies:
