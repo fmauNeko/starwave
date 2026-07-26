@@ -1,21 +1,16 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import {
-  BG,
-  GOOG_API_KEY,
-  USER_AGENT,
-  buildURL,
-  type WebPoSignalOutput,
-} from 'bgutils-js';
+import { BotGuardClient } from 'bgutils-js/botguard';
+import type { WebPoSignalOutput } from 'bgutils-js/shared-types';
+import { GOOG_API_KEY, USER_AGENT, buildURL } from 'bgutils-js/utils';
+import { WebPoMinter } from 'bgutils-js/webpo';
 import { JSDOM } from 'jsdom';
 import { Innertube } from 'youtubei.js';
 import type { Config } from '../../../config/config.type';
 
 const REQUEST_KEY = 'O43z0dpjhgX20SCx4KAo';
 const BOTGUARD_FETCH_TIMEOUT_MS = 10_000;
-
-type WebPoMinter = Awaited<ReturnType<typeof BG.WebPoMinter.create>>;
 
 @Injectable()
 export class InnertubeSessionService implements OnModuleInit {
@@ -234,9 +229,9 @@ export class InnertubeSessionService implements OnModuleInit {
     // eslint-disable-next-line @typescript-eslint/no-implied-eval, @typescript-eslint/no-unsafe-call
     new Function(interpreterJavascript)(); // Required: executes BotGuard interpreter downloaded from YouTube CDN
 
-    const botguard = await BG.BotGuardClient.create({
+    const botguard = await BotGuardClient.create({
       globalName: challenge.global_name,
-      globalObj: globalThis,
+      globalObject: globalThis,
       program: challenge.program,
     });
     const webPoSignalOutput: WebPoSignalOutput = [];
@@ -260,6 +255,6 @@ export class InnertubeSessionService implements OnModuleInit {
       throw new Error('Could not get BotGuard integrity token');
     }
 
-    return BG.WebPoMinter.create({ integrityToken }, webPoSignalOutput);
+    return WebPoMinter.create({ integrityToken }, webPoSignalOutput);
   }
 }

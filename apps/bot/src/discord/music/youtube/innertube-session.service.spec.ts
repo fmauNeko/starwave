@@ -76,15 +76,19 @@ vi.mock('youtubei.js', () => ({
   },
 }));
 
-vi.mock('bgutils-js', () => ({
-  BG: {
-    BotGuardClient: {
-      create: mockBotGuardCreate,
-    },
-    WebPoMinter: {
-      create: mockWebPoMinterCreate,
-    },
+vi.mock('bgutils-js/botguard', () => ({
+  BotGuardClient: {
+    create: mockBotGuardCreate,
   },
+}));
+
+vi.mock('bgutils-js/webpo', () => ({
+  WebPoMinter: {
+    create: mockWebPoMinterCreate,
+  },
+}));
+
+vi.mock('bgutils-js/utils', () => ({
   GOOG_API_KEY: 'test-api-key',
   USER_AGENT: 'test-user-agent',
   buildURL: mockBuildURL,
@@ -286,7 +290,7 @@ describe('InnertubeSessionService', () => {
       );
       expect(mockBotGuardCreate).toHaveBeenCalledWith({
         globalName: 'BG_VM',
-        globalObj: globalThis,
+        globalObject: globalThis,
         program: 'program',
       });
       expect(mockSnapshot).toHaveBeenCalledWith({
