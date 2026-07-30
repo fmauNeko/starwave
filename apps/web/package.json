@@ -35,7 +35,7 @@
     "eslint": "10.8.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-oxlint": "1.75.0",
-    "eslint-plugin-playwright": "2.10.5",
+    "eslint-plugin-playwright": "2.11.0",
     "eslint-plugin-vue": "10.10.0",
     "jiti": "2.7.0",
     "jsdom": "29.1.1",
