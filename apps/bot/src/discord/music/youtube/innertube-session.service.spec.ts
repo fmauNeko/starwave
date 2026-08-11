@@ -668,4 +668,37 @@ describe('InnertubeSessionService', () => {
       expect(service.getClient()).toBeUndefined();
     });
   });
+
+  describe('scheduledRefresh', () => {
+    it('runs a scheduled proactive refresh that rebuilds the session', async () => {
+      const refreshedClient = queueSessionBuild(
+        'visitor-data-2',
+        'po-token-2',
+        'scheduled',
+      );
+
+      await service.scheduledRefresh();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'innertube.session.refresh: scheduled session refresh',
+      );
+      expect(service.getClient()).toBe(refreshedClient);
+    });
+
+    it('swallows scheduled refresh failures after logging them', async () => {
+      mockInnertubeCreate.mockResolvedValueOnce(
+        createClient('visitor-data-1', 'refresh-bootstrap'),
+      );
+      mockFetch.mockResolvedValueOnce(
+        createTextResponse('globalThis.__bg_vm_loaded = true;'),
+      );
+      mockBotGuardCreate.mockRejectedValueOnce('BotGuard failed');
+
+      await expect(service.scheduledRefresh()).resolves.toBeUndefined();
+      expect(errorSpy).toHaveBeenCalledWith(
+        'innertube.session.refresh.failed',
+        expect.any(String),
+      );
+    });
+  });
 });

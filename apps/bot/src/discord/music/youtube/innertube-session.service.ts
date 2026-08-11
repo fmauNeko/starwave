@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Interval } from '@nestjs/schedule';
 import { BotGuardClient } from 'bgutils-js/botguard';
 import type { WebPoSignalOutput } from 'bgutils-js/shared-types';
 import { GOOG_API_KEY, USER_AGENT, buildURL } from 'bgutils-js/utils';
@@ -11,6 +12,7 @@ import type { Config } from '../../../config/config.type';
 
 const REQUEST_KEY = 'O43z0dpjhgX20SCx4KAo';
 const BOTGUARD_FETCH_TIMEOUT_MS = 10_000;
+const SESSION_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours — BotGuard integrity tokens expire well beyond this
 
 @Injectable()
 export class InnertubeSessionService implements OnModuleInit {
@@ -68,6 +70,15 @@ export class InnertubeSessionService implements OnModuleInit {
       });
 
     return this.refreshPromise;
+  }
+
+  @Interval(SESSION_REFRESH_INTERVAL_MS)
+  public async scheduledRefresh(): Promise<void> {
+    try {
+      await this.refresh('scheduled session refresh');
+    } catch {
+      // refresh() already logged the failure; a scheduled handler must never throw.
+    }
   }
 
   private async initSession(): Promise<void> {
