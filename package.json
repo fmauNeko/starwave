@@ -7,7 +7,7 @@
   "author": "",
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "turbo run dev",
+    "start:dev": "turbo run start:dev",
     "build": "turbo run build",
     "test": "turbo run test",
     "test:cov": "turbo run test:cov",
@@ -17,29 +17,29 @@
     "prepare": "husky || true"
   },
   "devDependencies": {
-    "@commitlint/cli": "21.0.1",
-    "@commitlint/config-conventional": "21.0.1",
-    "@commitlint/cz-commitlint": "21.0.1",
-    "@commitlint/types": "21.0.1",
+    "@commitlint/cli": "21.2.1",
+    "@commitlint/config-conventional": "21.2.0",
+    "@commitlint/cz-commitlint": "21.2.0",
+    "@commitlint/types": "21.2.0",
     "@eslint/js": "10.0.1",
-    "commitizen": "4.3.1",
-    "eslint": "10.4.0",
+    "commitizen": "4.3.2",
+    "eslint": "10.8.1",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.6",
-    "eslint-plugin-turbo": "2.9.16",
-    "globals": "17.6.0",
+    "eslint-plugin-turbo": "2.10.9",
+    "globals": "17.9.0",
     "husky": "9.1.7",
     "inquirer": "9.3.8",
     "jiti": "2.7.0",
-    "prettier": "3.8.3",
-    "turbo": "2.9.16",
+    "prettier": "3.9.6",
+    "turbo": "2.10.9",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.60.0"
+    "typescript-eslint": "8.66.0"
   },
   "engines": {
     "node": ">=24"
   },
-  "packageManager": "pnpm@11.4.0",
+  "packageManager": "pnpm@11.20.0",
   "workspaces": [
     "apps/*",
     "packages/*"

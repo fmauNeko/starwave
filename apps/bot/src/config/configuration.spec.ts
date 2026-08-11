@@ -141,6 +141,14 @@ describe('configuration loader', () => {
     expect(result.discord.guildsSettings['123'].theme.accentColor).toBe('');
   });
 
+  it('rejects malformed accentColor override values', async () => {
+    vol.fromJSON({ [configPath]: JSON.stringify(baseConfig) });
+    process.env.BOT__DISCORD__GUILDS_SETTINGS__123__THEME__ACCENT_COLOR =
+      'blue';
+
+    await expect(loadConfig()).rejects.toThrow();
+  });
+
   it('validates env with allowed NODE_ENV values', async () => {
     const { validateEnv } = (await import('./configuration.js')) as {
       validateEnv: (env: Record<string, unknown>) => unknown;

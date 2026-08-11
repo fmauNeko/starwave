@@ -48,12 +48,13 @@ describe('DiscordForbiddenFilter', () => {
     expect(reply).not.toHaveBeenCalled();
   });
 
-  it('throws a DM error when missing guild/member', async () => {
+  it('replies with a DM error when missing guild/member', async () => {
+    const reply = vi.fn();
     const interaction = {
       isRepliable: () => true,
       member: null,
       guildId: null,
-      reply: vi.fn(),
+      reply,
     };
 
     await expect(
@@ -61,17 +62,22 @@ describe('DiscordForbiddenFilter', () => {
         new DiscordForbiddenException('nope'),
         createHost(interaction),
       ),
-    ).rejects.toThrow(
-      'Cette fonctionnalité ne peut pas être utilisée en message privé car elle nécessite des rôles spécifiques.',
-    );
+    ).resolves.toBeUndefined();
+
+    expect(reply).toHaveBeenCalledWith({
+      content:
+        'Cette fonctionnalité ne peut pas être utilisée en message privé car elle nécessite des rôles spécifiques.',
+      flags: [MessageFlags.Ephemeral],
+    });
   });
 
-  it('throws when guild is not configured', async () => {
+  it('replies when guild is not configured', async () => {
+    const reply = vi.fn();
     const interaction = {
       isRepliable: () => true,
       member: { roles: [] },
       guildId: 'unknownGuild',
-      reply: vi.fn(),
+      reply,
     };
 
     await expect(
@@ -79,9 +85,52 @@ describe('DiscordForbiddenFilter', () => {
         new DiscordForbiddenException('nope'),
         createHost(interaction),
       ),
-    ).rejects.toThrow(
-      "Cette fonctionnalité n'est pas configurée pour ce serveur.",
-    );
+    ).resolves.toBeUndefined();
+
+    expect(reply).toHaveBeenCalledWith({
+      content: "Cette fonctionnalité n'est pas configurée pour ce serveur.",
+      flags: [MessageFlags.Ephemeral],
+    });
+  });
+
+  it('falls back to the default accent color when configured value is malformed', async () => {
+    interface ReplyPayload {
+      flags: unknown;
+      components: { toJSON: () => unknown }[];
+    }
+
+    const reply = vi.fn<(payload: ReplyPayload) => Promise<void>>();
+    const interaction = {
+      isRepliable: () => true,
+      member: { roles: [] },
+      guildId: 'malformedGuild',
+      reply,
+    };
+
+    const { unit } = await TestBed.solitary(DiscordForbiddenFilter)
+      .mock(ConfigService)
+      .final({
+        get: () => ({
+          malformedGuild: {
+            language: 'fr',
+            roles: { admin: 'admin-role' },
+            theme: { accentColor: 'not-a-color' },
+          },
+        }),
+      })
+      .compile();
+
+    await expect(
+      unit.catch(
+        new DiscordForbiddenException('custom message'),
+        createHost(interaction),
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(reply).toHaveBeenCalledTimes(1);
+    const payload = reply.mock.calls[0][0];
+    const containerJson = payload.components[0].toJSON();
+    expect(containerJson).toMatchObject({ accent_color: 0x5865f2 });
   });
 
   it('replies with ephemeral components when configured', async () => {

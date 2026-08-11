@@ -61,6 +61,6 @@ pnpm-debug.log*
 .DS_Store
 *.pem
 
-# Sisyphus
-.sisyphus/
+# oh-my-openagent
+.omo/
 .ignore

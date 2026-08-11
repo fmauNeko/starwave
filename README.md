@@ -57,8 +57,8 @@ pnpm run build
 #### Develop
 
 ```bash
-# Will run the development server for all the app & packages with the supported `dev` script.
-pnpm run dev
+# Will run the development server for all the app & packages with the supported `start:dev` script.
+pnpm run start:dev
 ```
 
 #### test
