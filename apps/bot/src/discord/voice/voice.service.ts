@@ -192,7 +192,10 @@ export class VoiceService {
 
   private setupPlayerHandlers(player: AudioPlayer, guildId: string): void {
     player.on('error', (error) => {
-      this.logger.error(`Audio player error in guild ${guildId}:`, error);
+      this.logger.error(
+        `voice.player.error in guild ${guildId}: "${error.message}" after ${String(error.resource.playbackDuration)}ms of playback — stream died; Idle transition advances the queue`,
+        error.stack,
+      );
     });
 
     player.on(AudioPlayerStatus.Idle, () => {
