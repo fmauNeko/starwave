@@ -42,7 +42,7 @@ New audio sources auto-register via NestJS discovery — there is **no central p
 
 `voice/` is a separate NestJS module used only by music; it wraps `@discordjs/voice`.
 
-- `VoiceService` — join/leave, one `AudioPlayer` + `AudioResource` per guild, volume (clamped 0–2, default 0.25), and disconnect recovery (`NoSubscriberBehavior.Pause`). `MusicService` is the only caller.
+- `VoiceService` — join/leave, one `AudioPlayer` + `AudioResource` per guild, volume (clamped 0–2, default 0.25), and disconnect recovery (`NoSubscriberBehavior.Pause`). `MusicService` is the only caller. On audio-resource errors it only logs (`voice.player.error` with playback duration) — it must NEVER stop the player or advance the queue itself; `@discordjs/voice` auto-transitions to Idle and `MusicService.setupAutoPlay` owns the advance (calling both skips two tracks).
 - `VoiceInactivityService` — `@On('voiceStateUpdate')`; when the bot's channel has no non-bot members it schedules an auto-leave after 30s (`INACTIVITY_TIMEOUT_MS`), cancelled if someone rejoins. Captures the client via `@Once('clientReady')`.
 - `LeaveCommand` (`voice/leave.command.ts`) is registered in `DiscordModule` providers, not `VoiceModule`.
 
@@ -52,7 +52,7 @@ YouTube audio is streamed in-process via `youtubei.js` (Innertube) + `googlevide
 
 **Services:**
 
-- `InnertubeSessionService` — manages the Innertube client lifecycle. On startup, creates a jsdom window, generates a PoToken via `bgutils-js`, and creates an authenticated Innertube client. Exposes `getClient()`, `getSessionPoToken()`, `generateContentPoToken(videoId)`, and `refresh(reason)` for reactive token refresh.
+- `InnertubeSessionService` — manages the Innertube client lifecycle. On startup, creates a jsdom window, generates a PoToken via `bgutils-js`, and creates an authenticated Innertube client. Exposes `getClient()`, `getSessionPoToken()`, `generateContentPoToken(videoId)`, and `refresh(reason)` for reactive token refresh. Also proactively refreshes the whole session every 6 h (`@Interval`, `SESSION_REFRESH_INTERVAL_MS`) so the BotGuard integrity token never expires mid-stream; the scheduled handler swallows failures (already logged by `refresh`).
 - `YouTubeStreamService` — fetches video metadata, handles search, and acquires audio-only SABR streams. Returns a Node `Readable` with `StreamType.WebmOpus` (no ffmpeg needed for the streaming path).
 
 **PoToken lifecycle:**
@@ -63,10 +63,11 @@ YouTube audio is streamed in-process via `youtubei.js` (Innertube) + `googlevide
 4. Generates a `WebPoMinter` and mints a session-bound PoToken
 5. Creates the final Innertube client with `{ po_token, visitor_data }`
 6. On playback failure (403/LOGIN_REQUIRED), `YouTubeStreamService` calls `session.refresh(reason)` which regenerates the PoToken (single-flight: concurrent calls share one refresh)
+7. Mid-stream, `YouTubeStreamService` subscribes to SABR `streamProtectionStatusUpdate` and `reloadPlayerResponse`. A protection status >= 2 (PoToken/attestation rejection) triggers a per-stream single-flight recovery: `session.refresh(reason)` → re-mint the content PoToken → `sabrStream.setPoToken(fresh)`. A custom `fetch` passed to `SabrStream` gates every segment request behind any in-flight recovery or player reload, so retries never race stale credentials. Segment retries are capped at `SABR_MAX_RETRIES = 3` (fast fail instead of ~55 s of dead-air backoff).
 
 **YtDlpService** is kept dormant in `MusicModule` for future non-YouTube providers. It still self-initializes (downloads the yt-dlp binary) but is not called for YouTube playback.
 
-**Known limitation:** SABR streams survive typical Discord pause durations (tested: 60s). Very long pauses (many minutes) may cause the CDN connection to time out; if this occurs, the track will end and the queue will advance to the next track.
+**Known limitation:** SABR streams survive typical Discord pause durations (tested: 60s). Very long pauses (many minutes) may still time out the CDN connection. Mid-stream PoToken rejections (`streamProtectionStatus >= 2`) are auto-recovered in-flight; if recovery repeatedly fails, the track fails fast (3 retries, ~3.5 s) and the queue advances via the player's Idle transition.
 
 **Age-restricted / region-locked content:** PoToken-only mode does not support age-restricted videos (no cookie path). These will fail with a clear error message.
 
@@ -104,14 +105,15 @@ YouTube audio is streamed in-process via `youtubei.js` (Innertube) + `googlevide
 
 ## Gotchas
 
-| Issue                                                 | Cause / Note                                                                                                           |
-| ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| New provider silently unused                          | Class missing `@MusicProvider()` → no discovery flag → `MusicProviderDiscovery` skips it (no error)                    |
-| Search always hits YouTube                            | `searchAndPlay` uses `providers[0]`; provider order in `MusicModule` matters                                           |
-| Queues lost on restart                                | `MusicQueue` is in-memory only                                                                                         |
-| Volume range                                          | Clamped 0–2 in `VoiceService` (default 0.25), not in the queue                                                         |
-| Bot auto-leaves voice after 30s                       | Channel empty of non-bot members; expected — `VoiceInactivityService` schedules leave, cancels on rejoin               |
-| YouTube streaming fails on startup                    | `InnertubeSessionService` failed to init; check logs for `innertube.session.init` / `innertube.session.refresh.failed` |
-| Age-restricted video fails                            | PoToken-only mode has no cookie path; expected — age-restricted content is not supported                               |
-| LOGIN_REQUIRED / "confirm you're not a bot" on server | Datacenter IP bot detection; set `youtube.cookiesPath` to a burner-account cookies.txt, or use a residential proxy     |
-| `youtube.cookies` key in config.json                  | Stale key from old yt-dlp config; use `youtube.cookiesPath` (a file path) instead                                      |
+| Issue                                                   | Cause / Note                                                                                                                                                                                                                                     |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| New provider silently unused                            | Class missing `@MusicProvider()` → no discovery flag → `MusicProviderDiscovery` skips it (no error)                                                                                                                                              |
+| Search always hits YouTube                              | `searchAndPlay` uses `providers[0]`; provider order in `MusicModule` matters                                                                                                                                                                     |
+| Queues lost on restart                                  | `MusicQueue` is in-memory only                                                                                                                                                                                                                   |
+| Volume range                                            | Clamped 0–2 in `VoiceService` (default 0.25), not in the queue                                                                                                                                                                                   |
+| Bot auto-leaves voice after 30s                         | Channel empty of non-bot members; expected — `VoiceInactivityService` schedules leave, cancels on rejoin                                                                                                                                         |
+| YouTube streaming fails on startup                      | `InnertubeSessionService` failed to init; check logs for `innertube.session.init` / `innertube.session.refresh.failed`                                                                                                                           |
+| Age-restricted video fails                              | PoToken-only mode has no cookie path; expected — age-restricted content is not supported                                                                                                                                                         |
+| LOGIN_REQUIRED / "confirm you're not a bot" on server   | Datacenter IP bot detection; set `youtube.cookiesPath` to a burner-account cookies.txt, or use a residential proxy                                                                                                                               |
+| `youtube.cookies` key in config.json                    | Stale key from old yt-dlp config; use `youtube.cookiesPath` (a file path) instead                                                                                                                                                                |
+| Track dies mid-play with "Maximum retries (N) exceeded" | SABR stream protection rejected the PoToken; recovery auto-triggers — check `youtube.stream.recover` / `youtube.stream.recovered` logs; repeated `recover.failed` means the session cannot mint an accepted token (see cookie/IP guidance above) |
