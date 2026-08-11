@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.4.0](https://github.com/fmauNeko/starwave/compare/bot@v1.3.0...bot@v1.4.0) (2026-08-11)
+
+
+### Features
+
+* **web:** init web app ([2da2ddf](https://github.com/fmauNeko/starwave/commit/2da2ddf689f6d078bf8e14500617816dfa37d35b))
+
+
+### Bug Fixes
+
+* **bot:** adopt bgutils-js v4 subpath exports ([99f22e2](https://github.com/fmauNeko/starwave/commit/99f22e2888f7303f7bfdcb3b42116260c17565c0))
+* **bot:** reply instead of rethrowing in forbidden filter ([0717159](https://github.com/fmauNeko/starwave/commit/07171598b75b0e16ac3b9fd0c37e5164818fd126))
+* **bot:** reset music state when leaving voice and recover from playback failures ([8048d2f](https://github.com/fmauNeko/starwave/commit/8048d2f66373cc1f316f8a8b71f70d1d67229259))
+* **bot:** tighten accentColor schema to reject malformed values ([34d2830](https://github.com/fmauNeko/starwave/commit/34d2830f6c1f9bc792d2612ea30f8fcd1e1bf4de))
+* **deps:** update dependency arkregex to ^0.0.6 ([#429](https://github.com/fmauNeko/starwave/issues/429)) ([65cf2b2](https://github.com/fmauNeko/starwave/commit/65cf2b29072115948f68c26f1bf7b2c825dc4cef))
+* **deps:** update dependency arkregex to ^0.0.7 ([#462](https://github.com/fmauNeko/starwave/issues/462)) ([928bc1c](https://github.com/fmauNeko/starwave/commit/928bc1c736b3f4d4239ec9d7c67b5bf13aa78cae))
+* **deps:** update dependency arkregex to ^0.0.8 ([#479](https://github.com/fmauNeko/starwave/issues/479)) ([49ce4ca](https://github.com/fmauNeko/starwave/commit/49ce4ca82dd372acad354f148ba565e62b8c8724))
+* **deps:** update dependency bgutils-js to v4 ([b376364](https://github.com/fmauNeko/starwave/commit/b3763644c8ba44c713bfa41df1248a4a33ce8477))
+* **deps:** update dependency bgutils-js to v4.0.2 ([#534](https://github.com/fmauNeko/starwave/issues/534)) ([b64e45f](https://github.com/fmauNeko/starwave/commit/b64e45f9bc2b7c2ccd7b49e9232a530bb70d8081))
+* **deps:** update dependency bgutils-js to v4.0.3 ([#573](https://github.com/fmauNeko/starwave/issues/573)) ([0ddaed3](https://github.com/fmauNeko/starwave/commit/0ddaed3bdc4fb014d53ca5c1841ca9a1b121ee8c))
+* **deps:** update dependency googlevideo to v4.1.1 ([#501](https://github.com/fmauNeko/starwave/issues/501)) ([7cf5eaf](https://github.com/fmauNeko/starwave/commit/7cf5eaf74a46c7d82340564ef210a46367962359))
+* **deps:** update dependency jsdom to v30 ([a0a6bfd](https://github.com/fmauNeko/starwave/commit/a0a6bfdca83fb784620d819e86eacbc2ef45c258))
+* **deps:** update dependency jsdom to v30.0.1 ([#551](https://github.com/fmauNeko/starwave/issues/551)) ([71ddabb](https://github.com/fmauNeko/starwave/commit/71ddabb8790baaaf5d25617ab964bfac6460dfdd))
+* **deps:** update dependency youtubei.js to v17.1.0 ([#442](https://github.com/fmauNeko/starwave/issues/442)) ([07e13af](https://github.com/fmauNeko/starwave/commit/07e13afb20aa10c23920a18a2b9da603dca66bf6))
+* **deps:** update dependency youtubei.js to v17.2.0 ([17d6cf8](https://github.com/fmauNeko/starwave/commit/17d6cf8e6c58fa0b43a1b8b03c30bc43abed5bc6))
+* **deps:** update dependency youtubei.js to v17.2.0 ([0038fe4](https://github.com/fmauNeko/starwave/commit/0038fe4e4db12a55e5959604e3d2828fff745f3a))
+
 ## [1.3.0](https://github.com/fmauNeko/starwave/compare/bot@v1.2.0...bot@v1.3.0) (2026-06-01)
 
 
