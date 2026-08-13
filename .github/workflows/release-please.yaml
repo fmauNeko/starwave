@@ -48,7 +48,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.docker_matrix) }}
     steps:
-      - uses: Codex-/return-dispatch@2e404d40b641ba1deb44be941660bb34828e4f6d # v4
+      - uses: Codex-/return-dispatch@85e564d60eaec3cc4aca885373d510cfe4bd5b19 # v4
         id: dispatch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.helm_matrix) }}
     steps:
-      - uses: Codex-/return-dispatch@2e404d40b641ba1deb44be941660bb34828e4f6d # v4
+      - uses: Codex-/return-dispatch@85e564d60eaec3cc4aca885373d510cfe4bd5b19 # v4
         id: dispatch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
