@@ -14,7 +14,6 @@ interface InnertubeCreateOptions {
 
 interface MockInnertubeClient {
   readonly label: string;
-  readonly getAttestationChallenge: ReturnType<typeof vi.fn>;
   readonly session: {
     readonly logged_in: boolean;
     readonly context: {
@@ -38,6 +37,9 @@ interface MockDom {
       readonly userAgent: string;
     };
     readonly origin: string;
+    yt?: {
+      readonly config_: Record<string, unknown>;
+    };
   };
 }
 
@@ -45,6 +47,7 @@ const {
   mockBotGuardCreate,
   mockBuildURL,
   mockFetch,
+  mockGetHeaders,
   mockExistsSync,
   mockInnertubeCreate,
   mockJSDOMConstructor,
@@ -56,6 +59,7 @@ const {
   mockBotGuardCreate: vi.fn(),
   mockBuildURL: vi.fn(),
   mockFetch: vi.fn(),
+  mockGetHeaders: vi.fn(),
   mockExistsSync: vi.fn(),
   mockInnertubeCreate: vi.fn(),
   mockJSDOMConstructor: vi.fn(),
@@ -92,6 +96,8 @@ vi.mock('bgutils-js/utils', () => ({
   GOOG_API_KEY: 'test-api-key',
   USER_AGENT: 'test-user-agent',
   buildURL: mockBuildURL,
+  getHeaders: mockGetHeaders,
+  parseLooseJSON: JSON.parse,
 }));
 
 vi.mock('jsdom', () => ({
@@ -105,16 +111,12 @@ const originalFetch = global.fetch;
 function createClient(
   visitorData: string | undefined,
   label: string,
-  bgChallenge: unknown = createChallenge(),
   loggedIn = false,
 ): MockInnertubeClient {
   const client = visitorData === undefined ? {} : { visitorData };
 
   return {
     label,
-    getAttestationChallenge: vi.fn().mockResolvedValue({
-      bg_challenge: bgChallenge,
-    }),
     session: {
       logged_in: loggedIn,
       context: {
@@ -126,15 +128,32 @@ function createClient(
 
 function createChallenge() {
   return {
-    client_experiments_state_blob: 'experiments',
-    global_name: 'BG_VM',
-    interpreter_hash: 'interpreter-hash',
-    interpreter_url: {
-      private_do_not_access_or_else_trusted_resource_url_wrapped_value:
+    globalName: 'BG_VM',
+    interpreterUrl: {
+      privateDoNotAccessOrElseTrustedResourceUrlWrappedValue:
         '//example.com/interpreter.js',
     },
     program: 'program',
   };
+}
+
+function createPageHtml(
+  challenge: ReturnType<typeof createChallenge> = createChallenge(),
+  eventId = 'page-event-id',
+): string {
+  return `<script>ytcfg.set(${JSON.stringify({ EVENT_ID: eventId })});</script><script>window.ytAtN(${JSON.stringify({ R: { bgChallenge: challenge } })})</script>`;
+}
+
+function createTvConfig(
+  challenge: ReturnType<typeof createChallenge> = createChallenge(),
+  requestKey = 'tv-request-key',
+): string {
+  return `)]}'${JSON.stringify({
+    challengeParams: {
+      R: JSON.stringify({ bgChallenge: challenge }),
+    },
+    challengeRequestKey: requestKey,
+  })}`;
 }
 
 function createDom(label: string): MockDom {
@@ -173,6 +192,7 @@ function createJsonResponse(json: unknown[], ok = true, status = 200) {
 
 function queueMinterBuild(sessionPoToken: string): void {
   mockFetch
+    .mockResolvedValueOnce(createTextResponse(createPageHtml()))
     .mockResolvedValueOnce(
       createTextResponse('globalThis.__bg_vm_loaded = true;'),
     )
@@ -195,7 +215,6 @@ function queueSessionBuild(
   const tokenizedClient = createClient(
     visitorData,
     `${label}-tokenized`,
-    createChallenge(),
     loggedIn,
   );
 
@@ -223,9 +242,13 @@ describe('InnertubeSessionService', () => {
     Reflect.deleteProperty(globalThis, 'location');
     Reflect.deleteProperty(globalThis, 'origin');
     Reflect.deleteProperty(globalThis, '__bg_vm_loaded');
+    Reflect.deleteProperty(globalThis, 'yt');
 
     global.fetch = mockFetch;
     mockBuildURL.mockReturnValue('https://jnn-pa.example/GenerateIT');
+    mockGetHeaders.mockReturnValue({
+      'content-type': 'application/json+protobuf',
+    });
     mockExistsSync.mockReturnValue(false);
     mockReadFileSync.mockReturnValue('');
     mockConfigGet = vi.fn().mockReturnValue({ cookiesPath: undefined });
@@ -256,6 +279,7 @@ describe('InnertubeSessionService', () => {
     Reflect.deleteProperty(globalThis, 'location');
     Reflect.deleteProperty(globalThis, 'origin');
     Reflect.deleteProperty(globalThis, '__bg_vm_loaded');
+    Reflect.deleteProperty(globalThis, 'yt');
     global.fetch = originalFetch;
     vi.restoreAllMocks();
   });
@@ -285,6 +309,22 @@ describe('InnertubeSessionService', () => {
       );
       expect(mockFetch).toHaveBeenNthCalledWith(
         1,
+        'https://www.youtube.com',
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          headers: expect.objectContaining({
+            'user-agent': 'test-user-agent',
+          }),
+        }),
+      );
+      expect(globalThis.yt).toEqual({
+        config_: { EVENT_ID: 'page-event-id' },
+      });
+      expect(dom.window.yt).toEqual({
+        config_: { EVENT_ID: 'page-event-id' },
+      });
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
         'https://example.com/interpreter.js',
         expect.anything(),
       );
@@ -299,7 +339,7 @@ describe('InnertubeSessionService', () => {
       });
       expect(mockBuildURL).toHaveBeenCalledWith('GenerateIT', true);
       expect(mockFetch).toHaveBeenNthCalledWith(
-        2,
+        3,
         'https://jnn-pa.example/GenerateIT',
         expect.objectContaining({
           body: JSON.stringify(['O43z0dpjhgX20SCx4KAo', 'botguard-response']),
@@ -307,7 +347,12 @@ describe('InnertubeSessionService', () => {
         }),
       );
       expect(mockWebPoMinterCreate).toHaveBeenCalledWith(
-        { integrityToken: 'integrity-token' },
+        {
+          estimatedTtlSecs: undefined,
+          integrityToken: 'integrity-token',
+          mintRefreshThreshold: undefined,
+          websafeFallbackToken: undefined,
+        },
         expect.any(Array),
       );
       expect(mockMintAsWebsafeString).toHaveBeenCalledWith('visitor-data-1');
@@ -451,30 +496,19 @@ describe('InnertubeSessionService', () => {
       expect(service.getClient()).toBeUndefined();
     });
 
-    it('rejects if the attestation challenge is missing', async () => {
-      mockInnertubeCreate.mockResolvedValueOnce(
-        createClient('visitor-data-1', 'missing-challenge', null),
-      );
-
-      await expect(service.onModuleInit()).rejects.toThrow(
-        'Innertube attestation challenge missing',
-      );
-      expect(service.getClient()).toBeUndefined();
-    });
-
     it('rejects if the attestation interpreter URL is missing', async () => {
-      const client = createClient('visitor-data-1', 'missing-interpreter-url');
-      client.getAttestationChallenge.mockResolvedValueOnce({
-        bg_challenge: {
-          interpreter_url: {
-            private_do_not_access_or_else_trusted_resource_url_wrapped_value:
-              '',
-          },
-          global_name: 'BG_VM',
-          program: 'program',
-        },
-      });
-      mockInnertubeCreate.mockResolvedValueOnce(client);
+      mockInnertubeCreate.mockResolvedValueOnce(
+        createClient('visitor-data-1', 'missing-interpreter-url'),
+      );
+      mockFetch.mockResolvedValueOnce(
+        createTextResponse(
+          createPageHtml({
+            globalName: 'BG_VM',
+            interpreterUrl: {},
+            program: 'program',
+          }),
+        ),
+      );
 
       await expect(service.onModuleInit()).rejects.toThrow(
         'Innertube attestation interpreter URL missing',
@@ -485,7 +519,9 @@ describe('InnertubeSessionService', () => {
       mockInnertubeCreate.mockResolvedValueOnce(
         createClient('visitor-data-1', 'bad-interpreter'),
       );
-      mockFetch.mockResolvedValueOnce(createTextResponse('', false, 503));
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse(createPageHtml()))
+        .mockResolvedValueOnce(createTextResponse('', false, 503));
 
       await expect(service.onModuleInit()).rejects.toThrow(
         'Failed to fetch BotGuard interpreter: 503',
@@ -496,7 +532,9 @@ describe('InnertubeSessionService', () => {
       mockInnertubeCreate.mockResolvedValueOnce(
         createClient('visitor-data-1', 'empty-interpreter'),
       );
-      mockFetch.mockResolvedValueOnce(createTextResponse(''));
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse(createPageHtml()))
+        .mockResolvedValueOnce(createTextResponse(''));
 
       await expect(service.onModuleInit()).rejects.toThrow(
         'BotGuard interpreter was empty',
@@ -508,6 +546,7 @@ describe('InnertubeSessionService', () => {
         createClient('visitor-data-1', 'bad-integrity'),
       );
       mockFetch
+        .mockResolvedValueOnce(createTextResponse(createPageHtml()))
         .mockResolvedValueOnce(
           createTextResponse('globalThis.__bg_vm_loaded = true;'),
         )
@@ -517,6 +556,98 @@ describe('InnertubeSessionService', () => {
 
       await expect(service.onModuleInit()).rejects.toThrow(
         'Could not get BotGuard integrity token',
+      );
+    });
+
+    it('falls back to the TV challenge when the homepage has no ytcfg', async () => {
+      mockInnertubeCreate
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'bootstrap'))
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'tokenized'));
+      mockFetch
+        .mockResolvedValueOnce(
+          createTextResponse(
+            `<script>window.ytAtN(${JSON.stringify({ R: { bgChallenge: createChallenge() } })})</script>`,
+          ),
+        )
+        .mockResolvedValueOnce(createTextResponse(createTvConfig()))
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        )
+        .mockResolvedValueOnce(createJsonResponse(['integrity-token', 60, 30]));
+      mockBotGuardCreate.mockResolvedValueOnce({ snapshot: mockSnapshot });
+      mockSnapshot.mockResolvedValueOnce('botguard-response');
+      mockWebPoMinterCreate.mockResolvedValueOnce({
+        mintAsWebsafeString: mockMintAsWebsafeString,
+      });
+      mockMintAsWebsafeString.mockResolvedValueOnce('session-po-token');
+
+      await service.onModuleInit();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'innertube.challenge.page_failed: Could not find ytcfg in page HTML',
+      );
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        'https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl',
+        expect.anything(),
+      );
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        4,
+        'https://jnn-pa.example/GenerateIT',
+        expect.objectContaining({
+          body: JSON.stringify(['tv-request-key', 'botguard-response']),
+        }),
+      );
+    });
+
+    it('falls back to the TV challenge when the homepage has no initial attestation data', async () => {
+      mockInnertubeCreate
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'bootstrap'))
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'tokenized'));
+      mockFetch
+        .mockResolvedValueOnce(
+          createTextResponse(
+            '<script>ytcfg.set({"EVENT_ID":"event"});</script>',
+          ),
+        )
+        .mockResolvedValueOnce(createTextResponse(createTvConfig()))
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        )
+        .mockResolvedValueOnce(createJsonResponse(['integrity-token', 60, 30]));
+      mockBotGuardCreate.mockResolvedValueOnce({ snapshot: mockSnapshot });
+      mockSnapshot.mockResolvedValueOnce('botguard-response');
+      mockWebPoMinterCreate.mockResolvedValueOnce({
+        mintAsWebsafeString: mockMintAsWebsafeString,
+      });
+      mockMintAsWebsafeString.mockResolvedValueOnce('session-po-token');
+
+      await service.onModuleInit();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        'innertube.challenge.page_failed: Could not find initial attestation challenge in page HTML',
+      );
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        'https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl',
+        expect.anything(),
+      );
+    });
+
+    it('rejects without logging session initialization when page and TV challenges fail', async () => {
+      mockInnertubeCreate.mockResolvedValueOnce(
+        createClient('visitor-data-1', 'bootstrap'),
+      );
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse('<html></html>'))
+        .mockResolvedValueOnce(createTextResponse('', false, 503));
+
+      await expect(service.onModuleInit()).rejects.toThrow(
+        'YouTube TV config returned 503',
+      );
+
+      expect(logSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('innertube.session.init'),
       );
     });
   });
@@ -622,9 +753,11 @@ describe('InnertubeSessionService', () => {
       mockInnertubeCreate.mockResolvedValueOnce(
         createClient('visitor-data-2', 'refresh-bootstrap'),
       );
-      mockFetch.mockResolvedValueOnce(
-        createTextResponse('globalThis.__bg_vm_loaded = true;'),
-      );
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse(createPageHtml()))
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        );
       mockBotGuardCreate.mockRejectedValueOnce(failure);
 
       await expect(
@@ -652,9 +785,11 @@ describe('InnertubeSessionService', () => {
       mockInnertubeCreate.mockResolvedValueOnce(
         createClient('visitor-data-1', 'refresh-bootstrap'),
       );
-      mockFetch.mockResolvedValueOnce(
-        createTextResponse('globalThis.__bg_vm_loaded = true;'),
-      );
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse(createPageHtml()))
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        );
       mockBotGuardCreate.mockRejectedValueOnce('BotGuard failed');
 
       await expect(service.refresh('startup refresh')).rejects.toBe(
@@ -689,9 +824,11 @@ describe('InnertubeSessionService', () => {
       mockInnertubeCreate.mockResolvedValueOnce(
         createClient('visitor-data-1', 'refresh-bootstrap'),
       );
-      mockFetch.mockResolvedValueOnce(
-        createTextResponse('globalThis.__bg_vm_loaded = true;'),
-      );
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse(createPageHtml()))
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        );
       mockBotGuardCreate.mockRejectedValueOnce('BotGuard failed');
 
       await expect(service.scheduledRefresh()).resolves.toBeUndefined();
