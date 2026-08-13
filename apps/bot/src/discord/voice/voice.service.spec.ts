@@ -1,8 +1,17 @@
 import * as discordVoice from '@discordjs/voice';
+import { Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TestBed, type Mocked } from '@suites/unit';
 import type { Guild, VoiceBasedChannel } from 'discord.js';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type MockInstance,
+  vi,
+} from 'vitest';
 import { VOICE_EVENTS, VoiceService } from './voice.service';
 
 vi.mock('@discordjs/voice', () => ({
@@ -36,9 +45,17 @@ vi.mock('@discordjs/voice', () => ({
 describe('VoiceService', () => {
   let service: VoiceService;
   let eventEmitter: Mocked<EventEmitter2>;
+  let errorSpy: MockInstance;
+  let logSpy: MockInstance;
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    errorSpy = vi
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation(() => undefined);
+    logSpy = vi
+      .spyOn(Logger.prototype, 'log')
+      .mockImplementation(() => undefined);
     const { unit, unitRef } = await TestBed.solitary(VoiceService).compile();
     service = unit;
     eventEmitter = unitRef.get(EventEmitter2);
@@ -559,9 +576,9 @@ describe('VoiceService', () => {
 
   describe('player error handling', () => {
     it('handles player error without crashing', () => {
-      let errorHandler: ((error: Error) => void) | undefined;
+      let errorHandler: ((error: unknown) => void) | undefined;
       const mockPlayer = {
-        on: vi.fn((event: string, handler: (error: Error) => void) => {
+        on: vi.fn((event: string, handler: (error: unknown) => void) => {
           if (event === 'error') {
             errorHandler = handler;
           }
@@ -583,7 +600,11 @@ describe('VoiceService', () => {
       service.play('guild-123', 'test.mp3');
 
       expect(() => {
-        errorHandler?.(new Error('Audio error'));
+        errorHandler?.({
+          message: 'Audio error',
+          stack: 'audio-error-stack',
+          resource: { playbackDuration: 0 },
+        });
       }).not.toThrow();
     });
 
@@ -614,6 +635,78 @@ describe('VoiceService', () => {
       expect(() => {
         idleHandler?.();
       }).not.toThrow();
+    });
+  });
+
+  describe('player handlers', () => {
+    it('logs informative error with playback duration when stream dies', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+        stop: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue({} as never);
+
+      service.play('guild-123', 'test.mp3');
+
+      const errorHandler = mockPlayer.on.mock.calls.find(
+        ([event]) => event === 'error',
+      )?.[1] as ((error: unknown) => void) | undefined;
+
+      errorHandler?.({
+        message: 'No media parts or protocol updates received from server',
+        stack: 'fake-stack',
+        resource: { playbackDuration: 55_780 },
+      });
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        'voice.player.error in guild guild-123: "No media parts or protocol updates received from server" after 55780ms of playback — stream died; Idle transition advances the queue',
+        'fake-stack',
+      );
+      expect(mockPlayer.stop).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('Idle handler logs the existing finished message and does not stop or emit', () => {
+      const mockPlayer = {
+        on: vi.fn(),
+        play: vi.fn(),
+        stop: vi.fn(),
+      };
+      const mockConnection = {
+        subscribe: vi.fn(),
+      };
+
+      vi.mocked(discordVoice.getVoiceConnection).mockReturnValue(
+        mockConnection as unknown as discordVoice.VoiceConnection,
+      );
+      vi.mocked(discordVoice.createAudioPlayer).mockReturnValue(
+        mockPlayer as unknown as discordVoice.AudioPlayer,
+      );
+      vi.mocked(discordVoice.createAudioResource).mockReturnValue({} as never);
+
+      service.play('guild-123', 'test.mp3');
+
+      const idleHandler = mockPlayer.on.mock.calls.find(
+        ([event]) => event === discordVoice.AudioPlayerStatus.Idle,
+      )?.[1] as (() => void) | undefined;
+
+      idleHandler?.();
+
+      expect(logSpy).toHaveBeenCalledWith('Audio finished in guild guild-123');
+      expect(errorSpy).not.toHaveBeenCalled();
+      expect(mockPlayer.stop).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
   });
 

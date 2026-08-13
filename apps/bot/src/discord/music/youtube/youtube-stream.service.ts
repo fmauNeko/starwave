@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { StreamType } from '@discordjs/voice';
 import { Constants, Platform, YTNodes, type Types } from 'youtubei.js';
 import { SabrStream } from 'googlevideo/sabr-stream';
-import type { ReloadPlaybackContext } from 'googlevideo/protos';
+import type {
+  ReloadPlaybackContext,
+  StreamProtectionStatus,
+} from 'googlevideo/protos';
 import { buildSabrFormat, EnabledTrackTypes } from 'googlevideo/utils';
 import { Readable } from 'node:stream';
 import { regex } from 'arkregex';
@@ -11,6 +14,11 @@ import { InnertubeSessionService } from './innertube-session.service';
 const YOUTUBE_URL_PATTERN = regex(
   '(?:youtube\\.com/(?:watch\\?v=|embed/|shorts/)|youtu\\.be/)([a-zA-Z0-9_-]{11})',
 );
+const SABR_MAX_RETRIES = 3;
+const STREAM_PROTECTION_RECOVERY_THRESHOLD = 2;
+const MAX_RECOVERY_ATTEMPTS = 3;
+const SESSION_REBUILD_ON_ATTEMPT = 3;
+const MAX_RELOAD_REMINTS = 3;
 const VIDEO_ID_PATTERN = regex('^([a-zA-Z0-9_-]{11})$');
 
 interface ThumbnailLike {
@@ -183,6 +191,25 @@ export class YouTubeStreamService {
       throw new Error('No SABR ustreamer config available');
     }
 
+    let recoveryPromise: Promise<void> | undefined;
+    let reloadPromise: Promise<void> | undefined;
+    let protectionAttempts = 0;
+    let reloadRemints = 0;
+    let streamClosed = false;
+    let exhaustedLogged = false;
+
+    const gatedFetch: typeof fetch = async (input, init) => {
+      if (recoveryPromise) {
+        await recoveryPromise;
+      }
+
+      if (reloadPromise) {
+        await reloadPromise;
+      }
+
+      return fetch(input, init);
+    };
+
     const sabrStream = new SabrStream({
       formats:
         streamingData.adaptive_formats?.map((format) =>
@@ -192,20 +219,88 @@ export class YouTubeStreamService {
       videoPlaybackUstreamerConfig,
       poToken,
       clientInfo: this.getSabrClientInfo(client),
+      fetch: gatedFetch,
     });
 
+    sabrStream.on('finish', () => {
+      streamClosed = true;
+    });
+
+    sabrStream.on('abort', () => {
+      streamClosed = true;
+    });
+
+    const startRecovery = (options: {
+      reason: string;
+      attempt: number;
+      maxAttempts: number;
+      rebuildSession: boolean;
+    }): void => {
+      if (streamClosed || recoveryPromise) {
+        return;
+      }
+
+      recoveryPromise = this.recoverSabrStream(videoId, sabrStream, {
+        ...options,
+        isClosed: () => streamClosed,
+      }).finally(() => {
+        recoveryPromise = undefined;
+      });
+    };
+
+    sabrStream.on(
+      'streamProtectionStatusUpdate',
+      (status: StreamProtectionStatus) => {
+        if ((status.status ?? 0) < STREAM_PROTECTION_RECOVERY_THRESHOLD) {
+          return;
+        }
+
+        if (protectionAttempts >= MAX_RECOVERY_ATTEMPTS) {
+          if (!exhaustedLogged) {
+            exhaustedLogged = true;
+            this.logger.error(
+              `youtube.stream.protected: ${videoId}`,
+              `YouTube kept withholding media after ${String(MAX_RECOVERY_ATTEMPTS)} PO token refreshes; this video cannot be streamed with the current session`,
+            );
+          }
+          return;
+        }
+
+        protectionAttempts += 1;
+        startRecovery({
+          reason: `stream protection status ${String(status.status)}`,
+          attempt: protectionAttempts,
+          maxAttempts: MAX_RECOVERY_ATTEMPTS,
+          rebuildSession: protectionAttempts >= SESSION_REBUILD_ON_ATTEMPT,
+        });
+      },
+    );
+
     sabrStream.on('reloadPlayerResponse', (reloadPlaybackContext) => {
-      void this.handleSabrReload(
+      if (reloadRemints < MAX_RELOAD_REMINTS) {
+        reloadRemints += 1;
+        startRecovery({
+          reason: 'reload player response',
+          attempt: reloadRemints,
+          maxAttempts: MAX_RELOAD_REMINTS,
+          rebuildSession: false,
+        });
+      }
+
+      reloadPromise = this.handleSabrReload(
         client,
         videoId,
         sabrStream,
         reloadPlaybackContext,
-      );
+      ).finally(() => {
+        reloadPromise = undefined;
+      });
     });
 
     const { audioStream } = await sabrStream.start({
       enabledTrackTypes: EnabledTrackTypes.AUDIO_ONLY,
       preferOpus: true,
+      maxRetries: SABR_MAX_RETRIES,
     });
     const nodeStream = Readable.fromWeb(
       audioStream as Parameters<typeof Readable.fromWeb>[0],
@@ -244,6 +339,52 @@ export class YouTubeStreamService {
     } catch (error: unknown) {
       this.logger.error(
         `youtube.stream.reload.failed: ${videoId}`,
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+  }
+
+  private async recoverSabrStream(
+    videoId: string,
+    sabrStream: SabrStream,
+    options: {
+      reason: string;
+      attempt: number;
+      maxAttempts: number;
+      rebuildSession: boolean;
+      isClosed: () => boolean;
+    },
+  ): Promise<void> {
+    const { reason, attempt, maxAttempts, rebuildSession, isClosed } = options;
+
+    this.logger.warn(
+      `youtube.stream.recover: ${videoId} (${reason}, attempt ${String(attempt)}/${String(maxAttempts)}${rebuildSession ? ', rebuilding session' : ''})`,
+    );
+
+    try {
+      if (rebuildSession) {
+        if (isClosed()) {
+          this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
+          return;
+        }
+        await this.session.refresh(reason);
+      }
+
+      if (isClosed()) {
+        this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
+        return;
+      }
+
+      const freshPoToken = await this.session.generateContentPoToken(videoId);
+      if (isClosed()) {
+        this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
+        return;
+      }
+      sabrStream.setPoToken(freshPoToken);
+      this.logger.log(`youtube.stream.recovered: ${videoId}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `youtube.stream.recover.failed: ${videoId}`,
         error instanceof Error ? error.message : String(error),
       );
     }
