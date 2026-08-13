@@ -147,13 +147,13 @@ jobs:
           git commit -m "fix(chart): sync appVersion to ${{ steps.extract.outputs.bot_version }}"
           git push
 
-  argocd-sync:
-    name: Sync ArgoCD
-    # Run if: helm release exists, ArgoCD is configured, and neither docker nor helm jobs failed
+  renovate-webhook:
+    name: Trigger Renovate
+    # Run if: helm release exists, Renovate is configured, and neither docker nor helm jobs failed
     if: |
       always() &&
       fromJson(needs.release.outputs.helm_matrix).target[0] != null &&
-      vars.ARGOCD_SERVER != '' &&
+      vars.RENOVATE_SERVER != '' &&
       needs.helm-release.result != 'failure' &&
       needs.docker-release.result != 'failure'
     runs-on: ubuntu-latest
@@ -178,20 +178,21 @@ jobs:
           run_id: ${{ needs.helm-release.outputs.run_id }}
           run_timeout_seconds: 1800
 
-      - name: Sync ArgoCD Application
+      - name: Trigger Renovate run
         env:
-          ARGOCD_SERVER: ${{ vars.ARGOCD_SERVER }}
-          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+          RENOVATE_SERVER: ${{ vars.RENOVATE_SERVER }}
+          RENOVATE_WEBHOOK_TOKEN: ${{ secrets.RENOVATE_WEBHOOK_TOKEN }}
+          RENOVATE_NAMESPACE: renovate
+          RENOVATE_JOB: forgejo-renovate
+          RENOVATE_PROJECT: infra%2Fiac
         run: |
           set -euo pipefail
 
-          curl -sSL -o /usr/local/bin/argocd https://${ARGOCD_SERVER}/download/argocd-linux-amd64
-          chmod +x /usr/local/bin/argocd
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer ${RENOVATE_WEBHOOK_TOKEN}" \
+            "https://${RENOVATE_SERVER}/webhook/v1/schedule?namespace=${RENOVATE_NAMESPACE}&job=${RENOVATE_JOB}&project=${RENOVATE_PROJECT}"
 
-          argocd app get starwave --hard-refresh
-          argocd app sync starwave
-
-          echo "ArgoCD sync triggered successfully"
+          echo "Renovate run triggered successfully"
 
   backmerge:
     name: Backmerge main into develop
