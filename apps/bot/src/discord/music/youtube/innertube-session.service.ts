@@ -268,6 +268,12 @@ export class InnertubeSessionService implements OnModuleInit {
       method: 'POST',
       signal: AbortSignal.timeout(BOTGUARD_FETCH_TIMEOUT_MS),
     });
+    if (!integrityTokenResponse.ok) {
+      throw new Error(
+        `Failed to generate BotGuard integrity token: ${String(integrityTokenResponse.status)}`,
+      );
+    }
+
     const [
       integrityToken,
       estimatedTtlSecs,
@@ -326,13 +332,13 @@ export class InnertubeSessionService implements OnModuleInit {
     }
 
     const html = await response.text();
-    const ytConfigRaw = /ytcfg\.set\(({.+?})\);/s.exec(html)?.[1];
+    const ytConfigRaw = this.extractBalancedObject(html, 'ytcfg.set(');
     if (!ytConfigRaw) {
       throw new Error('Could not find ytcfg in page HTML');
     }
     this.setYtConfig(JSON.parse(ytConfigRaw) as Record<string, unknown>);
 
-    const initial = /window\.ytAtN\(\s*({[\s\S]*?})\s*\)/.exec(html)?.[1];
+    const initial = this.extractBalancedObject(html, 'window.ytAtN(');
     if (!initial) {
       throw new Error(
         'Could not find initial attestation challenge in page HTML',
@@ -348,6 +354,84 @@ export class InnertubeSessionService implements OnModuleInit {
     }
 
     return { challenge, requestKey: REQUEST_KEY };
+  }
+
+  /**
+   * Extracts the balanced `{...}` object passed as the FIRST argument to `marker`.
+   * YouTube's inline payloads nest deeply and can contain `});` inside strings, so a
+   * non-greedy regex truncates them.
+   *
+   * The page also emits non-object call forms (`ytcfg.set("KEY", value)`), so call
+   * sites whose first argument is not an object literal are skipped. Scanning forward
+   * to the next `{` instead would land in an unrelated structure and silently push the
+   * whole page challenge onto the tv_config fallback.
+   */
+  private extractBalancedObject(
+    html: string,
+    marker: string,
+  ): string | undefined {
+    let searchFrom = 0;
+
+    for (;;) {
+      const markerIndex = html.indexOf(marker, searchFrom);
+      if (markerIndex === -1) {
+        return undefined;
+      }
+
+      searchFrom = markerIndex + marker.length;
+
+      let start = searchFrom;
+      while (start < html.length && /\s/u.test(html.charAt(start))) {
+        start++;
+      }
+
+      if (html.charAt(start) !== '{') {
+        continue;
+      }
+
+      const extracted = this.scanBalancedObject(html, start);
+      if (extracted !== undefined) {
+        return extracted;
+      }
+    }
+  }
+
+  /** Scans a `{...}` literal from `start`, respecting quoted strings and escapes. */
+  private scanBalancedObject(html: string, start: number): string | undefined {
+    let depth = 0;
+    let quote: string | undefined;
+    let escaped = false;
+
+    for (let index = start; index < html.length; index++) {
+      const char = html[index];
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+
+      if (quote !== undefined) {
+        if (char === '\\') {
+          escaped = true;
+        } else if (char === quote) {
+          quote = undefined;
+        }
+        continue;
+      }
+
+      if (char === '"' || char === "'") {
+        quote = char;
+      } else if (char === '{') {
+        depth++;
+      } else if (char === '}') {
+        depth--;
+        if (depth === 0) {
+          return html.slice(start, index + 1);
+        }
+      }
+    }
+
+    return undefined;
   }
 
   private async fetchTvChallenge(): Promise<{

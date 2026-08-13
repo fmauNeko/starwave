@@ -92,13 +92,17 @@ vi.mock('bgutils-js/webpo', () => ({
   },
 }));
 
-vi.mock('bgutils-js/utils', () => ({
-  GOOG_API_KEY: 'test-api-key',
-  USER_AGENT: 'test-user-agent',
-  buildURL: mockBuildURL,
-  getHeaders: mockGetHeaders,
-  parseLooseJSON: JSON.parse,
-}));
+vi.mock('bgutils-js/utils', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('bgutils-js/utils')>();
+
+  return {
+    GOOG_API_KEY: 'test-api-key',
+    USER_AGENT: 'test-user-agent',
+    buildURL: mockBuildURL,
+    getHeaders: mockGetHeaders,
+    parseLooseJSON: actual.parseLooseJSON,
+  };
+});
 
 vi.mock('jsdom', () => ({
   JSDOM: mockJSDOMConstructor,
@@ -556,6 +560,128 @@ describe('InnertubeSessionService', () => {
 
       await expect(service.onModuleInit()).rejects.toThrow(
         'Could not get BotGuard integrity token',
+      );
+    });
+
+    it('rejects with the HTTP status when integrity token generation fails', async () => {
+      mockInnertubeCreate.mockResolvedValueOnce(
+        createClient('visitor-data-1', 'failed-integrity-request'),
+      );
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse(createPageHtml()))
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        )
+        .mockResolvedValueOnce(
+          createTextResponse('service unavailable', false, 503),
+        );
+      mockBotGuardCreate.mockResolvedValueOnce({ snapshot: mockSnapshot });
+      mockSnapshot.mockResolvedValueOnce('botguard-response');
+
+      await expect(service.onModuleInit()).rejects.toThrow(
+        'Failed to generate BotGuard integrity token: 503',
+      );
+
+      expect(logSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('innertube.session.init'),
+      );
+    });
+
+    it('uses a page challenge written as loose JavaScript object syntax', async () => {
+      const challenge = createChallenge();
+      const looseChallenge = `{R:{bgChallenge:{globalName:'${challenge.globalName}',interpreterUrl:{privateDoNotAccessOrElseTrustedResourceUrlWrappedValue:'${challenge.interpreterUrl.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue}',},program:'${challenge.program}',},},}`;
+      mockInnertubeCreate
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'bootstrap'))
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'tokenized'));
+      mockFetch
+        .mockResolvedValueOnce(
+          createTextResponse(
+            `<script>ytcfg.set({"EVENT_ID":"loose-event"});</script><script>window.ytAtN(${looseChallenge})</script>`,
+          ),
+        )
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        )
+        .mockResolvedValueOnce(createJsonResponse(['integrity-token']));
+      mockBotGuardCreate.mockResolvedValueOnce({ snapshot: mockSnapshot });
+      mockSnapshot.mockResolvedValueOnce('botguard-response');
+      mockWebPoMinterCreate.mockResolvedValueOnce({
+        mintAsWebsafeString: mockMintAsWebsafeString,
+      });
+      mockMintAsWebsafeString.mockResolvedValueOnce('session-po-token');
+
+      await service.onModuleInit();
+
+      expect(mockBotGuardCreate).toHaveBeenCalledWith({
+        globalName: 'BG_VM',
+        globalObject: globalThis,
+        program: 'program',
+      });
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it('extracts nested ytcfg strings containing the old regex terminator without TV fallback', async () => {
+      const pageHtml = `<script>ytcfg.set(${JSON.stringify({
+        EVENT_ID: 'balanced-event',
+        NESTED: { value: 'embedded }); marker' },
+      })});</script><script>window.ytAtN(${JSON.stringify({ R: { bgChallenge: createChallenge() } })})</script>`;
+      mockInnertubeCreate
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'bootstrap'))
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'tokenized'));
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse(pageHtml))
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        )
+        .mockResolvedValueOnce(createJsonResponse(['integrity-token']));
+      mockBotGuardCreate.mockResolvedValueOnce({ snapshot: mockSnapshot });
+      mockSnapshot.mockResolvedValueOnce('botguard-response');
+      mockWebPoMinterCreate.mockResolvedValueOnce({
+        mintAsWebsafeString: mockMintAsWebsafeString,
+      });
+      mockMintAsWebsafeString.mockResolvedValueOnce('session-po-token');
+
+      await service.onModuleInit();
+
+      expect(globalThis.yt).toEqual({
+        config_: {
+          EVENT_ID: 'balanced-event',
+          NESTED: { value: 'embedded }); marker' },
+        },
+      });
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(warnSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('innertube.challenge.page_failed'),
+      );
+    });
+
+    it('skips ytcfg.set calls whose first argument is not an object literal', async () => {
+      const pageHtml =
+        `<script>ytcfg.set("CLIENT_NAME", {"not":"the config"});</script>` +
+        `<script>ytcfg.set(${JSON.stringify({ EVENT_ID: 'real-event' })});</script>` +
+        `<script>window.ytAtN(${JSON.stringify({ R: { bgChallenge: createChallenge() } })})</script>`;
+      mockInnertubeCreate
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'bootstrap'))
+        .mockResolvedValueOnce(createClient('visitor-data-1', 'tokenized'));
+      mockFetch
+        .mockResolvedValueOnce(createTextResponse(pageHtml))
+        .mockResolvedValueOnce(
+          createTextResponse('globalThis.__bg_vm_loaded = true;'),
+        )
+        .mockResolvedValueOnce(createJsonResponse(['integrity-token']));
+      mockBotGuardCreate.mockResolvedValueOnce({ snapshot: mockSnapshot });
+      mockSnapshot.mockResolvedValueOnce('botguard-response');
+      mockWebPoMinterCreate.mockResolvedValueOnce({
+        mintAsWebsafeString: mockMintAsWebsafeString,
+      });
+      mockMintAsWebsafeString.mockResolvedValueOnce('session-po-token');
+
+      await service.onModuleInit();
+
+      expect(globalThis.yt).toEqual({ config_: { EVENT_ID: 'real-event' } });
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      expect(warnSpy).not.toHaveBeenCalledWith(
+        expect.stringContaining('innertube.challenge.page_failed'),
       );
     });
 
