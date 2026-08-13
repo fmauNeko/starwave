@@ -58,7 +58,7 @@ YouTube audio is streamed in-process via `youtubei.js` (Innertube) + `googlevide
 **PoToken lifecycle:**
 
 1. `InnertubeSessionService.onModuleInit()` bootstraps an Innertube client to get `visitor_data`
-2. Fetches a BotGuard attestation challenge from YouTube
+2. Fetches a BotGuard attestation challenge — **scraped from the YouTube homepage, not `/att/get`**. The page's `ytcfg.set({...})` is parsed and exposed as `globalThis.yt.config_` (BotGuard reads `yt.config_.EVENT_ID` during the snapshot), and the challenge is taken from the `window.ytAtN({...})` blob. If either regex misses, it falls back to the TV challenge from `tv_config` (which needs no `EVENT_ID`) using that response's own `challengeRequestKey`. **Do not revert this to `innertube.getAttestationChallenge()`** — see the gotcha below
 3. Executes the BotGuard interpreter (required for attestation)
 4. Generates a `WebPoMinter` and mints a session-bound PoToken
 5. Creates the final Innertube client with `{ po_token, visitor_data }`
@@ -69,7 +69,17 @@ YouTube audio is streamed in-process via `youtubei.js` (Innertube) + `googlevide
 
 **Known limitation:** SABR streams survive typical Discord pause durations (tested: 60s). Very long pauses (many minutes) may still time out the CDN connection. Mid-stream PoToken rejections (`streamProtectionStatus >= 2`) are auto-recovered in-flight; if recovery repeatedly fails, the track fails fast (3 retries, ~3.5 s) and the queue advances via the player's Idle transition.
 
-**Some videos are refused by YouTube regardless of a valid PoToken.** Verified empirically against live YouTube: `dQw4w9WgXcQ` (3:33) streams to completion — 3353 KB of ~3550 KB expected, zero protection events — using this exact configuration, while `Gm5-Xo4BEWU` (a 41-minute album upload) is cut off at exactly 966 KB (~2%) with `streamProtectionStatus = 2`. A configuration matrix (locally-generated vs real `visitor_data`, cookies vs anonymous, videoId- vs visitorData-bound SABR token) returned byte-for-byte the same 966 KB for that video, so no session/token change alters the outcome — YouTube is refusing the content, not the credential. Re-minting cannot fix these; the bot logs `youtube.stream.protected` and advances the queue. Do not "fix" this by rebuilding the session more aggressively (that only hammers the attestation endpoint and risks the IP's standing).
+**The attestation challenge MUST come from the page, not `/att/get`.** As of 2026-08, YouTube binds the initial attestation challenge to `yt.config_.EVENT_ID` and **rejects any WebPO token minted from an `/att/get` challenge** on the `WEB`/`MWEB` clients ([BgUtils#44](https://github.com/LuanRT/BgUtils/pull/44)). The failure is silent and easy to misdiagnose: minting succeeds and returns a well-formed token, but the SABR server reports `streamProtectionStatus = 2` on the very first request and serves only a ~1 MB cold-start allowance (about a minute of audio) before withholding media — which surfaces as "music plays briefly then stops".
+
+Diagnosing this is quick if you know the tell: a rejected token behaves **byte-for-byte identically to sending no token at all**. Measured on `kJQP7kiw5Fk`, same session, three challenge sources:
+
+| Challenge source                      | Audio delivered  | `streamProtectionStatus` |
+| ------------------------------------- | ---------------- | ------------------------ |
+| `/att/get` (the old, broken path)       | 999 / 4497 KB    | `[2,2,2,2]` — rejected     |
+| Homepage `window.ytAtN` + `yt.config_`    | 4497 / 4497 KB   | `[1,1,…]` — accepted       |
+| `tv_config` `challengeParams.R`           | 4497 / 4497 KB   | `[1,1,…]` — accepted       |
+
+`streamProtectionStatus = 1` means the token was accepted; `2` means rejected. If playback ever regresses to ~1 minute again, check the challenge source **first** — not the token binding, session options, or cookies, all of which were ruled out empirically and change nothing.
 
 **Age-restricted / region-locked content:** PoToken-only mode does not support age-restricted videos (no cookie path). These will fail with a clear error message.
 
