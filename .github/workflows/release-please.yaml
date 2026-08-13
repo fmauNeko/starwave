@@ -22,7 +22,7 @@ jobs:
       prs_created: ${{ steps.release.outputs.prs_created }}
       pr: ${{ steps.release.outputs.pr }}
     steps:
-      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
       - name: Generate matrix output
         id: matrix
@@ -48,7 +48,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.docker_matrix) }}
     steps:
-      - uses: Codex-/return-dispatch@85e564d60eaec3cc4aca885373d510cfe4bd5b19 # v4
+      - uses: Codex-/return-dispatch@85e564d60eaec3cc4aca885373d510cfe4bd5b19 # v4.0.1
         id: dispatch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.release.outputs.helm_matrix) }}
     steps:
-      - uses: Codex-/return-dispatch@85e564d60eaec3cc4aca885373d510cfe4bd5b19 # v4
+      - uses: Codex-/return-dispatch@85e564d60eaec3cc4aca885373d510cfe4bd5b19 # v4.0.1
         id: dispatch
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -107,12 +107,12 @@ jobs:
       - name: Generate GitHub App token
         if: steps.extract.outputs.has_bot_release == 'true'
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.extract.outputs.has_bot_release == 'true'
         with:
           ref: main
@@ -161,7 +161,7 @@ jobs:
     steps:
       - name: Await Docker release
         if: ${{ needs.docker-release.outputs.run_id != '' }}
-        uses: Codex-/await-remote-run@bb04140a0965ec5532845d826a74dc5f075f891b # v3
+        uses: Codex-/await-remote-run@bb04140a0965ec5532845d826a74dc5f075f891b # v3.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.event.repository.name }}
@@ -170,7 +170,7 @@ jobs:
           run_timeout_seconds: 1800
 
       - name: Await Helm release
-        uses: Codex-/await-remote-run@bb04140a0965ec5532845d826a74dc5f075f891b # v3
+        uses: Codex-/await-remote-run@bb04140a0965ec5532845d826a74dc5f075f891b # v3.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repo: ${{ github.event.repository.name }}
@@ -199,7 +199,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [release, update-chart-appversion]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
