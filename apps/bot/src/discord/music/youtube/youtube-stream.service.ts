@@ -16,6 +16,8 @@ const YOUTUBE_URL_PATTERN = regex(
 );
 const SABR_MAX_RETRIES = 3;
 const STREAM_PROTECTION_RECOVERY_THRESHOLD = 2;
+const MAX_RECOVERY_ATTEMPTS = 3;
+const SESSION_REBUILD_ON_ATTEMPT = 3;
 const VIDEO_ID_PATTERN = regex('^([a-zA-Z0-9_-]{11})$');
 
 interface ThumbnailLike {
@@ -190,6 +192,9 @@ export class YouTubeStreamService {
 
     let recoveryPromise: Promise<void> | undefined;
     let reloadPromise: Promise<void> | undefined;
+    let recoveryAttempts = 0;
+    let streamClosed = false;
+    let exhaustedLogged = false;
 
     const gatedFetch: typeof fetch = async (input, init) => {
       if (recoveryPromise) {
@@ -215,16 +220,41 @@ export class YouTubeStreamService {
       fetch: gatedFetch,
     });
 
-    const triggerRecovery = (reason: string): Promise<void> => {
-      recoveryPromise ??= this.recoverSabrStream(
+    sabrStream.on('finish', () => {
+      streamClosed = true;
+    });
+
+    sabrStream.on('abort', () => {
+      streamClosed = true;
+    });
+
+    const triggerRecovery = (reason: string): void => {
+      if (streamClosed || recoveryPromise) {
+        return;
+      }
+
+      if (recoveryAttempts >= MAX_RECOVERY_ATTEMPTS) {
+        if (!exhaustedLogged) {
+          exhaustedLogged = true;
+          this.logger.error(
+            `youtube.stream.protected: ${videoId}`,
+            `YouTube kept withholding media after ${String(MAX_RECOVERY_ATTEMPTS)} PO token refreshes; this video cannot be streamed with the current session`,
+          );
+        }
+        return;
+      }
+
+      recoveryAttempts += 1;
+      const attempt = recoveryAttempts;
+
+      recoveryPromise = this.recoverSabrStream(
         videoId,
         sabrStream,
         reason,
+        attempt,
       ).finally(() => {
         recoveryPromise = undefined;
       });
-
-      return recoveryPromise;
     };
 
     sabrStream.on(
@@ -234,14 +264,12 @@ export class YouTubeStreamService {
           return;
         }
 
-        void triggerRecovery(
-          `stream protection status ${String(status.status)}`,
-        );
+        triggerRecovery(`stream protection status ${String(status.status)}`);
       },
     );
 
     sabrStream.on('reloadPlayerResponse', (reloadPlaybackContext) => {
-      void triggerRecovery('reload player response');
+      triggerRecovery('reload player response');
       reloadPromise = this.handleSabrReload(
         client,
         videoId,
@@ -303,11 +331,19 @@ export class YouTubeStreamService {
     videoId: string,
     sabrStream: SabrStream,
     reason: string,
+    attempt: number,
   ): Promise<void> {
-    this.logger.warn(`youtube.stream.recover: ${videoId} (${reason})`);
+    const rebuildSession = attempt >= SESSION_REBUILD_ON_ATTEMPT;
+
+    this.logger.warn(
+      `youtube.stream.recover: ${videoId} (${reason}, attempt ${String(attempt)}/${String(MAX_RECOVERY_ATTEMPTS)}${rebuildSession ? ', rebuilding session' : ''})`,
+    );
 
     try {
-      await this.session.refresh(reason);
+      if (rebuildSession) {
+        await this.session.refresh(reason);
+      }
+
       const freshPoToken = await this.session.generateContentPoToken(videoId);
       sabrStream.setPoToken(freshPoToken);
       this.logger.log(`youtube.stream.recovered: ${videoId}`);
