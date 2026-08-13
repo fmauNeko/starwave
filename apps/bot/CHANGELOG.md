@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.1](https://github.com/fmauNeko/starwave/compare/bot@v1.4.0...bot@v1.4.1) (2026-08-13)
+
+
+### Bug Fixes
+
+* **bot:** cap SABR recovery instead of rebuilding the session per retry ([9973491](https://github.com/fmauNeko/starwave/commit/9973491697234e875de6673803da9c34e69ebc33))
+* **bot:** log voice player stream errors without racing queue auto-advance ([023c368](https://github.com/fmauNeko/starwave/commit/023c36854ed64951bd0615ea1d38109def8ae8ce))
+* **bot:** recover SABR streams in-flight from PoToken rejection ([84c6173](https://github.com/fmauNeko/starwave/commit/84c6173071ba6a55755d1b42c5384e67b99b4153))
+* **bot:** schedule proactive innertube session refresh every 6h ([b70a2da](https://github.com/fmauNeko/starwave/commit/b70a2da0198bc3e9af0ec9a1aaab31e537774e21))
+* **bot:** separate reload and protection recovery budgets, harden challenge extraction ([a3622ae](https://github.com/fmauNeko/starwave/commit/a3622ae211462adad605459e726693ae6b9b0ea1))
+* **bot:** source BotGuard challenge from the page instead of /att/get ([cde6f86](https://github.com/fmauNeko/starwave/commit/cde6f86aeefd9b3970937035ea1be1303838ba6f))
+
 ## [1.4.0](https://github.com/fmauNeko/starwave/compare/bot@v1.3.0...bot@v1.4.0) (2026-08-11)
 
 
