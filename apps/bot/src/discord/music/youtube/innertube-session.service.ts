@@ -4,7 +4,12 @@ import { ConfigService } from '@nestjs/config';
 import { Interval } from '@nestjs/schedule';
 import { BotGuardClient } from 'bgutils-js/botguard';
 import type { WebPoSignalOutput } from 'bgutils-js/shared-types';
-import { GOOG_API_KEY, USER_AGENT, buildURL } from 'bgutils-js/utils';
+import {
+  USER_AGENT,
+  buildURL,
+  getHeaders,
+  parseLooseJSON,
+} from 'bgutils-js/utils';
 import { WebPoMinter } from 'bgutils-js/webpo';
 import { JSDOM } from 'jsdom';
 import { Innertube } from 'youtubei.js';
@@ -12,7 +17,19 @@ import type { Config } from '../../../config/config.type';
 
 const REQUEST_KEY = 'O43z0dpjhgX20SCx4KAo';
 const BOTGUARD_FETCH_TIMEOUT_MS = 10_000;
+const TV_CONFIG_URL =
+  'https://www.youtube.com/tv_config?action_get_config=true&client=lb4&theme=cl';
+const TV_USER_AGENT =
+  'Mozilla/5.0 (Linux arm64-v8a; Android 10) Cobalt/25.lts.30.1034958-gold (unlike Gecko) v8/8.8.278.17-jit gles Starboard/15, Sony_ATV_sdm845_13140765/52.1.C.0.268 (KDDI, SOV38) com.google.android.youtube.tv/5.30.301';
 const SESSION_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours — BotGuard integrity tokens expire well beyond this
+
+interface RawBgChallenge {
+  readonly program: string;
+  readonly globalName: string;
+  readonly interpreterUrl?: {
+    readonly privateDoNotAccessOrElseTrustedResourceUrlWrappedValue?: string;
+  };
+}
 
 @Injectable()
 export class InnertubeSessionService implements OnModuleInit {
@@ -96,7 +113,7 @@ export class InnertubeSessionService implements OnModuleInit {
       ...(cookie ? { cookie } : {}),
     });
     const visitorData = this.extractVisitorData(bootstrapClient);
-    const webPoMinter = await this.createWebPoMinter(bootstrapClient);
+    const webPoMinter = await this.createWebPoMinter();
     const sessionPoToken = await webPoMinter.mintAsWebsafeString(visitorData);
     const client = await Innertube.create({
       enable_session_cache: false,
@@ -196,6 +213,12 @@ export class InnertubeSessionService implements OnModuleInit {
     }
   }
 
+  private setYtConfig(config: Record<string, unknown>): void {
+    const yt = { config_: config };
+    Object.assign(this.dom?.window ?? {}, { yt });
+    Object.assign(globalThis, { yt });
+  }
+
   private extractVisitorData(client: Innertube): string {
     const visitorData = client.session.context.client.visitorData;
 
@@ -206,19 +229,11 @@ export class InnertubeSessionService implements OnModuleInit {
     return visitorData;
   }
 
-  private async createWebPoMinter(client: Innertube): Promise<WebPoMinter> {
-    const challengeResponse = await client.getAttestationChallenge(
-      'ENGAGEMENT_TYPE_UNBOUND',
-    );
-    const challenge = challengeResponse.bg_challenge;
-
-    if (!challenge) {
-      throw new Error('Innertube attestation challenge missing');
-    }
-
+  private async createWebPoMinter(): Promise<WebPoMinter> {
+    const { challenge, requestKey } = await this.fetchAttestationChallenge();
     const interpreterUrl =
-      challenge.interpreter_url
-        .private_do_not_access_or_else_trusted_resource_url_wrapped_value;
+      challenge.interpreterUrl
+        ?.privateDoNotAccessOrElseTrustedResourceUrlWrappedValue;
     if (!interpreterUrl) {
       throw new Error('Innertube attestation interpreter URL missing');
     }
@@ -241,31 +256,138 @@ export class InnertubeSessionService implements OnModuleInit {
     new Function(interpreterJavascript)(); // Required: executes BotGuard interpreter downloaded from YouTube CDN
 
     const botguard = await BotGuardClient.create({
-      globalName: challenge.global_name,
+      globalName: challenge.globalName,
       globalObject: globalThis,
       program: challenge.program,
     });
     const webPoSignalOutput: WebPoSignalOutput = [];
     const botguardResponse = await botguard.snapshot({ webPoSignalOutput });
     const integrityTokenResponse = await fetch(buildURL('GenerateIT', true), {
-      body: JSON.stringify([REQUEST_KEY, botguardResponse]),
-      headers: {
-        'content-type': 'application/json+protobuf',
-        'user-agent': USER_AGENT,
-        'x-goog-api-key': GOOG_API_KEY,
-        'x-user-agent': 'grpc-web-javascript/0.1',
-      },
+      body: JSON.stringify([requestKey, botguardResponse]),
+      headers: getHeaders(),
       method: 'POST',
       signal: AbortSignal.timeout(BOTGUARD_FETCH_TIMEOUT_MS),
     });
-    const integrityTokenJson =
-      (await integrityTokenResponse.json()) as unknown[];
-    const integrityToken = integrityTokenJson[0];
+    const [
+      integrityToken,
+      estimatedTtlSecs,
+      mintRefreshThreshold,
+      websafeFallbackToken,
+    ] = (await integrityTokenResponse.json()) as [
+      string,
+      number,
+      number,
+      string?,
+    ];
 
     if (typeof integrityToken !== 'string') {
       throw new Error('Could not get BotGuard integrity token');
     }
 
-    return WebPoMinter.create({ integrityToken }, webPoSignalOutput);
+    return WebPoMinter.create(
+      {
+        integrityToken,
+        estimatedTtlSecs,
+        mintRefreshThreshold,
+        ...(websafeFallbackToken === undefined ? {} : { websafeFallbackToken }),
+      },
+      webPoSignalOutput,
+    );
+  }
+
+  private async fetchAttestationChallenge(): Promise<{
+    challenge: RawBgChallenge;
+    requestKey: string;
+  }> {
+    try {
+      return await this.fetchPageChallenge();
+    } catch (error: unknown) {
+      this.logger.warn(
+        `innertube.challenge.page_failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return this.fetchTvChallenge();
+    }
+  }
+
+  private async fetchPageChallenge(): Promise<{
+    challenge: RawBgChallenge;
+    requestKey: string;
+  }> {
+    const response = await fetch('https://www.youtube.com', {
+      headers: {
+        accept: '*/*',
+        'accept-language': 'en-US,en;q=0.7',
+        'user-agent': USER_AGENT,
+      },
+      signal: AbortSignal.timeout(BOTGUARD_FETCH_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      throw new Error(`YouTube homepage returned ${String(response.status)}`);
+    }
+
+    const html = await response.text();
+    const ytConfigRaw = /ytcfg\.set\(({.+?})\);/s.exec(html)?.[1];
+    if (!ytConfigRaw) {
+      throw new Error('Could not find ytcfg in page HTML');
+    }
+    this.setYtConfig(JSON.parse(ytConfigRaw) as Record<string, unknown>);
+
+    const initial = /window\.ytAtN\(\s*({[\s\S]*?})\s*\)/.exec(html)?.[1];
+    if (!initial) {
+      throw new Error(
+        'Could not find initial attestation challenge in page HTML',
+      );
+    }
+
+    const challenge = (
+      parseLooseJSON(initial)['R'] as
+        { readonly bgChallenge?: RawBgChallenge } | undefined
+    )?.bgChallenge;
+    if (!challenge) {
+      throw new Error('Initial attestation data has no bgChallenge');
+    }
+
+    return { challenge, requestKey: REQUEST_KEY };
+  }
+
+  private async fetchTvChallenge(): Promise<{
+    challenge: RawBgChallenge;
+    requestKey: string;
+  }> {
+    const response = await fetch(TV_CONFIG_URL, {
+      headers: {
+        accept: '*/*',
+        'accept-language': 'en-US,en;q=0.9',
+        'user-agent': TV_USER_AGENT,
+      },
+      signal: AbortSignal.timeout(BOTGUARD_FETCH_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      throw new Error(`YouTube TV config returned ${String(response.status)}`);
+    }
+
+    const body = await response.text();
+    if (!body.startsWith(")]}'")) {
+      throw new Error('Unexpected YouTube TV config response');
+    }
+
+    const config = JSON.parse(body.slice(4)) as {
+      readonly challengeParams?: { readonly R?: string };
+      readonly challengeRequestKey?: string;
+    };
+    const raw = config.challengeParams?.R;
+    const requestKey = config.challengeRequestKey;
+    if (!raw || !requestKey) {
+      throw new Error('YouTube TV config has no challenge');
+    }
+
+    const challenge = (
+      JSON.parse(raw) as { readonly bgChallenge?: RawBgChallenge }
+    ).bgChallenge;
+    if (!challenge) {
+      throw new Error('YouTube TV config challenge has no bgChallenge');
+    }
+
+    return { challenge, requestKey };
   }
 }
