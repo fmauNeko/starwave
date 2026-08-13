@@ -73,11 +73,11 @@ YouTube audio is streamed in-process via `youtubei.js` (Innertube) + `googlevide
 
 Diagnosing this is quick if you know the tell: a rejected token behaves **byte-for-byte identically to sending no token at all**. Measured on `kJQP7kiw5Fk`, same session, three challenge sources:
 
-| Challenge source                      | Audio delivered  | `streamProtectionStatus` |
-| ------------------------------------- | ---------------- | ------------------------ |
-| `/att/get` (the old, broken path)       | 999 / 4497 KB    | `[2,2,2,2]` — rejected     |
-| Homepage `window.ytAtN` + `yt.config_`    | 4497 / 4497 KB   | `[1,1,…]` — accepted       |
-| `tv_config` `challengeParams.R`           | 4497 / 4497 KB   | `[1,1,…]` — accepted       |
+| Challenge source                       | Audio delivered | `streamProtectionStatus` |
+| -------------------------------------- | --------------- | ------------------------ |
+| `/att/get` (the old, broken path)      | 999 / 4497 KB   | `[2,2,2,2]` — rejected   |
+| Homepage `window.ytAtN` + `yt.config_` | 4497 / 4497 KB  | `[1,1,…]` — accepted     |
+| `tv_config` `challengeParams.R`        | 4497 / 4497 KB  | `[1,1,…]` — accepted     |
 
 `streamProtectionStatus = 1` means the token was accepted; `2` means rejected. If playback ever regresses to ~1 minute again, check the challenge source **first** — not the token binding, session options, or cookies, all of which were ruled out empirically and change nothing.
 
