@@ -857,6 +857,137 @@ describe('YouTubeStreamService', () => {
       audioInfo.source.destroy();
     });
 
+    it('keeps player reload re-mints independent from the protection recovery budget', async () => {
+      mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+      const reloadHandler = mockSabrInstances[0]?.handlers.get(
+        'reloadPlayerResponse',
+      );
+
+      for (let reload = 1; reload <= 3; reload++) {
+        reloadHandler?.({ reload: true });
+        await vi.waitFor(() => {
+          expect(mockSabrInstances[0]?.setPoToken).toHaveBeenCalledTimes(
+            reload,
+          );
+        });
+      }
+
+      expect(session.refresh).not.toHaveBeenCalled();
+      expect(errorSpy).not.toHaveBeenCalledWith(
+        'youtube.stream.protected: dQw4w9WgXcQ',
+        expect.any(String),
+      );
+      audioInfo.source.destroy();
+    });
+
+    it('preserves first-attempt protection recovery after exhausting player reload re-mints', async () => {
+      mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+      const reloadHandler = mockSabrInstances[0]?.handlers.get(
+        'reloadPlayerResponse',
+      );
+
+      for (let reload = 1; reload <= 3; reload++) {
+        reloadHandler?.({ reload: true });
+        await vi.waitFor(() => {
+          expect(mockSabrInstances[0]?.setPoToken).toHaveBeenCalledTimes(
+            reload,
+          );
+        });
+      }
+      mockSabrInstances[0]?.handlers.get('streamProtectionStatusUpdate')?.({
+        status: 2,
+      });
+
+      await vi.waitFor(() => {
+        expect(mockSabrInstances[0]?.setPoToken).toHaveBeenCalledTimes(4);
+      });
+      expect(warnSpy).toHaveBeenCalledWith(
+        'youtube.stream.recover: dQw4w9WgXcQ (stream protection status 2, attempt 1/3)',
+      );
+      audioInfo.source.destroy();
+    });
+
+    it('caps player reload re-mints without suppressing SABR config reloads', async () => {
+      mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+      const reloadHandler = mockSabrInstances[0]?.handlers.get(
+        'reloadPlayerResponse',
+      );
+
+      for (let reload = 1; reload <= 4; reload++) {
+        reloadHandler?.({ reload: true });
+        await vi.waitFor(() => {
+          expect(mockSabrInstances[0]?.setStreamingURL).toHaveBeenCalledTimes(
+            reload,
+          );
+        });
+      }
+
+      expect(mockSabrInstances[0]?.setPoToken).toHaveBeenCalledTimes(3);
+      audioInfo.source.destroy();
+    });
+
+    it('aborts recovery after the stream closes during a session rebuild', async () => {
+      mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+      const protectionHandler = mockSabrInstances[0]?.handlers.get(
+        'streamProtectionStatusUpdate',
+      );
+      const refresh = Promise.withResolvers<undefined>();
+      vi.mocked(session.refresh).mockReturnValueOnce(refresh.promise);
+
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        protectionHandler?.({ status: 2 });
+        await vi.waitFor(() => {
+          expect(mockSabrInstances[0]?.setPoToken).toHaveBeenCalledTimes(
+            attempt,
+          );
+        });
+      }
+      protectionHandler?.({ status: 2 });
+      await vi.waitFor(() => {
+        expect(session.refresh).toHaveBeenCalledTimes(1);
+      });
+      mockSabrInstances[0]?.handlers.get('finish')?.({});
+      refresh.resolve();
+
+      await vi.waitFor(() => {
+        expect(debugSpy).toHaveBeenCalledWith(
+          'youtube.stream.recover.aborted: dQw4w9WgXcQ',
+        );
+      });
+      expect(mockSabrInstances[0]?.setPoToken).toHaveBeenCalledTimes(2);
+      audioInfo.source.destroy();
+    });
+
+    it('aborts recovery after the stream closes during a PoToken re-mint', async () => {
+      mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+      const poToken = Promise.withResolvers<string>();
+      vi.mocked(session.generateContentPoToken).mockReturnValueOnce(
+        poToken.promise,
+      );
+
+      mockSabrInstances[0]?.handlers.get('streamProtectionStatusUpdate')?.({
+        status: 2,
+      });
+      await vi.waitFor(() => {
+        expect(session.generateContentPoToken).toHaveBeenCalledTimes(2);
+      });
+      mockSabrInstances[0]?.handlers.get('abort')?.({});
+      poToken.resolve('unused-po-token');
+
+      await vi.waitFor(() => {
+        expect(debugSpy).toHaveBeenCalledWith(
+          'youtube.stream.recover.aborted: dQw4w9WgXcQ',
+        );
+      });
+      expect(mockSabrInstances[0]?.setPoToken).not.toHaveBeenCalled();
+      audioInfo.source.destroy();
+    });
+
     it('defers segment requests while a player reload is in flight', async () => {
       mockSabrStart.mockResolvedValueOnce({ audioStream: createAudioStream() });
       const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');

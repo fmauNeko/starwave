@@ -18,6 +18,7 @@ const SABR_MAX_RETRIES = 3;
 const STREAM_PROTECTION_RECOVERY_THRESHOLD = 2;
 const MAX_RECOVERY_ATTEMPTS = 3;
 const SESSION_REBUILD_ON_ATTEMPT = 3;
+const MAX_RELOAD_REMINTS = 3;
 const VIDEO_ID_PATTERN = regex('^([a-zA-Z0-9_-]{11})$');
 
 interface ThumbnailLike {
@@ -192,7 +193,8 @@ export class YouTubeStreamService {
 
     let recoveryPromise: Promise<void> | undefined;
     let reloadPromise: Promise<void> | undefined;
-    let recoveryAttempts = 0;
+    let protectionAttempts = 0;
+    let reloadRemints = 0;
     let streamClosed = false;
     let exhaustedLogged = false;
 
@@ -228,31 +230,20 @@ export class YouTubeStreamService {
       streamClosed = true;
     });
 
-    const triggerRecovery = (reason: string): void => {
+    const startRecovery = (options: {
+      reason: string;
+      attempt: number;
+      maxAttempts: number;
+      rebuildSession: boolean;
+    }): void => {
       if (streamClosed || recoveryPromise) {
         return;
       }
 
-      if (recoveryAttempts >= MAX_RECOVERY_ATTEMPTS) {
-        if (!exhaustedLogged) {
-          exhaustedLogged = true;
-          this.logger.error(
-            `youtube.stream.protected: ${videoId}`,
-            `YouTube kept withholding media after ${String(MAX_RECOVERY_ATTEMPTS)} PO token refreshes; this video cannot be streamed with the current session`,
-          );
-        }
-        return;
-      }
-
-      recoveryAttempts += 1;
-      const attempt = recoveryAttempts;
-
-      recoveryPromise = this.recoverSabrStream(
-        videoId,
-        sabrStream,
-        reason,
-        attempt,
-      ).finally(() => {
+      recoveryPromise = this.recoverSabrStream(videoId, sabrStream, {
+        ...options,
+        isClosed: () => streamClosed,
+      }).finally(() => {
         recoveryPromise = undefined;
       });
     };
@@ -264,12 +255,38 @@ export class YouTubeStreamService {
           return;
         }
 
-        triggerRecovery(`stream protection status ${String(status.status)}`);
+        if (protectionAttempts >= MAX_RECOVERY_ATTEMPTS) {
+          if (!exhaustedLogged) {
+            exhaustedLogged = true;
+            this.logger.error(
+              `youtube.stream.protected: ${videoId}`,
+              `YouTube kept withholding media after ${String(MAX_RECOVERY_ATTEMPTS)} PO token refreshes; this video cannot be streamed with the current session`,
+            );
+          }
+          return;
+        }
+
+        protectionAttempts += 1;
+        startRecovery({
+          reason: `stream protection status ${String(status.status)}`,
+          attempt: protectionAttempts,
+          maxAttempts: MAX_RECOVERY_ATTEMPTS,
+          rebuildSession: protectionAttempts >= SESSION_REBUILD_ON_ATTEMPT,
+        });
       },
     );
 
     sabrStream.on('reloadPlayerResponse', (reloadPlaybackContext) => {
-      triggerRecovery('reload player response');
+      if (reloadRemints < MAX_RELOAD_REMINTS) {
+        reloadRemints += 1;
+        startRecovery({
+          reason: 'reload player response',
+          attempt: reloadRemints,
+          maxAttempts: MAX_RELOAD_REMINTS,
+          rebuildSession: false,
+        });
+      }
+
       reloadPromise = this.handleSabrReload(
         client,
         videoId,
@@ -330,21 +347,39 @@ export class YouTubeStreamService {
   private async recoverSabrStream(
     videoId: string,
     sabrStream: SabrStream,
-    reason: string,
-    attempt: number,
+    options: {
+      reason: string;
+      attempt: number;
+      maxAttempts: number;
+      rebuildSession: boolean;
+      isClosed: () => boolean;
+    },
   ): Promise<void> {
-    const rebuildSession = attempt >= SESSION_REBUILD_ON_ATTEMPT;
+    const { reason, attempt, maxAttempts, rebuildSession, isClosed } = options;
 
     this.logger.warn(
-      `youtube.stream.recover: ${videoId} (${reason}, attempt ${String(attempt)}/${String(MAX_RECOVERY_ATTEMPTS)}${rebuildSession ? ', rebuilding session' : ''})`,
+      `youtube.stream.recover: ${videoId} (${reason}, attempt ${String(attempt)}/${String(maxAttempts)}${rebuildSession ? ', rebuilding session' : ''})`,
     );
 
     try {
       if (rebuildSession) {
+        if (isClosed()) {
+          this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
+          return;
+        }
         await this.session.refresh(reason);
       }
 
+      if (isClosed()) {
+        this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
+        return;
+      }
+
       const freshPoToken = await this.session.generateContentPoToken(videoId);
+      if (isClosed()) {
+        this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
+        return;
+      }
       sabrStream.setPoToken(freshPoToken);
       this.logger.log(`youtube.stream.recovered: ${videoId}`);
     } catch (error: unknown) {
