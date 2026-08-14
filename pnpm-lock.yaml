@@ -126,8 +126,8 @@ importers:
         specifier: 7.8.2
         version: 7.8.2
       youtubei.js:
-        specifier: 17.2.0
-        version: 17.2.0
+        specifier: 18.0.0
+        version: 18.0.0
     devDependencies:
       '@eslint/eslintrc':
         specifier: 3.3.6
@@ -4861,9 +4861,9 @@ packages:
   merge@2.1.1:
     resolution: {integrity: sha512-jz+Cfrg9GWOZbQAnDQ4hlVnQky+341Yk5ru8bZSe6sIDTCIg8n9i/u7hSQGSVOF3C7lH6mGtqjkiT9G4wFLL0w==}
 
-  meriyah@6.1.4:
-    resolution: {integrity: sha512-Sz8FzjzI0kN13GK/6MVEsVzMZEPvOhnmmI1lU5+/1cGOiK3QUahntrNNtdVeihrO7t9JpoH75iMNXg6R6uWflQ==}
-    engines: {node: '>=18.0.0'}
+  meriyah@7.3.1:
+    resolution: {integrity: sha512-642iQ3T0ZBXw+qrFo9m50CsdzSz9Tn0HtSKN3WxWlTXfcHUZwunxU4gMoMDIQzzOhwtkLOLeBs9GXs7NwDI2nA==}
+    engines: {node: '>=20.0.0'}
 
   methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
@@ -6521,8 +6521,8 @@ packages:
     resolution: {integrity: sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg==}
     engines: {node: '>=18'}
 
-  youtubei.js@17.2.0:
-    resolution: {integrity: sha512-XLNsgRKO1h7t4i9tIMWSQSeWdD7Ujkk5v1m5YCaumaHMhu/xuLqtO3M0Hq7CXNup9HlJ1NGrT1Y+HLIHnL6Ujg==}
+  youtubei.js@18.0.0:
+    resolution: {integrity: sha512-7Tztl5QzNL4nIhiAxa4P/0C8cDDsUe0j4iaUeNiaA+ZfSe/l+HkHxXyoWlQXNW7IPi2n6AW23ysVMJLDh+AwWQ==}
 
 snapshots:
 
@@ -11462,7 +11462,7 @@ snapshots:
 
   merge@2.1.1: {}
 
-  meriyah@6.1.4: {}
+  meriyah@7.3.1: {}
 
   methods@1.1.2: {}
 
@@ -13114,8 +13114,8 @@ snapshots:
 
   yoctocolors@2.2.0: {}
 
-  youtubei.js@17.2.0:
+  youtubei.js@18.0.0:
     dependencies:
       '@bufbuild/protobuf': 2.13.0
       fflate: 0.8.3
-      meriyah: 6.1.4
+      meriyah: 7.3.1
