@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.2](https://github.com/fmauNeko/starwave/compare/bot@v1.4.1...bot@v1.4.2) (2026-08-14)
+
+
+### Bug Fixes
+
+* **deps:** update dependency youtubei.js to v18 ([4a0ece7](https://github.com/fmauNeko/starwave/commit/4a0ece72932d7a6e12a07f1ed6cb37e8541f76ca))
+* **deps:** update dependency youtubei.js to v18 ([9b11f15](https://github.com/fmauNeko/starwave/commit/9b11f15613473e435a52efbcd6def1c50a8e3d59))
+
 ## [1.4.1](https://github.com/fmauNeko/starwave/compare/bot@v1.4.0...bot@v1.4.1) (2026-08-13)
 
 
