@@ -39,7 +39,7 @@
     "discord.js": "14.27.0",
     "googlevideo": "4.1.1",
     "jsdom": "30.0.1",
-    "necord": "6.14.0",
+    "necord": "7.0.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "youtubei.js": "18.0.0"
