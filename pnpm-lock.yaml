@@ -442,8 +442,8 @@ importers:
         specifier: 1.82.0
         version: 1.82.0(oxlint@1.82.0)
       eslint-plugin-playwright:
-        specifier: 2.11.0
-        version: 2.11.0(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))
+        specifier: 2.12.0
+        version: 2.12.0(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))
       eslint-plugin-vue:
         specifier: 10.11.0
         version: 10.11.0(@typescript-eslint/parser@8.70.0(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3))(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(vue-eslint-parser@10.4.1(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1))
@@ -3823,8 +3823,8 @@ packages:
     peerDependencies:
       oxlint: ~1.82.0
 
-  eslint-plugin-playwright@2.11.0:
-    resolution: {integrity: sha512-zOIEYyv1TSn2izXkyg/yj0LXc4YBQI6pl3xIFWwMCcXt/dgQCz8dBqXiXFMoM3xc/GqZThAtaGYo8aPu/vBd+Q==}
+  eslint-plugin-playwright@2.12.0:
+    resolution: {integrity: sha512-7HpSKR/D2oCH4RKRauFskcrnDrHvLQKopW7Nen8lqrFZtx/SB+FgqVaH+zyQd32noZSZy9Lrsa+DsYrVUpn6hg==}
     engines: {node: '>=16.9.0'}
     peerDependencies:
       eslint: '>=8.40.0'
@@ -10134,7 +10134,7 @@ snapshots:
       jsonc-parser: 3.3.1
       oxlint: 1.82.0
 
-  eslint-plugin-playwright@2.11.0(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1)):
+  eslint-plugin-playwright@2.12.0(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1)):
     dependencies:
       eslint: 10.10.0(jiti@2.7.0)(supports-color@8.1.1)
       globals: 17.12.0
