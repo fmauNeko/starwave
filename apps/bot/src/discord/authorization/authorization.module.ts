@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { DiscordForbiddenFilter } from './discord-forbidden.filter';
-import { RoleGuard } from './role.guard';
+import { DiscordForbiddenFilter } from './discord-forbidden.filter.js';
+import { RoleGuard } from './role.guard.js';
 
 @Module({
   imports: [ConfigModule],

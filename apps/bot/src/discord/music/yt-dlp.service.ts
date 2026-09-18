@@ -14,8 +14,8 @@ import { pipeline } from 'node:stream/promises';
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import type { Config } from '../../config/config.type';
-import { execYtDlp } from './yt-dlp.util';
+import type { Config } from '../../config/config.type.js';
+import { execYtDlp } from './yt-dlp.util.js';
 
 const YT_DLP_GITHUB_API =
   'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest';

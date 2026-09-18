@@ -1,10 +1,10 @@
 import { ConfigService } from '@nestjs/config';
 import type { Client, Message, TextChannel } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Config } from '../../config/config.type';
-import { LoopMode, type Track } from './music-queue';
-import { MusicService } from './music.service';
-import { NowPlayingService } from './now-playing.service';
+import type { Config } from '../../config/config.type.js';
+import { LoopMode, type Track } from './music-queue.js';
+import { MusicService } from './music.service.js';
+import { NowPlayingService } from './now-playing.service.js';
 
 const mockTrack: Track = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',

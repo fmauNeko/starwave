@@ -6,8 +6,8 @@ import {
   MessageFlags,
   TextDisplayBuilder,
 } from 'discord.js';
-import { Config } from '../../config/config.type';
-import { DiscordForbiddenException } from './discord-forbidden.exception';
+import { Config } from '../../config/config.type.js';
+import { DiscordForbiddenException } from './discord-forbidden.exception.js';
 
 const DEFAULT_ACCENT_COLOR = 0x5865f2;
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;

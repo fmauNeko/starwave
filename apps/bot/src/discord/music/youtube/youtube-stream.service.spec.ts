@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { StreamType } from '@discordjs/voice';
 import { Readable } from 'node:stream';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { InnertubeSessionService } from './innertube-session.service';
+import type { InnertubeSessionService } from './innertube-session.service.js';
 
 interface MockVideoInfo {
   basic_info?: {
@@ -153,7 +153,7 @@ vi.mock('googlevideo/utils', () => ({
   buildSabrFormat: mockBuildSabrFormat,
 }));
 
-import { YouTubeStreamService } from './youtube-stream.service';
+import { YouTubeStreamService } from './youtube-stream.service.js';
 
 const originalGlobalFetch = global.fetch;
 

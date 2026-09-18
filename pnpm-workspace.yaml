@@ -10,5 +10,7 @@ allowBuilds:
   '@swc/core': true
   canvas: true
   esbuild: true
-  necord: true
+  # necord's only build script is the @nuxt/opencollective donation banner,
+  # which crashes libuv on Windows (exit 0xc0000409). It is purely cosmetic.
+  necord: false
   unrs-resolver: true

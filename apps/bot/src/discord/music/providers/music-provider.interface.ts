@@ -1,6 +1,6 @@
 import type { Readable } from 'node:stream';
 import { StreamType } from '@discordjs/voice';
-import type { Track } from '../music-queue';
+import type { Track } from '../music-queue.js';
 
 export interface AudioInfo {
   source: Readable | string;

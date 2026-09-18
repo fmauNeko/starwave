@@ -13,7 +13,7 @@ import {
 import { WebPoMinter } from 'bgutils-js/webpo';
 import { JSDOM } from 'jsdom';
 import { Innertube } from 'youtubei.js';
-import type { Config } from '../../../config/config.type';
+import type { Config } from '../../../config/config.type.js';
 
 const REQUEST_KEY = 'O43z0dpjhgX20SCx4KAo';
 const BOTGUARD_FETCH_TIMEOUT_MS = 10_000;

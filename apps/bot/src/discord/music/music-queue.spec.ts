@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { LoopMode, MusicQueue, type Track } from './music-queue';
+import { LoopMode, MusicQueue, type Track } from './music-queue.js';
 
 const createTrack = (title: string): Track => ({
   url: `https://youtube.com/watch?v=${title}`,

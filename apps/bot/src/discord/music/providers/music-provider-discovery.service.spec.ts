@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DiscoveryService, Reflector } from '@nestjs/core';
-import { MusicProviderDiscovery } from './music-provider-discovery.service';
-import { MUSIC_PROVIDER_KEY } from './music-provider.decorator';
-import type { MusicProvider } from './music-provider.interface';
+import { MusicProviderDiscovery } from './music-provider-discovery.service.js';
+import { MUSIC_PROVIDER_KEY } from './music-provider.decorator.js';
+import type { MusicProvider } from './music-provider.interface.js';
 
 describe('MusicProviderDiscovery', () => {
   let service: MusicProviderDiscovery;
