@@ -4,12 +4,33 @@
 
 | Aspect    | Details                                   |
 | --------- | ----------------------------------------- |
-| Type      | NestJS 11 Discord bot                     |
-| Framework | Necord (discord.js 14 wrapper)            |
+| Type      | NestJS 12 Discord bot                     |
+| Framework | Necord 7 (discord.js 14 wrapper)          |
+| Modules   | **ESM** (`"type": "module"`)              |
 | Config    | Arktype schema validation + env overrides |
 | Testing   | Vitest + @suites/unit for automocking     |
 
 Lightweight service exposing only health endpoint (`GET /`). All Discord interaction via Necord decorators.
+
+### ESM rules (non-negotiable)
+
+This package is ESM. Necord 7 is ESM-only, and because `discord.js` ships separate `.d.ts` / `.d.mts`
+typings, a CommonJS bot would resolve discord.js under a _different_ export condition than Necord does —
+making the two sets of discord.js types nominally incompatible (`Types have separate declarations of a
+private property '_sortedRoles'`). Staying CommonJS is therefore not an option here.
+
+Consequences when writing code:
+
+| Rule                                              | Example                                              |
+| ------------------------------------------------- | ---------------------------------------------------- |
+| Relative imports **must** carry a `.js` extension | `from './music.service.js'` (even though it's `.ts`) |
+| `__dirname` / `__filename` do not exist           | use `import.meta.dirname`                            |
+| `require()` does not exist                        | use `createRequire(import.meta.url)`                 |
+| Typed subpath imports need the extension too      | `from 'supertest/types.js'`                          |
+
+`.swcrc` pins the build to ESM output (`module.type: "es6"`). It mirrors the Nest CLI's swc defaults and
+**must** keep `legacyDecorator`, `decoratorMetadata`, and `keepClassNames` — Nest DI and Necord's command
+discovery read that emitted metadata, and dropping any of them breaks wiring at runtime, not at compile time.
 
 ## Setup & Run
 
@@ -57,8 +78,8 @@ Env vars merge over `config.json` before validation.
 // src/discord/example/example.command.ts
 import { Injectable } from '@nestjs/common';
 import { Context, SlashCommand, type SlashCommandContext } from 'necord';
-import { RequireRole } from '../authorization/require-role.decorator';
-import { Role } from '../authorization/role.enum';
+import { RequireRole } from '../authorization/require-role.decorator.js';
+import { Role } from '../authorization/role.enum.js';
 
 @Injectable()
 @RequireRole(Role.Admin) // Optional: restrict access

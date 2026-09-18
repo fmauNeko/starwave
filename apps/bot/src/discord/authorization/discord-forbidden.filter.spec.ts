@@ -2,8 +2,8 @@ import type { ArgumentsHost } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TestBed } from '@suites/unit';
 import { MessageFlags } from 'discord.js';
-import { DiscordForbiddenException } from './discord-forbidden.exception';
-import { DiscordForbiddenFilter } from './discord-forbidden.filter';
+import { DiscordForbiddenException } from './discord-forbidden.exception.js';
+import { DiscordForbiddenFilter } from './discord-forbidden.filter.js';
 
 describe('DiscordForbiddenFilter', () => {
   let service: DiscordForbiddenFilter;

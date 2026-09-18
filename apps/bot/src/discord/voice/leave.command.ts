@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { MessageFlags } from 'discord.js';
 import { Context, SlashCommand, type SlashCommandContext } from 'necord';
-import { MusicService } from '../music/music.service';
-import { VoiceInactivityService } from './voice-inactivity.service';
-import { VoiceService } from './voice.service';
+import { MusicService } from '../music/music.service.js';
+import { VoiceInactivityService } from './voice-inactivity.service.js';
+import { VoiceService } from './voice.service.js';
 
 @Injectable()
 export class LeaveCommand {

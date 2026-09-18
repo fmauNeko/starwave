@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DiscoveryService, Reflector } from '@nestjs/core';
-import { MUSIC_PROVIDER_KEY } from './music-provider.decorator';
-import type { MusicProvider } from './music-provider.interface';
+import { MUSIC_PROVIDER_KEY } from './music-provider.decorator.js';
+import type { MusicProvider } from './music-provider.interface.js';
 
 export const MUSIC_PROVIDERS = Symbol('MUSIC_PROVIDERS');
 

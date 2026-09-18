@@ -1,11 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { App } from 'supertest/types';
+import { App } from 'supertest/types.js';
 import { vi } from 'vitest';
-import { DiscordModule } from '../src/discord/discord.module';
-import { AppModule } from './../src/app.module';
-import { DiscordMockModule } from './discord.mock.module';
+import { DiscordModule } from '../src/discord/discord.module.js';
+import { AppModule } from './../src/app.module.js';
+import { DiscordMockModule } from './discord.mock.module.js';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;

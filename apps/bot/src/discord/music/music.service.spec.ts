@@ -6,11 +6,11 @@ import {
 import { Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { VoiceService } from '../voice/voice.service';
-import { LoopMode } from './music-queue';
-import { MUSIC_EVENTS, MusicService } from './music.service';
-import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
-import type { MusicProvider } from './providers/music-provider.interface';
+import { VoiceService } from '../voice/voice.service.js';
+import { LoopMode } from './music-queue.js';
+import { MUSIC_EVENTS, MusicService } from './music.service.js';
+import { MusicProviderDiscovery } from './providers/music-provider-discovery.service.js';
+import type { MusicProvider } from './providers/music-provider.interface.js';
 
 const mockTrack = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',

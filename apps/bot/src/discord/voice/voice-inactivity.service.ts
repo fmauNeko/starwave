@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { getVoiceConnection } from '@discordjs/voice';
 import type { Client, VoiceBasedChannel, VoiceState } from 'discord.js';
 import { Context, type ContextOf, On, Once } from 'necord';
-import { VoiceService } from './voice.service';
+import { VoiceService } from './voice.service.js';
 
 const INACTIVITY_TIMEOUT_MS = 30_000;
 
@@ -19,7 +19,7 @@ export class VoiceInactivityService implements OnModuleDestroy {
   }
 
   @Once('clientReady')
-  public onClientReady(@Context() [client]: ContextOf<'ready'>): void {
+  public onClientReady(@Context() [client]: ContextOf<'clientReady'>): void {
     this.client = client;
   }
 

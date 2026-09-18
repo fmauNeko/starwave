@@ -10,8 +10,8 @@ import type {
   VoiceState,
 } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { VoiceInactivityService } from './voice-inactivity.service';
-import { VoiceService } from './voice.service';
+import { VoiceInactivityService } from './voice-inactivity.service.js';
+import { VoiceService } from './voice.service.js';
 
 vi.mock('@discordjs/voice', () => ({
   getVoiceConnection: vi.fn(),

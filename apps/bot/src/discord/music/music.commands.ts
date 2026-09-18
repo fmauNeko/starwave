@@ -10,10 +10,10 @@ import {
   NumberOption,
   type SlashCommandContext,
 } from 'necord';
-import { VoiceService } from '../voice/voice.service';
-import { LoopMode, type Track } from './music-queue';
-import { MusicService } from './music.service';
-import { NowPlayingService } from './now-playing.service';
+import { VoiceService } from '../voice/voice.service.js';
+import { LoopMode, type Track } from './music-queue.js';
+import { MusicService } from './music.service.js';
+import { NowPlayingService } from './now-playing.service.js';
 
 class PlayDto {
   @StringOption({

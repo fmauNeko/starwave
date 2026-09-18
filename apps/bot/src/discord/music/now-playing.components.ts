@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { MessageFlags } from 'discord.js';
 import { Button, type ButtonContext, Ctx } from 'necord';
-import { MusicService } from './music.service';
+import { MusicService } from './music.service.js';
 import {
   NOW_PLAYING_BUTTON_IDS,
   NowPlayingService,
-} from './now-playing.service';
+} from './now-playing.service.js';
 
 @Injectable()
 export class NowPlayingComponents {

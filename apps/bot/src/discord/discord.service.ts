@@ -6,7 +6,7 @@ export class DiscordService {
   private readonly logger = new Logger(DiscordService.name);
 
   @Once('clientReady')
-  public onReady(@Context() [client]: ContextOf<'ready'>) {
+  public onReady(@Context() [client]: ContextOf<'clientReady'>) {
     this.logger.log(`Bot logged in as ${client.user.username}`);
   }
 

@@ -9,7 +9,7 @@ import type {
 import { buildSabrFormat, EnabledTrackTypes } from 'googlevideo/utils';
 import { Readable } from 'node:stream';
 import { regex } from 'arkregex';
-import { InnertubeSessionService } from './innertube-session.service';
+import { InnertubeSessionService } from './innertube-session.service.js';
 
 const YOUTUBE_URL_PATTERN = regex(
   '(?:youtube\\.com/(?:watch\\?v=|embed/|shorts/)|youtu\\.be/)([a-zA-Z0-9_-]{11})',

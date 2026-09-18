@@ -64,3 +64,4 @@ pnpm-debug.log*
 # oh-my-openagent
 .omo/
 .ignore
+.opencode/

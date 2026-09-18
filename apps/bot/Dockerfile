@@ -54,4 +54,4 @@ COPY --from=prod-deps --chown=node:node /dependencies/node_modules ./node_module
 RUN chown -R node:node /app
 USER node
 EXPOSE 3000
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]

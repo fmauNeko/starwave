@@ -1,12 +1,12 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { regex } from 'arkregex';
-import type { Track } from '../music-queue';
-import { YouTubeStreamService } from '../youtube/youtube-stream.service';
-import { MusicProvider } from './music-provider.decorator';
+import type { Track } from '../music-queue.js';
+import { YouTubeStreamService } from '../youtube/youtube-stream.service.js';
+import { MusicProvider } from './music-provider.decorator.js';
 import type {
   AudioInfo,
   MusicProvider as MusicProviderInterface,
-} from './music-provider.interface';
+} from './music-provider.interface.js';
 
 const YOUTUBE_URL_PATTERN = regex(
   '(?:youtube\\.com/(?:watch\\?v=|embed/|shorts/)|youtu\\.be/)([a-zA-Z0-9_-]{11})',

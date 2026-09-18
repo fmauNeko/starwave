@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PingCommand } from './ping.command';
+import { PingCommand } from './ping.command.js';
 
 describe('PingCommand', () => {
   it('replies with Pong!', () => {
