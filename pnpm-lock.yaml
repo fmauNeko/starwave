@@ -192,7 +192,7 @@ importers:
         version: 10.1.8(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))
       eslint-plugin-prettier:
         specifier: 5.5.6
-        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1)))(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(prettier@3.9.7)
+        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1)))(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(prettier@3.9.8)
       eslint-plugin-turbo:
         specifier: 2.10.13
         version: 2.10.13(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(turbo@2.10.13)
@@ -209,8 +209,8 @@ importers:
         specifier: 2.7.0
         version: 2.7.0
       prettier:
-        specifier: 3.9.7
-        version: 3.9.7
+        specifier: 3.9.8
+        version: 3.9.8
       turbo:
         specifier: 2.10.13
         version: 2.10.13
@@ -295,13 +295,13 @@ importers:
         version: 10.0.1(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))
       '@necord/schematics':
         specifier: 2.0.0
-        version: 2.0.0(chokidar@5.0.0)(prettier@3.9.7)
+        version: 2.0.0(chokidar@5.0.0)(prettier@3.9.8)
       '@nestjs/cli':
         specifier: 12.0.3
-        version: 12.0.3(@swc/cli@0.8.1(@swc/core@1.16.2)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.2)(@types/node@25.9.7)(fork-ts-checker-webpack-plugin@9.1.0(typescript@6.0.3)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)))(prettier@3.9.7)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)))(tsconfig-paths-webpack-plugin@4.2.0)(webpack-node-externals@3.0.0)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))
+        version: 12.0.3(@swc/cli@0.8.1(@swc/core@1.16.2)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.2)(@types/node@25.9.7)(fork-ts-checker-webpack-plugin@9.1.0(typescript@6.0.3)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)))(prettier@3.9.8)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)))(tsconfig-paths-webpack-plugin@4.2.0)(webpack-node-externals@3.0.0)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))
       '@nestjs/schematics':
         specifier: 12.0.3
-        version: 12.0.3(chokidar@5.0.0)(prettier@3.9.7)(typescript@6.0.3)
+        version: 12.0.3(chokidar@5.0.0)(prettier@3.9.8)(typescript@6.0.3)
       '@nestjs/testing':
         specifier: 12.0.3
         version: 12.0.3(@nestjs/common@12.0.3(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.0.3)(@nestjs/platform-express@12.0.3)
@@ -346,7 +346,7 @@ importers:
         version: 10.1.8(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))
       eslint-plugin-prettier:
         specifier: 5.5.6
-        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1)))(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(prettier@3.9.7)
+        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1)))(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(prettier@3.9.8)
       globals:
         specifier: 17.12.0
         version: 17.12.0
@@ -354,8 +354,8 @@ importers:
         specifier: 4.78.0
         version: 4.78.0
       prettier:
-        specifier: 3.9.7
-        version: 3.9.7
+        specifier: 3.9.8
+        version: 3.9.8
       source-map-support:
         specifier: 0.5.21
         version: 0.5.21
@@ -454,8 +454,8 @@ importers:
         specifier: 1.83.0
         version: 1.83.0
       prettier:
-        specifier: 3.9.7
-        version: 3.9.7
+        specifier: 3.9.8
+        version: 3.9.8
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -4817,8 +4817,8 @@ packages:
     resolution: {integrity: sha512-SxToR7P8Y2lWmv/kTzVLC1t/GDI2WGjMwNhLLE9qtH8Q13C+aEmuRlzDst4Up4s0Wc8sF2M+J57iB3cMLqftfg==}
     engines: {node: '>=6.0.0'}
 
-  prettier@3.9.7:
-    resolution: {integrity: sha512-T3mF5P7HFzZVLDQuCUNtJj6WK1pcpLMweMNUVwGb01bLNkH9AkKxtZvmInw8K6bnn2O3d6/5RHl6zSHiBAD0Og==}
+  prettier@3.9.8:
+    resolution: {integrity: sha512-WRFq3Wn3WId7LLROfMLdH7xaFr2jR62wU8nLO6rQUOLOxNZUviyJQs1M0iIhLexSFy+L+w0ch66wtoO2jRjG0A==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -6970,9 +6970,9 @@ snapshots:
       '@tybys/wasm-util': 0.10.4
     optional: true
 
-  '@necord/schematics@2.0.0(chokidar@5.0.0)(prettier@3.9.7)':
+  '@necord/schematics@2.0.0(chokidar@5.0.0)(prettier@3.9.8)':
     dependencies:
-      '@nestjs/schematics': 12.0.0(@typescript/typescript6@6.0.2)(chokidar@5.0.0)(prettier@3.9.7)
+      '@nestjs/schematics': 12.0.0(@typescript/typescript6@6.0.2)(chokidar@5.0.0)(prettier@3.9.8)
       rxjs: 7.8.2
       tslib: 2.8.1
       typescript: '@typescript/typescript6@6.0.2'
@@ -6980,13 +6980,13 @@ snapshots:
       - chokidar
       - prettier
 
-  '@nestjs/cli@12.0.3(@swc/cli@0.8.1(@swc/core@1.16.2)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.2)(@types/node@25.9.7)(fork-ts-checker-webpack-plugin@9.1.0(typescript@6.0.3)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)))(prettier@3.9.7)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)))(tsconfig-paths-webpack-plugin@4.2.0)(webpack-node-externals@3.0.0)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))':
+  '@nestjs/cli@12.0.3(@swc/cli@0.8.1(@swc/core@1.16.2)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.2)(@types/node@25.9.7)(fork-ts-checker-webpack-plugin@9.1.0(typescript@6.0.3)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)))(prettier@3.9.8)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3)))(tsconfig-paths-webpack-plugin@4.2.0)(webpack-node-externals@3.0.0)(webpack@5.106.2(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)(uglify-js@3.19.3))':
     dependencies:
       '@angular-devkit/core': 22.1.8(chokidar@5.0.0)
       '@angular-devkit/schematics': 22.1.8(chokidar@5.0.0)
       '@angular-devkit/schematics-cli': 22.1.8(@types/node@25.9.7)(chokidar@5.0.0)
       '@inquirer/prompts': 8.7.2(@types/node@25.9.7)
-      '@nestjs/schematics': 12.0.3(chokidar@5.0.0)(prettier@3.9.7)(typescript@6.0.3)
+      '@nestjs/schematics': 12.0.3(chokidar@5.0.0)(prettier@3.9.8)(typescript@6.0.3)
       ansis: 4.4.0
       chokidar: 5.0.0
       cli-table3: 0.6.5
@@ -7067,7 +7067,7 @@ snapshots:
       '@nestjs/core': 12.0.3(@nestjs/common@12.0.3(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/platform-express@12.0.3)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       cron: 4.4.0
 
-  '@nestjs/schematics@12.0.0(@typescript/typescript6@6.0.2)(chokidar@5.0.0)(prettier@3.9.7)':
+  '@nestjs/schematics@12.0.0(@typescript/typescript6@6.0.2)(chokidar@5.0.0)(prettier@3.9.8)':
     dependencies:
       '@angular-devkit/core': 22.1.5(chokidar@5.0.0)
       '@angular-devkit/schematics': 22.1.5(chokidar@5.0.0)
@@ -7076,11 +7076,11 @@ snapshots:
       pluralize: 8.0.0
       typescript: '@typescript/typescript6@6.0.2'
     optionalDependencies:
-      prettier: 3.9.7
+      prettier: 3.9.8
     transitivePeerDependencies:
       - chokidar
 
-  '@nestjs/schematics@12.0.3(chokidar@5.0.0)(prettier@3.9.7)(typescript@6.0.3)':
+  '@nestjs/schematics@12.0.3(chokidar@5.0.0)(prettier@3.9.8)(typescript@6.0.3)':
     dependencies:
       '@angular-devkit/core': 22.1.8(chokidar@5.0.0)
       '@angular-devkit/schematics': 22.1.8(chokidar@5.0.0)
@@ -7089,7 +7089,7 @@ snapshots:
       pluralize: 8.0.0
       typescript: 6.0.3
     optionalDependencies:
-      prettier: 3.9.7
+      prettier: 3.9.8
     transitivePeerDependencies:
       - chokidar
 
@@ -8869,10 +8869,10 @@ snapshots:
       eslint: 10.10.0(jiti@2.7.0)(supports-color@8.1.1)
       globals: 17.12.0
 
-  eslint-plugin-prettier@5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1)))(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(prettier@3.9.7):
+  eslint-plugin-prettier@5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1)))(eslint@10.10.0(jiti@2.7.0)(supports-color@8.1.1))(prettier@3.9.8):
     dependencies:
       eslint: 10.10.0(jiti@2.7.0)(supports-color@8.1.1)
-      prettier: 3.9.7
+      prettier: 3.9.8
       prettier-linter-helpers: 1.0.1
       synckit: 0.11.13
     optionalDependencies:
@@ -10258,7 +10258,7 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
-  prettier@3.9.7: {}
+  prettier@3.9.8: {}
 
   pretty-ms@9.3.1:
     dependencies:
