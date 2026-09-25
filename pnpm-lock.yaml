@@ -297,8 +297,8 @@ importers:
         specifier: 2.0.0
         version: 2.0.0(chokidar@5.0.0)(prettier@3.9.8)
       '@nestjs/cli':
-        specifier: 12.0.3
-        version: 12.0.3(@swc/cli@0.8.1(@swc/core@1.16.2)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.2)(@types/node@25.9.8)(prettier@3.9.8)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))
+        specifier: 12.0.5
+        version: 12.0.5(@swc/cli@0.8.1(@swc/core@1.16.2)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.2)(@types/node@25.9.8)(prettier@3.9.8)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))
       '@nestjs/schematics':
         specifier: 12.0.4
         version: 12.0.4(chokidar@5.0.0)(prettier@3.9.8)(typescript@6.0.3)
@@ -1530,8 +1530,8 @@ packages:
     resolution: {integrity: sha512-C/laN4v2AEKJcayeSMbcAcP6NjTyuKMboVxgMToMq2Qdn8evc4rqprlp1jUj/Ub3n8M7VNTOaGuWFgAPO/OlSQ==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: '>=8.6.0'}
 
-  '@nestjs/cli@12.0.3':
-    resolution: {integrity: sha512-HofsPoiWsx6gZ7/IivaZJrgsq/3CTCb4FkCQzFu/Q3J2V+4xC7GYnit/HNB66EfuY8j3gWJCzasMKmF5VugmOA==}
+  '@nestjs/cli@12.0.5':
+    resolution: {integrity: sha512-28PJP/dYqGdAZoLbGgJORY9CxqkYBN449WKOUiYAXKwtSEAq7jJChtHCJYo1jLMwM0mwKqCjpBYIAWoHzyhSxw==}
     engines: {node: '>= 20.11'}
     hasBin: true
     peerDependencies:
@@ -6940,7 +6940,7 @@ snapshots:
       - chokidar
       - prettier
 
-  '@nestjs/cli@12.0.3(@swc/cli@0.8.1(@swc/core@1.16.2)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.2)(@types/node@25.9.8)(prettier@3.9.8)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))':
+  '@nestjs/cli@12.0.5(@swc/cli@0.8.1(@swc/core@1.16.2)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.2)(@types/node@25.9.8)(prettier@3.9.8)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28)))(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.28))':
     dependencies:
       '@angular-devkit/core': 22.1.8(chokidar@5.0.0)
       '@angular-devkit/schematics': 22.1.8(chokidar@5.0.0)
@@ -6951,6 +6951,7 @@ snapshots:
       chokidar: 5.0.0
       cli-table3: 0.6.5
       commander: 15.0.0
+      jsonc-parser: 3.3.1
       minimatch: 10.2.6
       node-emoji: 2.2.0
       ora: 9.4.1
