@@ -251,8 +251,8 @@ importers:
         specifier: 0.1.12
         version: 0.1.12(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
       arkregex:
-        specifier: 0.0.11
-        version: 0.0.11
+        specifier: 0.0.12
+        version: 0.0.12
       arktype:
         specifier: 2.2.6
         version: 2.2.6
@@ -526,6 +526,9 @@ packages:
 
   '@ark/util@0.56.5':
     resolution: {integrity: sha512-Klxtj2QlkLnl5tdaUUtLHqRHdmQNUsuJelkAj/vyIK6crz/xT0kbUvF2sIf+fIDkhit80OGf/1lBmmDn1bBWpw==}
+
+  '@ark/util@0.56.6':
+    resolution: {integrity: sha512-mHqq0f0HyDd9YadpFl25w0QECAP7d8HGIUpEC85duD+L+xr4i/CwfOid/Z7zJFFF/47oLt6+pZB9RbqWpBYTYg==}
 
   '@asamuzakjp/css-color@7.1.2':
     resolution: {integrity: sha512-99DHAnXDB5z6EEK+9GMpVI7Mw4oxj97dY5bpOzMnjADQWxI8rN6TvTduuFLUhUMlS7/CfVZ06tcZsus6cltnNw==}
@@ -2816,6 +2819,9 @@ packages:
 
   arkregex@0.0.11:
     resolution: {integrity: sha512-b7bu/QijB2MCuRrivlzIc2e7TccVA16eswurQFZbtCzd9tubIdVRh1c3clVRVTdO2ExTXXuoRctkkLIsWNP00w==}
+
+  arkregex@0.0.12:
+    resolution: {integrity: sha512-sOxL0eX50pnRYO4OyajKZChGuuj/iHwC5tysiAaGOPBu+zJwJQckWn7/DRH2++ol5uaKpyRn7N0hKT7nDqGmgg==}
 
   arktype@2.2.6:
     resolution: {integrity: sha512-0ygTf58QUodmxeEXdGm/1DGzd2lOdER5rIrtNWrCUV8QUMYdv0Ig1vzC9dwP1GP86aMgvrrI6k9FvYncDxp4tQ==}
@@ -5915,6 +5921,8 @@ snapshots:
 
   '@ark/util@0.56.5': {}
 
+  '@ark/util@0.56.6': {}
+
   '@asamuzakjp/css-color@7.1.2':
     dependencies:
       '@csstools/css-calc': 3.4.1(@csstools/css-parser-algorithms@4.0.1(@csstools/css-tokenizer@4.0.2))(@csstools/css-tokenizer@4.0.2)
@@ -8248,6 +8256,10 @@ snapshots:
   arkregex@0.0.11:
     dependencies:
       '@ark/util': 0.56.5
+
+  arkregex@0.0.12:
+    dependencies:
+      '@ark/util': 0.56.6
 
   arktype@2.2.6:
     dependencies:
