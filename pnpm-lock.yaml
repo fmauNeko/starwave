@@ -433,8 +433,8 @@ importers:
         specifier: 10.1.8
         version: 10.1.8(eslint@10.12.0(jiti@2.7.0)(supports-color@8.1.1))
       eslint-plugin-oxlint:
-        specifier: 1.86.0
-        version: 1.86.0(oxlint@1.87.0)
+        specifier: 1.87.0
+        version: 1.87.0(oxlint@1.87.0)
       eslint-plugin-playwright:
         specifier: 2.12.1
         version: 2.12.1(eslint@10.12.0(jiti@2.7.0)(supports-color@8.1.1))
@@ -3416,10 +3416,10 @@ packages:
     peerDependencies:
       eslint: '>=7.0.0'
 
-  eslint-plugin-oxlint@1.86.0:
-    resolution: {integrity: sha512-AYBDGxR/a8kJmUeZBZ98TF5+Kihg8LvWU4EEYoIv5nsEml18kXCD9b4RsqxLz4BiXD7PcrvrCO0/t16NmaFR1A==}
+  eslint-plugin-oxlint@1.87.0:
+    resolution: {integrity: sha512-dk2R9AHh8Mczl/2pg/zunpISTqRL/8jpctQqUREmQOKBdUidJegOizyG3t96GYatEDN5sj2UfXjYVDN4kBj/Hg==}
     peerDependencies:
-      oxlint: ~1.86.0
+      oxlint: ~1.87.0
 
   eslint-plugin-playwright@2.12.1:
     resolution: {integrity: sha512-JhavNuYBIq7SE/Zg9Esf9RGHkXoDbzrEKS383cowzMyvZ4JMbmdNCN6CoW+RU1Cjzwcoea1tou0je58uXmT/9A==}
@@ -8798,7 +8798,7 @@ snapshots:
     dependencies:
       eslint: 10.12.0(jiti@2.7.0)(supports-color@8.1.1)
 
-  eslint-plugin-oxlint@1.86.0(oxlint@1.87.0):
+  eslint-plugin-oxlint@1.87.0(oxlint@1.87.0):
     dependencies:
       jsonc-parser: 3.3.1
       oxlint: 1.87.0
