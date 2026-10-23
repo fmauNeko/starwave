@@ -297,11 +297,11 @@ importers:
         specifier: 2.0.0
         version: 2.0.0(chokidar@5.0.0)(prettier@3.9.10)
       '@nestjs/cli':
-        specifier: 12.0.9
-        version: 12.0.9(@swc/cli@0.8.1(@swc/core@1.16.18)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.18)(@types/node@25.9.9)(prettier@3.9.10)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.112.0(@swc/core@1.16.18)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30)))(webpack@5.112.0(@swc/core@1.16.18)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30))
+        specifier: 12.0.10
+        version: 12.0.10(@swc/cli@0.8.1(@swc/core@1.16.18)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.18)(@types/node@25.9.9)(prettier@3.9.10)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.112.0(@swc/core@1.16.18)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30)))(webpack@5.112.0(@swc/core@1.16.18)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30))
       '@nestjs/schematics':
-        specifier: 12.0.9
-        version: 12.0.9(chokidar@5.0.0)(prettier@3.9.10)(typescript@6.0.3)
+        specifier: 12.0.10
+        version: 12.0.10(chokidar@5.0.0)(prettier@3.9.10)(typescript@6.0.3)
       '@nestjs/testing':
         specifier: 12.2.0
         version: 12.2.0(@nestjs/common@12.2.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@12.2.0)(@nestjs/platform-express@12.2.0)
@@ -1557,8 +1557,8 @@ packages:
     resolution: {integrity: sha512-C/laN4v2AEKJcayeSMbcAcP6NjTyuKMboVxgMToMq2Qdn8evc4rqprlp1jUj/Ub3n8M7VNTOaGuWFgAPO/OlSQ==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: '>=8.6.0'}
 
-  '@nestjs/cli@12.0.9':
-    resolution: {integrity: sha512-jny3o6hItqBnWM7gMsxDQKj/DyzQnojcFm0nI5kXvc/3Fl6uvIDbZfXDm42LzgSEptYKxOsYXjBw0u5EHLj5Sg==}
+  '@nestjs/cli@12.0.10':
+    resolution: {integrity: sha512-sFtiyJaiZe2cPqFCLhgzje5lnU1ANaGuDeaOClWMkECRC20W2m6NkqG6gnUgv+nspejIVyTG9yIyn4mXGJ9Y9g==}
     engines: {node: '>= 20.11'}
     hasBin: true
     peerDependencies:
@@ -1648,6 +1648,16 @@ packages:
   '@nestjs/schematics@12.0.0':
     resolution: {integrity: sha512-ilsxam7i+SWd2psr12faLVSk86FYKnxRUGO6jAGNi1P9+O0kRaYVOScyrKeIj97W9T9UJoJF38fg+7KgjY/nOg==}
     engines: {node: '>=22.12.0'}
+    peerDependencies:
+      prettier: ^3.0.0
+      typescript: '>=6.0.0'
+    peerDependenciesMeta:
+      prettier:
+        optional: true
+
+  '@nestjs/schematics@12.0.10':
+    resolution: {integrity: sha512-3objKOOQDGxcckj92d7NNiYGVNoMoUqqw7eX8O/25ZL4V6ih/Hkx4WgOJ/H/2fkfag4UdiYN/GySHimn682+nQ==}
+    engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0}
     peerDependencies:
       prettier: ^3.0.0
       typescript: '>=6.0.0'
@@ -6942,7 +6952,7 @@ snapshots:
       - chokidar
       - prettier
 
-  '@nestjs/cli@12.0.9(@swc/cli@0.8.1(@swc/core@1.16.18)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.18)(@types/node@25.9.9)(prettier@3.9.10)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.112.0(@swc/core@1.16.18)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30)))(webpack@5.112.0(@swc/core@1.16.18)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30))':
+  '@nestjs/cli@12.0.10(@swc/cli@0.8.1(@swc/core@1.16.18)(chokidar@5.0.0)(supports-color@8.1.1))(@swc/core@1.16.18)(@types/node@25.9.9)(prettier@3.9.10)(ts-loader@9.6.2(typescript@6.0.3)(webpack@5.112.0(@swc/core@1.16.18)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30)))(webpack@5.112.0(@swc/core@1.16.18)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.30))':
     dependencies:
       '@angular-devkit/core': 22.2.3(chokidar@5.0.0)
       '@angular-devkit/schematics': 22.2.3(chokidar@5.0.0)
@@ -7035,6 +7045,19 @@ snapshots:
       jsonc-parser: 3.3.1
       pluralize: 8.0.0
       typescript: '@typescript/typescript6@6.0.2'
+    optionalDependencies:
+      prettier: 3.9.10
+    transitivePeerDependencies:
+      - chokidar
+
+  '@nestjs/schematics@12.0.10(chokidar@5.0.0)(prettier@3.9.10)(typescript@6.0.3)':
+    dependencies:
+      '@angular-devkit/core': 22.2.3(chokidar@5.0.0)
+      '@angular-devkit/schematics': 22.2.3(chokidar@5.0.0)
+      comment-json: 5.0.0
+      jsonc-parser: 3.3.1
+      pluralize: 8.0.0
+      typescript: 6.0.3
     optionalDependencies:
       prettier: 3.9.10
     transitivePeerDependencies:
