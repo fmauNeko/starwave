@@ -284,8 +284,8 @@ importers:
         specifier: 7.8.2
         version: 7.8.2
       youtubei.js:
-        specifier: 18.2.0
-        version: 18.2.0
+        specifier: 18.3.0
+        version: 18.3.0
     devDependencies:
       '@eslint/eslintrc':
         specifier: 3.3.7
@@ -5732,8 +5732,8 @@ packages:
     resolution: {integrity: sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg==}
     engines: {node: '>=18'}
 
-  youtubei.js@18.2.0:
-    resolution: {integrity: sha512-4xvEEOk7ezu/MrYcQUABzWGKn4I2hRgjtrS8EYJmZsNXTirpF02y856tp4ART4F1tvb9XCitAYPnCFQSlz0XYA==}
+  youtubei.js@18.3.0:
+    resolution: {integrity: sha512-6Cwn/U8a+OjpZp5XgqOjwy7Lk0RrGavm3I5zO7qZWO+fes20vhWMZnlUs0h/97SwjS0AsxAZrZ5bJ85XBJVWTw==}
 
 snapshots:
 
@@ -10979,7 +10979,7 @@ snapshots:
 
   yoctocolors@2.2.0: {}
 
-  youtubei.js@18.2.0:
+  youtubei.js@18.3.0:
     dependencies:
       '@bufbuild/protobuf': 2.16.0
       fflate: 0.8.3
