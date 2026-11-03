@@ -3,4 +3,4 @@ name: starwave
 description: Helm chart for starwave services (NestJS Discord bot)
 type: application
 version: 0.6.4
-appVersion: 1.4.2
+appVersion: 2.0.0
