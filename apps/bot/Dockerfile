@@ -1,12 +1,17 @@
-FROM node:lts-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS base
+FROM node:lts-alpine@sha256:c6ad9e9c1d80f6eb607c26b4b0a132ff7a2344fad1c78ea3baa2a7d4c8de6d94 AS node-base
+
+WORKDIR /app
+
+# ---
+FROM node-base AS base
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME/bin:$PATH
-WORKDIR /app
 
+# Node.js no longer ships Corepack: install the pnpm pinned in packageManager with npm.
 COPY package.json ./
-RUN corepack enable && \
-  corepack prepare --activate
+RUN npm install -g --allow-scripts=pnpm "$(node -p "require('./package.json').packageManager")" && \
+  npm cache clean --force
 
 # ---
 FROM base AS prepare
@@ -41,7 +46,7 @@ COPY --from=prepare /app/out/full/ .
 RUN pnpm run build
 
 # ---
-FROM base AS runner
+FROM node-base AS runner
 
 ENV NODE_ENV=production
 
