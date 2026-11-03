@@ -12,7 +12,7 @@ import {
   type MockInstance,
   vi,
 } from 'vitest';
-import { VOICE_EVENTS, VoiceService } from './voice.service';
+import { VOICE_EVENTS, VoiceService } from './voice.service.js';
 
 vi.mock('@discordjs/voice', () => ({
   joinVoiceChannel: vi.fn(),

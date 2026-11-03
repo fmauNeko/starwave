@@ -1,5 +1,5 @@
 import { type } from 'arktype';
-import { Role } from '../discord/authorization/role.enum';
+import { Role } from '../discord/authorization/role.enum.js';
 
 export const configSchema = type.module({
   roles: type.enumerated(...Object.values(Role)),

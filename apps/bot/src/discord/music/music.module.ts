@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DiscoveryModule } from '@nestjs/core';
-import { VoiceModule } from '../voice/voice.module';
-import { InnertubeSessionService } from './youtube/innertube-session.service';
-import { YouTubeStreamService } from './youtube/youtube-stream.service';
-import { MusicCommands } from './music.commands';
-import { MusicService } from './music.service';
-import { NowPlayingComponents } from './now-playing.components';
-import { NowPlayingService } from './now-playing.service';
-import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
-import { YouTubeProvider } from './providers/youtube.provider';
-import { YtDlpService } from './yt-dlp.service';
+import { VoiceModule } from '../voice/voice.module.js';
+import { InnertubeSessionService } from './youtube/innertube-session.service.js';
+import { YouTubeStreamService } from './youtube/youtube-stream.service.js';
+import { MusicCommands } from './music.commands.js';
+import { MusicService } from './music.service.js';
+import { NowPlayingComponents } from './now-playing.components.js';
+import { NowPlayingService } from './now-playing.service.js';
+import { MusicProviderDiscovery } from './providers/music-provider-discovery.service.js';
+import { YouTubeProvider } from './providers/youtube.provider.js';
+import { YtDlpService } from './yt-dlp.service.js';
 
 @Module({
   imports: [ConfigModule, VoiceModule, DiscoveryModule],

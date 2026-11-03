@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import type { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Config } from '../../../config/config.type';
+import type { Config } from '../../../config/config.type.js';
 
 interface InnertubeCreateOptions {
   enable_session_cache?: boolean;
@@ -108,7 +108,7 @@ vi.mock('jsdom', () => ({
   JSDOM: mockJSDOMConstructor,
 }));
 
-import { InnertubeSessionService } from './innertube-session.service';
+import { InnertubeSessionService } from './innertube-session.service.js';
 
 const originalFetch = global.fetch;
 

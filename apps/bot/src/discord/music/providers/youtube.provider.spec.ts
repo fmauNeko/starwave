@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   VideoMetadata,
   YouTubeStreamService,
-} from '../youtube/youtube-stream.service';
-import { YouTubeProvider } from './youtube.provider';
+} from '../youtube/youtube-stream.service.js';
+import { YouTubeProvider } from './youtube.provider.js';
 
 function createMockStreamService(
   overrides: Partial<YouTubeStreamService> = {},

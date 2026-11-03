@@ -1,15 +1,20 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { StreamType } from '@discordjs/voice';
 import { Constants, Platform, YTNodes, type Types } from 'youtubei.js';
-import { SabrStream } from 'googlevideo/sabr-stream';
+import { SabrStream, type ReloadResponse } from 'googlevideo/sabr-stream';
 import type {
   ReloadPlaybackContext,
   StreamProtectionStatus,
 } from 'googlevideo/protos';
-import { buildSabrFormat, EnabledTrackTypes } from 'googlevideo/utils';
+import type { SabrFormat } from 'googlevideo/shared-types';
+import {
+  base64ToU8,
+  buildSabrFormat,
+  EnabledTrackTypes,
+} from 'googlevideo/utils';
 import { Readable } from 'node:stream';
 import { regex } from 'arkregex';
-import { InnertubeSessionService } from './innertube-session.service';
+import { InnertubeSessionService } from './innertube-session.service.js';
 
 const YOUTUBE_URL_PATTERN = regex(
   '(?:youtube\\.com/(?:watch\\?v=|embed/|shorts/)|youtu\\.be/)([a-zA-Z0-9_-]{11})',
@@ -18,7 +23,6 @@ const SABR_MAX_RETRIES = 3;
 const STREAM_PROTECTION_RECOVERY_THRESHOLD = 2;
 const MAX_RECOVERY_ATTEMPTS = 3;
 const SESSION_REBUILD_ON_ATTEMPT = 3;
-const MAX_RELOAD_REMINTS = 3;
 const VIDEO_ID_PATTERN = regex('^([a-zA-Z0-9_-]{11})$');
 
 interface ThumbnailLike {
@@ -31,6 +35,7 @@ interface VideoInfoLike {
     duration?: number;
     thumbnail?: ThumbnailLike[];
     is_live?: boolean;
+    is_post_live_dvr?: boolean;
   };
   videoDetails?: {
     title?: string;
@@ -191,26 +196,48 @@ export class YouTubeStreamService {
       throw new Error('No SABR ustreamer config available');
     }
 
-    let recoveryPromise: Promise<void> | undefined;
-    let reloadPromise: Promise<void> | undefined;
+    let pendingProtectionStatus: number | undefined;
     let protectionAttempts = 0;
-    let reloadRemints = 0;
     let streamClosed = false;
     let exhaustedLogged = false;
 
-    const gatedFetch: typeof fetch = async (input, init) => {
-      if (recoveryPromise) {
-        await recoveryPromise;
+    const mintPoToken = async (): Promise<Uint8Array> => {
+      const protectionStatus = pendingProtectionStatus;
+      pendingProtectionStatus = undefined;
+
+      // SabrStream also mints once at start-up, when the acquisition token is still fresh.
+      if (protectionStatus === undefined) {
+        return base64ToU8(poToken);
       }
 
-      if (reloadPromise) {
-        await reloadPromise;
+      if (protectionAttempts >= MAX_RECOVERY_ATTEMPTS) {
+        if (!exhaustedLogged) {
+          exhaustedLogged = true;
+          this.logger.error(
+            `youtube.stream.protected: ${videoId}`,
+            `YouTube kept withholding media after ${String(MAX_RECOVERY_ATTEMPTS)} PO token refreshes; this video cannot be streamed with the current session`,
+          );
+        }
+        throw new Error('PO token recovery attempts exhausted');
       }
 
-      return fetch(input, init);
+      protectionAttempts += 1;
+      const freshPoToken = await this.recoverPoToken(videoId, {
+        reason: `stream protection status ${String(protectionStatus)}`,
+        attempt: protectionAttempts,
+        maxAttempts: MAX_RECOVERY_ATTEMPTS,
+        rebuildSession: protectionAttempts >= SESSION_REBUILD_ON_ATTEMPT,
+        isClosed: () => streamClosed,
+      });
+      if (freshPoToken === undefined) {
+        throw new Error('PO token recovery did not produce a token');
+      }
+
+      return base64ToU8(freshPoToken);
     };
 
     const sabrStream = new SabrStream({
+      videoId,
       formats:
         streamingData.adaptive_formats?.map((format) =>
           buildSabrFormat(format as Parameters<typeof buildSabrFormat>[0]),
@@ -219,7 +246,11 @@ export class YouTubeStreamService {
       videoPlaybackUstreamerConfig,
       poToken,
       clientInfo: this.getSabrClientInfo(client),
-      fetch: gatedFetch,
+      callbacks: {
+        onMintPoToken: mintPoToken,
+        onReloadPlayerResponse: (reloadPlaybackContext) =>
+          this.handleSabrReload(client, videoId, reloadPlaybackContext),
+      },
     });
 
     sabrStream.on('finish', () => {
@@ -230,77 +261,27 @@ export class YouTubeStreamService {
       streamClosed = true;
     });
 
-    const startRecovery = (options: {
-      reason: string;
-      attempt: number;
-      maxAttempts: number;
-      rebuildSession: boolean;
-    }): void => {
-      if (streamClosed || recoveryPromise) {
-        return;
-      }
-
-      recoveryPromise = this.recoverSabrStream(videoId, sabrStream, {
-        ...options,
-        isClosed: () => streamClosed,
-      }).finally(() => {
-        recoveryPromise = undefined;
-      });
-    };
+    sabrStream.on('error', (error) => {
+      streamClosed = true;
+      this.logger.error(`youtube.stream.failed: ${videoId}`, error.message);
+    });
 
     sabrStream.on(
       'streamProtectionStatusUpdate',
       (status: StreamProtectionStatus) => {
-        if ((status.status ?? 0) < STREAM_PROTECTION_RECOVERY_THRESHOLD) {
-          return;
-        }
-
-        if (protectionAttempts >= MAX_RECOVERY_ATTEMPTS) {
-          if (!exhaustedLogged) {
-            exhaustedLogged = true;
-            this.logger.error(
-              `youtube.stream.protected: ${videoId}`,
-              `YouTube kept withholding media after ${String(MAX_RECOVERY_ATTEMPTS)} PO token refreshes; this video cannot be streamed with the current session`,
-            );
-          }
-          return;
-        }
-
-        protectionAttempts += 1;
-        startRecovery({
-          reason: `stream protection status ${String(status.status)}`,
-          attempt: protectionAttempts,
-          maxAttempts: MAX_RECOVERY_ATTEMPTS,
-          rebuildSession: protectionAttempts >= SESSION_REBUILD_ON_ATTEMPT,
-        });
+        const protectionStatus = status.status ?? 0;
+        pendingProtectionStatus =
+          protectionStatus >= STREAM_PROTECTION_RECOVERY_THRESHOLD
+            ? protectionStatus
+            : undefined;
       },
     );
 
-    sabrStream.on('reloadPlayerResponse', (reloadPlaybackContext) => {
-      if (reloadRemints < MAX_RELOAD_REMINTS) {
-        reloadRemints += 1;
-        startRecovery({
-          reason: 'reload player response',
-          attempt: reloadRemints,
-          maxAttempts: MAX_RELOAD_REMINTS,
-          rebuildSession: false,
-        });
-      }
-
-      reloadPromise = this.handleSabrReload(
-        client,
-        videoId,
-        sabrStream,
-        reloadPlaybackContext,
-      ).finally(() => {
-        reloadPromise = undefined;
-      });
-    });
-
-    const { audioStream } = await sabrStream.start({
+    const { audioStream } = sabrStream.start({
       enabledTrackTypes: EnabledTrackTypes.AUDIO_ONLY,
-      preferOpus: true,
+      audioFormat: (formats) => this.selectOpusAudioFormat(formats),
       maxRetries: SABR_MAX_RETRIES,
+      isPostLiveDvr: info.basic_info?.is_post_live_dvr === true,
     });
     const nodeStream = Readable.fromWeb(
       audioStream as Parameters<typeof Readable.fromWeb>[0],
@@ -316,37 +297,31 @@ export class YouTubeStreamService {
   private async handleSabrReload(
     client: NonNullable<ReturnType<InnertubeSessionService['getClient']>>,
     videoId: string,
-    sabrStream: SabrStream,
-    reloadPlaybackContext: ReloadPlaybackContext,
-  ): Promise<void> {
+    reloadPlaybackContext: ReloadPlaybackContext | undefined,
+  ): Promise<ReloadResponse> {
     this.logger.warn(`youtube.stream.reload: ${videoId}`);
 
     try {
       const { serverAbrStreamingUrl, videoPlaybackUstreamerConfig } =
         await this.reloadSabrConfig(client, videoId, reloadPlaybackContext);
 
-      if (serverAbrStreamingUrl && videoPlaybackUstreamerConfig) {
-        sabrStream.setStreamingURL(serverAbrStreamingUrl);
-        sabrStream.setUstreamerConfig(videoPlaybackUstreamerConfig);
-        this.logger.log(`youtube.stream.reloaded: ${videoId}`);
-        return;
+      if (!serverAbrStreamingUrl || !videoPlaybackUstreamerConfig) {
+        throw new Error('missing url or config');
       }
 
-      this.logger.error(
-        `youtube.stream.reload.failed: ${videoId}`,
-        'missing url or config',
-      );
+      this.logger.log(`youtube.stream.reloaded: ${videoId}`);
+      return { serverAbrStreamingUrl, videoPlaybackUstreamerConfig };
     } catch (error: unknown) {
       this.logger.error(
         `youtube.stream.reload.failed: ${videoId}`,
         error instanceof Error ? error.message : String(error),
       );
+      throw error;
     }
   }
 
-  private async recoverSabrStream(
+  private async recoverPoToken(
     videoId: string,
-    sabrStream: SabrStream,
     options: {
       reason: string;
       attempt: number;
@@ -354,7 +329,7 @@ export class YouTubeStreamService {
       rebuildSession: boolean;
       isClosed: () => boolean;
     },
-  ): Promise<void> {
+  ): Promise<string | undefined> {
     const { reason, attempt, maxAttempts, rebuildSession, isClosed } = options;
 
     this.logger.warn(
@@ -365,35 +340,36 @@ export class YouTubeStreamService {
       if (rebuildSession) {
         if (isClosed()) {
           this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
-          return;
+          return undefined;
         }
         await this.session.refresh(reason);
       }
 
       if (isClosed()) {
         this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
-        return;
+        return undefined;
       }
 
       const freshPoToken = await this.session.generateContentPoToken(videoId);
       if (isClosed()) {
         this.logger.debug(`youtube.stream.recover.aborted: ${videoId}`);
-        return;
+        return undefined;
       }
-      sabrStream.setPoToken(freshPoToken);
       this.logger.log(`youtube.stream.recovered: ${videoId}`);
+      return freshPoToken;
     } catch (error: unknown) {
       this.logger.error(
         `youtube.stream.recover.failed: ${videoId}`,
         error instanceof Error ? error.message : String(error),
       );
+      return undefined;
     }
   }
 
   private async reloadSabrConfig(
     client: NonNullable<ReturnType<InnertubeSessionService['getClient']>>,
     videoId: string,
-    reloadPlaybackContext: ReloadPlaybackContext,
+    reloadPlaybackContext: ReloadPlaybackContext | undefined,
   ): Promise<ReloadedSabrConfig> {
     const watchEndpoint = new YTNodes.NavigationEndpoint({
       watchEndpoint: { videoId },
@@ -461,6 +437,15 @@ export class YouTubeStreamService {
         '',
       url: this.canonicalUrl(videoId),
     };
+  }
+
+  private selectOpusAudioFormat(formats: SabrFormat[]): SabrFormat | undefined {
+    return formats
+      .filter((format) => {
+        const mimeType = format.mimeType ?? '';
+        return mimeType.startsWith('audio/webm') && mimeType.includes('opus');
+      })
+      .sort((a, b) => b.bitrate - a.bitrate)[0];
   }
 
   private getSabrClientInfo(

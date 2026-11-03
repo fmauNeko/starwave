@@ -1,6 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Config } from '../../config/config.type';
+import type { Config } from '../../config/config.type.js';
 
 vi.mock('node:fs', () => ({
   existsSync: vi.fn().mockReturnValue(false),
@@ -46,7 +46,7 @@ global.fetch = mockFetch;
 
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { YtDlpService } from './yt-dlp.service';
+import { YtDlpService } from './yt-dlp.service.js';
 
 function createMockConfigService(cookiesPath?: string): ConfigService<Config> {
   return {

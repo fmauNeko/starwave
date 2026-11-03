@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import { TestBed } from '@suites/unit';
 import { Client } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DiscordService } from './discord.service';
+import { DiscordService } from './discord.service.js';
 
 describe('DiscordService', () => {
   let service: DiscordService;

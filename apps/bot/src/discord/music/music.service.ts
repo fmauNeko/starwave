@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { AudioPlayerStatus } from '@discordjs/voice';
-import { VOICE_EVENTS, VoiceService } from '../voice/voice.service';
-import { LoopMode, MusicQueue, type Track } from './music-queue';
-import { MusicProviderDiscovery } from './providers/music-provider-discovery.service';
-import type { MusicProvider } from './providers/music-provider.interface';
+import { VOICE_EVENTS, VoiceService } from '../voice/voice.service.js';
+import { LoopMode, MusicQueue, type Track } from './music-queue.js';
+import { MusicProviderDiscovery } from './providers/music-provider-discovery.service.js';
+import type { MusicProvider } from './providers/music-provider.interface.js';
 
 export const MUSIC_EVENTS = {
   QUEUE_END: 'music.queue.end',

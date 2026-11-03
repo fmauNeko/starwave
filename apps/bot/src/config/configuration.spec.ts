@@ -1,9 +1,9 @@
 import { fs, vol } from 'memfs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { JsonConfig } from './config.type';
+import type { JsonConfig } from './config.type.js';
 
-const configPath = path.join(__dirname, '..', '..', 'config.json');
+const configPath = path.join(import.meta.dirname, '..', '..', 'config.json');
 const baseConfig = {
   discord: {
     devGuildIds: ['123'],

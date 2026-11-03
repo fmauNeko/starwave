@@ -3,10 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { Interaction } from 'discord.js';
 import { Observable } from 'rxjs';
-import { Config } from '../../config/config.type';
-import { DiscordForbiddenException } from './discord-forbidden.exception';
-import { ROLE_KEY } from './require-role.decorator';
-import { Role, RoleRank } from './role.enum';
+import { Config } from '../../config/config.type.js';
+import { DiscordForbiddenException } from './discord-forbidden.exception.js';
+import { ROLE_KEY } from './require-role.decorator.js';
+import { Role, RoleRank } from './role.enum.js';
 
 @Injectable()
 export class RoleGuard implements CanActivate {

@@ -2,10 +2,10 @@
 import type { ButtonInteraction, GuildMember, VoiceChannel } from 'discord.js';
 import { MessageFlags } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Track } from './music-queue';
-import { MusicService } from './music.service';
-import { NowPlayingComponents } from './now-playing.components';
-import { NowPlayingService } from './now-playing.service';
+import type { Track } from './music-queue.js';
+import { MusicService } from './music.service.js';
+import { NowPlayingComponents } from './now-playing.components.js';
+import { NowPlayingService } from './now-playing.service.js';
 
 const mockTrack: Track = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',

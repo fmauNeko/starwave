@@ -1,10 +1,10 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 import { MessageFlags } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MusicService } from '../music/music.service';
-import { LeaveCommand } from './leave.command';
-import { VoiceInactivityService } from './voice-inactivity.service';
-import { VoiceService } from './voice.service';
+import { MusicService } from '../music/music.service.js';
+import { LeaveCommand } from './leave.command.js';
+import { VoiceInactivityService } from './voice-inactivity.service.js';
+import { VoiceService } from './voice.service.js';
 
 function createMockInteraction(
   options: { guildId?: string | null } = {},

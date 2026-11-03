@@ -1,6 +1,6 @@
 import { TestBed } from '@suites/unit';
 import { Client } from 'discord.js';
-import { PresenceService } from './presence.service';
+import { PresenceService } from './presence.service.js';
 
 describe('PresenceService', () => {
   let service: PresenceService;

@@ -2,14 +2,14 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GatewayIntentBits } from 'discord.js';
 import { NecordModule } from 'necord';
-import { Config } from '../config/config.type';
-import { AuthorizationModule } from './authorization/authorization.module';
-import { DiscordService } from './discord.service';
-import { MusicModule } from './music/music.module';
-import { PingCommand } from './ping/ping.command';
-import { PresenceModule } from './presence/presence.module';
-import { LeaveCommand } from './voice/leave.command';
-import { VoiceModule } from './voice/voice.module';
+import { Config } from '../config/config.type.js';
+import { AuthorizationModule } from './authorization/authorization.module.js';
+import { DiscordService } from './discord.service.js';
+import { MusicModule } from './music/music.module.js';
+import { PingCommand } from './ping/ping.command.js';
+import { PresenceModule } from './presence/presence.module.js';
+import { LeaveCommand } from './voice/leave.command.js';
+import { VoiceModule } from './voice/voice.module.js';
 
 @Module({
   imports: [

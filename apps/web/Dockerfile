@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32
+# syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 #
 # PLACEHOLDER Dockerfile for the `web` app — intentionally a no-op stub.
 #
@@ -7,5 +7,5 @@
 # app matrix (`turbo ls --filter=./apps/*`) has a Dockerfile to target instead of
 # failing on a missing file.
 #
-FROM busybox:latest@sha256:dc2d74b28e4cf8984fa52af1f39bc7c3d9c73760b41a74d629f5d11b1ab28616
+FROM busybox:latest@sha256:a46257e06c82ad85242d0d38077d0a52d9896389ca60a1a59d3463db586e5fa4
 CMD ["echo", "starwave web: placeholder image — real build not yet implemented"]

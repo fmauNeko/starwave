@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import configuration, { validateEnv } from './config/configuration';
-import { DiscordModule } from './discord/discord.module';
+import { AppController } from './app.controller.js';
+import { AppService } from './app.service.js';
+import configuration, { validateEnv } from './config/configuration.js';
+import { DiscordModule } from './discord/discord.module.js';
 
 @Module({
   imports: [

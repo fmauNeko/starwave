@@ -1,13 +1,13 @@
 import { type } from 'arktype';
 import fs from 'node:fs';
 import path from 'node:path';
-import { EnvConfig, JsonConfig, configSchema } from './config.type';
+import { EnvConfig, JsonConfig, configSchema } from './config.type.js';
 
 type JsonObject = Record<string, unknown>;
 
 export default (): JsonConfig => {
   const baseConfigContent = fs.readFileSync(
-    path.join(__dirname, '..', '..', 'config.json'),
+    path.join(import.meta.dirname, '..', '..', 'config.json'),
     'utf-8',
   );
 

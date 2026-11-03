@@ -1,11 +1,11 @@
 import { type } from 'arktype';
 import fs from 'node:fs';
 import path from 'node:path';
-import { JsonConfig, configSchema } from '../../src/config/config.type';
+import { JsonConfig, configSchema } from '../../src/config/config.type.js';
 
 export default (): JsonConfig => {
   const jsonFileContent = fs.readFileSync(
-    path.join(__dirname, '..', 'config.test.json'),
+    path.join(import.meta.dirname, '..', 'config.test.json'),
     'utf-8',
   );
 

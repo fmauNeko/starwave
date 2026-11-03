@@ -2,9 +2,9 @@ import type { ExecutionContext } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { TestBed } from '@suites/unit';
-import { Config } from '../../config/config.type';
-import { Role } from './role.enum';
-import { RoleGuard } from './role.guard';
+import { Config } from '../../config/config.type.js';
+import { Role } from './role.enum.js';
+import { RoleGuard } from './role.guard.js';
 
 describe('RoleGuard', () => {
   let service: RoleGuard;

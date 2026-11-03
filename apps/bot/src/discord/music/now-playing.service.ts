@@ -13,10 +13,10 @@ import {
   type TextChannel,
 } from 'discord.js';
 import { Context, On, type ContextOf } from 'necord';
-import type { Config } from '../../config/config.type';
-import { VOICE_EVENTS } from '../voice/voice.service';
-import { LoopMode } from './music-queue';
-import { MUSIC_EVENTS, MusicService } from './music.service';
+import type { Config } from '../../config/config.type.js';
+import { VOICE_EVENTS } from '../voice/voice.service.js';
+import { LoopMode } from './music-queue.js';
+import { MUSIC_EVENTS, MusicService } from './music.service.js';
 
 export const NOW_PLAYING_BUTTON_IDS = {
   PLAY_PAUSE: 'np_playpause',

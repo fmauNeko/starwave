@@ -8,11 +8,11 @@ import type {
 } from 'discord.js';
 import { EmbedBuilder, MessageFlags } from 'discord.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { VoiceService } from '../voice/voice.service';
-import { LoopMode, type Track } from './music-queue';
-import { MusicCommands } from './music.commands';
-import { MusicService } from './music.service';
-import { NowPlayingService } from './now-playing.service';
+import { VoiceService } from '../voice/voice.service.js';
+import { LoopMode, type Track } from './music-queue.js';
+import { MusicCommands } from './music.commands.js';
+import { MusicService } from './music.service.js';
+import { NowPlayingService } from './now-playing.service.js';
 
 const mockTrack: Track = {
   url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
