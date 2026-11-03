@@ -1,5 +1,60 @@
 # Changelog
 
+## [2.0.0](https://github.com/fmauNeko/starwave/compare/bot@v1.4.2...bot@v2.0.0) (2026-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **bot:** apps/bot is now an ESM package. Relative imports require .js extensions, __dirname is unavailable, and the container entrypoint is now dist/main.js.
+
+### Features
+
+* **bot:** migrate to NestJS 12 and Necord 7 ([3068840](https://github.com/fmauNeko/starwave/commit/3068840e6a315d630a2cc87c408360d735b05441))
+
+
+### Bug Fixes
+
+* **bot:** migrate SABR streaming to the googlevideo 5 callback API ([c4f471c](https://github.com/fmauNeko/starwave/commit/c4f471cc828d958cb96f1f8f2eb065ccf10e92b0))
+* **deps:** update dependency @nestjs/config to v12.0.1 ([#728](https://github.com/fmauNeko/starwave/issues/728)) ([42463a8](https://github.com/fmauNeko/starwave/commit/42463a8ada6aec5e7916f410b950f0b9dd72eb2d))
+* **deps:** update dependency arkregex to v0.0.10 ([#736](https://github.com/fmauNeko/starwave/issues/736)) ([f412edd](https://github.com/fmauNeko/starwave/commit/f412edd5da3e8c4966332a42646a45896bcd0bed))
+* **deps:** update dependency arkregex to v0.0.11 ([#757](https://github.com/fmauNeko/starwave/issues/757)) ([4340210](https://github.com/fmauNeko/starwave/commit/434021085d0d133316bd4f07d3183784d00893f3))
+* **deps:** update dependency arkregex to v0.0.12 ([#763](https://github.com/fmauNeko/starwave/issues/763)) ([cb41da4](https://github.com/fmauNeko/starwave/commit/cb41da428e13131dc98eb4c3ddeaa414f853234f))
+* **deps:** update dependency arkregex to v0.0.13 ([#786](https://github.com/fmauNeko/starwave/issues/786)) ([be2a69d](https://github.com/fmauNeko/starwave/commit/be2a69dbd48614d3c3d376ac1ecae5212a4fe70c))
+* **deps:** update dependency arkregex to v0.0.14 ([#831](https://github.com/fmauNeko/starwave/issues/831)) ([9c96a06](https://github.com/fmauNeko/starwave/commit/9c96a061d482a1c00fb5660b02c8b0a95eddd65a))
+* **deps:** update dependency arktype to v2.2.5 ([#738](https://github.com/fmauNeko/starwave/issues/738)) ([c35e144](https://github.com/fmauNeko/starwave/commit/c35e144bd01b6fdbeb87fc10f8f46985ac1f00e8))
+* **deps:** update dependency arktype to v2.2.6 ([#759](https://github.com/fmauNeko/starwave/issues/759)) ([9da2895](https://github.com/fmauNeko/starwave/commit/9da2895cc19df422f5d82bc3f97382a5bcf1099c))
+* **deps:** update dependency arktype to v2.2.7 ([#764](https://github.com/fmauNeko/starwave/issues/764)) ([950fbe4](https://github.com/fmauNeko/starwave/commit/950fbe4b8774adbc0444954582c9b3ca233268f5))
+* **deps:** update dependency arktype to v2.2.8 ([#787](https://github.com/fmauNeko/starwave/issues/787)) ([945940e](https://github.com/fmauNeko/starwave/commit/945940ee5b413958154612b30aa678587f9de07a))
+* **deps:** update dependency arktype to v2.2.9 ([#832](https://github.com/fmauNeko/starwave/issues/832)) ([61d1cb0](https://github.com/fmauNeko/starwave/commit/61d1cb06334677d0c462f1d3269b36a31c434133))
+* **deps:** update dependency discord-api-types to v0.38.54 ([#650](https://github.com/fmauNeko/starwave/issues/650)) ([bff129a](https://github.com/fmauNeko/starwave/commit/bff129a9eaab543189ccb409bc41b1b013f08e04))
+* **deps:** update dependency discord-api-types to v0.38.55 ([#658](https://github.com/fmauNeko/starwave/issues/658)) ([1b0d7af](https://github.com/fmauNeko/starwave/commit/1b0d7af78e7dd29dfb838127398d395e0c89309b))
+* **deps:** update dependency discord-api-types to v0.38.56 ([#752](https://github.com/fmauNeko/starwave/issues/752)) ([8c2dc80](https://github.com/fmauNeko/starwave/commit/8c2dc8064b126b90c1f7003df4657d5d434fc5a4))
+* **deps:** update dependency discord-api-types to v0.38.57 ([#828](https://github.com/fmauNeko/starwave/issues/828)) ([0964a08](https://github.com/fmauNeko/starwave/commit/0964a083a4e783564463cbf8ecf3778a615092ba))
+* **deps:** update dependency discord.js to v14.28.0 ([#860](https://github.com/fmauNeko/starwave/issues/860)) ([2036cb1](https://github.com/fmauNeko/starwave/commit/2036cb1a9ff64d92fc606e50e195268352c5afd0))
+* **deps:** update dependency googlevideo to v5 ([4701bd6](https://github.com/fmauNeko/starwave/commit/4701bd6ef7b2de88ca4a600cab7cf5c9c8dc3c84))
+* **deps:** update dependency googlevideo to v5 ([4a91939](https://github.com/fmauNeko/starwave/commit/4a91939aab80789c025f68875219e2319e15dd2f))
+* **deps:** update dependency jsdom to v30.1.0 ([#701](https://github.com/fmauNeko/starwave/issues/701)) ([d9c35a1](https://github.com/fmauNeko/starwave/commit/d9c35a199a9b0ca79baf2e35f6c696750db1dd1a))
+* **deps:** update dependency jsdom to v30.1.1 ([#722](https://github.com/fmauNeko/starwave/issues/722)) ([0cd04ae](https://github.com/fmauNeko/starwave/commit/0cd04aeac80e7ae42f1a22e5791dfce6249c703e))
+* **deps:** update dependency jsdom to v30.1.2 ([#775](https://github.com/fmauNeko/starwave/issues/775)) ([7df14cd](https://github.com/fmauNeko/starwave/commit/7df14cd54ae14d4747994326f0e26779528f8a15))
+* **deps:** update dependency jsdom to v30.1.3 ([#813](https://github.com/fmauNeko/starwave/issues/813)) ([32cc117](https://github.com/fmauNeko/starwave/commit/32cc117dc499f1f8868c6dd40bb08317d720d6c8))
+* **deps:** update dependency necord to v7.1.1 ([#856](https://github.com/fmauNeko/starwave/issues/856)) ([0b47202](https://github.com/fmauNeko/starwave/commit/0b47202a8289d95d640806e8646eed54c4898858))
+* **deps:** update dependency youtubei.js to v18.1.0 ([#729](https://github.com/fmauNeko/starwave/issues/729)) ([21edbca](https://github.com/fmauNeko/starwave/commit/21edbcaec21e5da4262dac5f1115d68e6ee2302f))
+* **deps:** update dependency youtubei.js to v18.2.0 ([#819](https://github.com/fmauNeko/starwave/issues/819)) ([154e40c](https://github.com/fmauNeko/starwave/commit/154e40c2c0f1c65cb264c21e3931eadc2151ac94))
+* **deps:** update dependency youtubei.js to v18.3.0 ([#842](https://github.com/fmauNeko/starwave/issues/842)) ([ba33ceb](https://github.com/fmauNeko/starwave/commit/ba33ceb1ea1a6cd3418ffe4433d5ba8721ac3a9b))
+* **deps:** update nest monorepo ([#731](https://github.com/fmauNeko/starwave/issues/731)) ([80c138b](https://github.com/fmauNeko/starwave/commit/80c138bdd105f77cbe49178fc939b1b06119160f))
+* **deps:** update nest monorepo ([#747](https://github.com/fmauNeko/starwave/issues/747)) ([e29ed1a](https://github.com/fmauNeko/starwave/commit/e29ed1aec2d16a69167d2c79f717fbbd5f7661af))
+* **deps:** update nest monorepo ([#850](https://github.com/fmauNeko/starwave/issues/850)) ([8695285](https://github.com/fmauNeko/starwave/commit/8695285aceb76c113a2ddff9027e8512e8e12d36))
+* **deps:** update nest monorepo to v11.2.0 ([#615](https://github.com/fmauNeko/starwave/issues/615)) ([e69f963](https://github.com/fmauNeko/starwave/commit/e69f963eb6cb4f526fe0caa96ecbb6c74efa9d55))
+* **deps:** update nest monorepo to v11.2.1 ([#617](https://github.com/fmauNeko/starwave/issues/617)) ([14ad605](https://github.com/fmauNeko/starwave/commit/14ad605c5f26b2932f6ed14b8f6371134355ad42))
+* **deps:** update nest monorepo to v11.2.2 ([#639](https://github.com/fmauNeko/starwave/issues/639)) ([1fd11fd](https://github.com/fmauNeko/starwave/commit/1fd11fd8215598e24e43a0d3a6e289f5f6cad8d1))
+* **deps:** update nest monorepo to v11.2.3 ([#640](https://github.com/fmauNeko/starwave/issues/640)) ([21b8382](https://github.com/fmauNeko/starwave/commit/21b8382a3af32370be8fbfa151625a96e65bbde4))
+* **deps:** update nest monorepo to v11.2.4 ([#691](https://github.com/fmauNeko/starwave/issues/691)) ([71b1363](https://github.com/fmauNeko/starwave/commit/71b1363d200e53fbdaba9544aa5ee3856ef5461b))
+* **deps:** update nest monorepo to v12.0.4 ([#695](https://github.com/fmauNeko/starwave/issues/695)) ([b79a5c7](https://github.com/fmauNeko/starwave/commit/b79a5c7c0cf42309eb4c39a0d5db6512a3d41ffa))
+* **deps:** update nest monorepo to v12.1.3 ([#803](https://github.com/fmauNeko/starwave/issues/803)) ([2cefaec](https://github.com/fmauNeko/starwave/commit/2cefaecb74c5663c9aca102e019cb8c7c3a084ac))
+* **deps:** update nest monorepo to v12.2.0 ([#824](https://github.com/fmauNeko/starwave/issues/824)) ([df4ffc0](https://github.com/fmauNeko/starwave/commit/df4ffc020ecbfb492bbb532cc3b8d2842b839c6d))
+* **deps:** update nest monorepo to v12.3.2 ([#851](https://github.com/fmauNeko/starwave/issues/851)) ([166c47d](https://github.com/fmauNeko/starwave/commit/166c47d7fd588d1e4705e35552cc454b2fe5f7d4))
+* **docker:** install pnpm with npm instead of corepack ([85620a1](https://github.com/fmauNeko/starwave/commit/85620a19ddafe0e06c9a040c789bd44f8e506da7))
+
 ## [1.4.2](https://github.com/fmauNeko/starwave/compare/bot@v1.4.1...bot@v1.4.2) (2026-08-14)
 
 
