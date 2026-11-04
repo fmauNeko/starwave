@@ -12,7 +12,8 @@ import {
   buildSabrFormat,
   EnabledTrackTypes,
 } from 'googlevideo/utils';
-import { Readable } from 'node:stream';
+import { pipeline, Readable } from 'node:stream';
+import prism from 'prism-media';
 import { regex } from 'arkregex';
 import { InnertubeSessionService } from './innertube-session.service.js';
 
@@ -283,15 +284,21 @@ export class YouTubeStreamService {
       maxRetries: SABR_MAX_RETRIES,
       isPostLiveDvr: info.basic_info?.is_post_live_dvr === true,
     });
-    const nodeStream = Readable.fromWeb(
-      audioStream as Parameters<typeof Readable.fromWeb>[0],
+    // WebM/Opus with inline volume routes voice through prism's FFmpeg wrapper,
+    // whose missing _write() breaks Node >= 26.11's pipe fast path. Demux here
+    // so voice uses Opus decoder -> volume -> encoder without FFmpeg.
+    const opusPackets = pipeline(
+      Readable.fromWeb(audioStream as Parameters<typeof Readable.fromWeb>[0]),
+      new prism.opus.WebmDemuxer(),
+      // Errors reach the player via the demuxer; destroying it cancels SABR.
+      () => undefined,
     );
 
     this.logger.log(
       `youtube.stream.acquired: ${videoId} [${String(Date.now() - startedAt)}ms]`,
     );
 
-    return { source: nodeStream, streamType: StreamType.WebmOpus };
+    return { source: opusPackets, streamType: StreamType.Opus };
   }
 
   private async handleSabrReload(

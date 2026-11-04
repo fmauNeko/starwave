@@ -41,6 +41,7 @@
     "googlevideo": "5.0.1",
     "jsdom": "30.1.3",
     "necord": "7.1.1",
+    "prism-media": "1.3.5",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "youtubei.js": "18.3.0"
