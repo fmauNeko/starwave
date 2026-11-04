@@ -23,7 +23,7 @@
     "test:e2e:debug": "vitest --inspect-brk --inspect --logHeapUsage --no-file-parallelism --config ./vitest.config.e2e.ts"
   },
   "dependencies": {
-    "@discordjs/opus": "0.10.0",
+    "@discordjs/opus": "0.11.0",
     "@discordjs/voice": "0.19.2",
     "@nestjs/common": "12.3.2",
     "@nestjs/config": "12.0.1",
@@ -41,6 +41,7 @@
     "googlevideo": "5.0.1",
     "jsdom": "30.1.3",
     "necord": "7.1.1",
+    "prism-media": "1.3.5",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2",
     "youtubei.js": "18.3.0"
@@ -66,7 +67,7 @@
     "eslint": "10.14.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.7",
-    "globals": "17.13.0",
+    "globals": "17.14.0",
     "memfs": "4.80.0",
     "prettier": "3.9.10",
     "source-map-support": "0.5.21",

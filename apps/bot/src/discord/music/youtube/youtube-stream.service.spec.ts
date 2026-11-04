@@ -195,6 +195,57 @@ function createAudioStream(): ReadableStream<Uint8Array> {
   });
 }
 
+function createWebmBytes(
+  opusPackets: readonly (readonly number[])[],
+): Uint8Array {
+  const element = (id: readonly number[], payload: readonly number[]) => [
+    ...id,
+    0x80 | payload.length,
+    ...payload,
+  ];
+  const track = element(
+    [0xae],
+    [
+      ...element([0xd7], [1]),
+      ...element([0x83], [2]),
+      ...element(
+        [0x63, 0xa2],
+        [
+          ...Buffer.from('OpusHead'),
+          1,
+          2,
+          0x38,
+          0x01,
+          0x80,
+          0xbb,
+          0,
+          0,
+          0,
+          0,
+          0,
+        ],
+      ),
+    ],
+  );
+  const cluster = element(
+    [0x1f, 0x43, 0xb6, 0x75],
+    [
+      ...element([0xe7], [0]),
+      ...opusPackets.flatMap((packet) =>
+        element([0xa3], [0x81, 0, 0, 0x80, ...packet]),
+      ),
+    ],
+  );
+
+  return new Uint8Array([
+    ...element([0x1a, 0x45, 0xdf, 0xa3], []),
+    ...element(
+      [0x18, 0x53, 0x80, 0x67],
+      [...element([0x16, 0x54, 0xae, 0x6b], track), ...cluster],
+    ),
+  ]);
+}
+
 function createClient(): MockInnertubeClient {
   return {
     actions: {},
@@ -502,12 +553,12 @@ describe('YouTubeStreamService', () => {
   });
 
   describe('getAudioStream', () => {
-    it('returns a Node Readable stream with StreamType.WebmOpus when SABR succeeds', async () => {
+    it('returns a Readable of Opus packets with StreamType.Opus when SABR succeeds', async () => {
       mockSabrStart.mockReturnValueOnce({ audioStream: createAudioStream() });
 
       const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
 
-      expect(audioInfo.streamType).toBe(StreamType.WebmOpus);
+      expect(audioInfo.streamType).toBe(StreamType.Opus);
       expect(audioInfo.source).toBeInstanceOf(Readable);
       expect(MockSabrStream).toHaveBeenCalledTimes(1);
       expect(mockSabrStart).toHaveBeenCalledWith({
@@ -540,6 +591,67 @@ describe('YouTubeStreamService', () => {
         ),
       );
       audioInfo.source.destroy();
+    });
+
+    it('yields exactly the Opus packets when SABR WebM chunks split a SimpleBlock', async () => {
+      const webm = createWebmBytes([
+        [1, 2, 3],
+        [4, 5, 6],
+      ]);
+      // The last two SimpleBlocks are nine bytes each; split inside the first packet.
+      const split = webm.length - 11;
+      const audioStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(webm.slice(0, split));
+          controller.enqueue(webm.slice(split));
+          controller.close();
+        },
+      });
+      mockSabrStart.mockReturnValueOnce({ audioStream });
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+
+      const packets: unknown[] = [];
+      for await (const packet of audioInfo.source) {
+        packets.push(packet);
+      }
+
+      expect(packets).toEqual([Buffer.from([1, 2, 3]), Buffer.from([4, 5, 6])]);
+    });
+
+    it('rejects collection with the SABR error when the audio stream fails', async () => {
+      const error = new Error('sabr exploded');
+      const audioStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.error(error);
+        },
+      });
+      mockSabrStart.mockReturnValueOnce({ audioStream });
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+
+      const collection = (async () => {
+        const packets: unknown[] = [];
+        for await (const packet of audioInfo.source) {
+          packets.push(packet);
+        }
+        return packets;
+      })();
+
+      await expect(collection).rejects.toThrow(error);
+    });
+
+    it('cancels the SABR audio stream when the returned source is destroyed', async () => {
+      const cancelled = Promise.withResolvers<undefined>();
+      const audioStream = new ReadableStream<Uint8Array>({
+        cancel() {
+          cancelled.resolve(undefined);
+        },
+      });
+      mockSabrStart.mockReturnValueOnce({ audioStream });
+      const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
+
+      audioInfo.source.destroy();
+
+      await expect(cancelled.promise).resolves.toBeUndefined();
     });
 
     it('requires a WebM/Opus audio format and picks the highest bitrate one', async () => {
@@ -984,7 +1096,7 @@ describe('YouTubeStreamService', () => {
 
       const audioInfo = await service.getAudioStream('dQw4w9WgXcQ');
 
-      expect(audioInfo.streamType).toBe(StreamType.WebmOpus);
+      expect(audioInfo.streamType).toBe(StreamType.Opus);
       expect(session.refresh).toHaveBeenCalledTimes(1);
       expect(session.refresh).toHaveBeenCalledWith(
         'token failure on stream acquisition',
