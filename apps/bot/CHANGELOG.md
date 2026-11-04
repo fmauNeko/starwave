@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.1](https://github.com/fmauNeko/starwave/compare/bot@v2.0.0...bot@v2.0.1) (2026-11-04)
+
+
+### Bug Fixes
+
+* **bot:** demux SABR audio in-process instead of piping it into ffmpeg ([bf8e56e](https://github.com/fmauNeko/starwave/commit/bf8e56e9d1b67b88913ecaa32955c43462e6a3fc))
+* **bot:** demux SABR audio in-process instead of piping it into ffmpeg ([d9dfb1e](https://github.com/fmauNeko/starwave/commit/d9dfb1e96fcbc6f77836836d6fd30d26f46b9bdd))
+* **bot:** demux SABR audio in-process instead of piping it into ffmpeg ([75b9a17](https://github.com/fmauNeko/starwave/commit/75b9a17f2e8590835499fd6323907405abe90a91))
+* **deps:** add prism-media to the bot dependencies ([6d9b04d](https://github.com/fmauNeko/starwave/commit/6d9b04d83c56404650913f744d3827c85e81cc07))
+* **deps:** update dependency @discordjs/opus to v0.11.0 ([#866](https://github.com/fmauNeko/starwave/issues/866)) ([fe829e6](https://github.com/fmauNeko/starwave/commit/fe829e6610d6f78c65b02b4c489e3927257281f0))
+
 ## [2.0.0](https://github.com/fmauNeko/starwave/compare/bot@v1.4.2...bot@v2.0.0) (2026-11-03)
 
 
