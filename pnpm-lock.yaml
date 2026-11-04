@@ -224,11 +224,11 @@ importers:
   apps/bot:
     dependencies:
       '@discordjs/opus':
-        specifier: 0.10.0
-        version: 0.10.0(supports-color@8.1.1)
+        specifier: 0.11.0
+        version: 0.11.0(supports-color@8.1.1)
       '@discordjs/voice':
         specifier: 0.19.2
-        version: 0.19.2(@discordjs/opus@0.10.0(supports-color@8.1.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
+        version: 0.19.2(@discordjs/opus@0.11.0(supports-color@8.1.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
       '@nestjs/common':
         specifier: 12.3.2
         version: 12.3.2(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
@@ -868,9 +868,9 @@ packages:
     resolution: {integrity: sha512-YJOVVZ545x24mHzANfYoy0BJX5PDyeZlpiJjDkUBM/V/Ao7TFX9lcUvCN4nr0tbr5ubeaXxtEBILUrHtTphVeQ==}
     hasBin: true
 
-  '@discordjs/opus@0.10.0':
-    resolution: {integrity: sha512-HHEnSNrSPmFEyndRdQBJN2YE6egyXS9JUnJWyP6jficK0Y+qKMEZXyYTgmzpjrxXP1exM/hKaNP7BRBUEWkU5w==}
-    engines: {node: '>=12.0.0'}
+  '@discordjs/opus@0.11.0':
+    resolution: {integrity: sha512-f7w9QxyheGD6rwVuS68EAeF8S+5WhodQd9mol39RxmFmOj0jStSD/RvFGfF3KJIxb/4RZwCV6a0SOGrbXKKXdw==}
+    engines: {node: '>=22'}
 
   '@discordjs/rest@2.6.3':
     resolution: {integrity: sha512-wvOylxNYJkwKjctS/Mn5GP1w9r3/rzyH+ThD1JlAca6zEdlHs8QWBBUQJpU5Q+W6DoIj/Ljh1IPlZs7hTU+UAg==}
@@ -3275,6 +3275,7 @@ packages:
   discord.js@14.28.0:
     resolution: {integrity: sha512-l/mIllvqvWQDWqa8NPw7b2AU2tM9oPWiWR6Jk54DTNlUdyArXbi+Y0m0sLIUtQ9O0x+tyVpDMCG6K6Kf0yeAWQ==}
     engines: {node: '>=18'}
+    deprecated: Please upgrade to 14.28.1 or newer as those versions solve a potential security issue related to the new permission fields on channels
 
   dotenv-expand@13.0.0:
     resolution: {integrity: sha512-aBfBS8eYIeXmpHI9ThIlA7/WLq+SLt18iXUZhb52rW89QLKQFoIpPG1bPeewoPZsTyjSSO3T7234FBVUM1V2rA==}
@@ -6295,7 +6296,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@discordjs/opus@0.10.0(supports-color@8.1.1)':
+  '@discordjs/opus@0.11.0(supports-color@8.1.1)':
     dependencies:
       '@discordjs/node-pre-gyp': 0.4.5(supports-color@8.1.1)
       node-addon-api: 8.9.2
@@ -6319,12 +6320,12 @@ snapshots:
     dependencies:
       discord-api-types: 0.38.57
 
-  '@discordjs/voice@0.19.2(@discordjs/opus@0.10.0(supports-color@8.1.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)':
+  '@discordjs/voice@0.19.2(@discordjs/opus@0.11.0(supports-color@8.1.1))(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)':
     dependencies:
       '@snazzah/davey': 0.1.12(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3)
       '@types/ws': 8.18.2
       discord-api-types: 0.38.57
-      prism-media: 1.3.5(@discordjs/opus@0.10.0(supports-color@8.1.1))
+      prism-media: 1.3.5(@discordjs/opus@0.11.0(supports-color@8.1.1))
       tslib: 2.9.1
       ws: 8.22.1
     transitivePeerDependencies:
@@ -10027,9 +10028,9 @@ snapshots:
 
   prettier@3.9.10: {}
 
-  prism-media@1.3.5(@discordjs/opus@0.10.0(supports-color@8.1.1)):
+  prism-media@1.3.5(@discordjs/opus@0.11.0(supports-color@8.1.1)):
     optionalDependencies:
-      '@discordjs/opus': 0.10.0(supports-color@8.1.1)
+      '@discordjs/opus': 0.11.0(supports-color@8.1.1)
 
   proto-list@1.2.4: {}
 
