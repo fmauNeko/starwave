@@ -23,7 +23,7 @@
     "test:e2e:debug": "vitest --inspect-brk --inspect --logHeapUsage --no-file-parallelism --config ./vitest.config.e2e.ts"
   },
   "dependencies": {
-    "@discordjs/opus": "0.10.0",
+    "@discordjs/opus": "0.11.0",
     "@discordjs/voice": "0.19.2",
     "@nestjs/common": "12.3.2",
     "@nestjs/config": "12.0.1",
