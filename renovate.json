@@ -10,5 +10,12 @@
     ":automergeDigest"
   ],
   "baseBranchPatterns": ["develop"],
-  "ignorePaths": ["charts/starwave/values.yaml"]
+  "ignorePaths": ["charts/starwave/values.yaml"],
+  "packageRules": [
+    {
+      "description": "Suites packages must be upgraded together",
+      "matchPackageNames": ["@suites/**"],
+      "groupName": "suites monorepo"
+    }
+  ]
 }
