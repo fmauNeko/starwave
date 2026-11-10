@@ -312,8 +312,8 @@ importers:
         specifier: 3.1.0
         version: 3.1.0(@nestjs/common@12.4.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)
       '@suites/doubles.vitest':
-        specifier: 3.1.0
-        version: 3.1.0(@vitest/spy@5.1.0)(vitest@5.1.0)
+        specifier: 4.1.2
+        version: 4.1.2(@vitest/spy@5.1.0)(vitest@5.1.0)
       '@suites/unit':
         specifier: 3.1.1
         version: 3.1.1
@@ -2170,6 +2170,10 @@ packages:
     resolution: {integrity: sha512-2aG83BiIuOOVwu8Joisi4soSMI2isYBR8wJXWq+jInWOFCtQq+6cFwhXmpqRheMX0aKk7kb14HpclclMvpK3nQ==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
+  '@suites/core.unit@4.1.2':
+    resolution: {integrity: sha512-1/AC1/wudDfp+EM5ocKrf7UGNI41SWDqu7deVWDTW85HZFf6nvuc1CVXZcnMYmCHC4GduZM7y0pMloJv3GhYRw==}
+    engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
+
   '@suites/di.nestjs@3.1.0':
     resolution: {integrity: sha512-SKPdfqZRqjDKRfte8Id1xvmhCNOSSnDSFS68Qcw04IirnUEAAm/wjJBv3Bo8tH/YjzlZkAjzpapZTiWePSM9qg==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
@@ -2177,9 +2181,9 @@ packages:
       '@nestjs/common': '>= 8.0'
       reflect-metadata: <1.0.0
 
-  '@suites/doubles.vitest@3.1.0':
-    resolution: {integrity: sha512-SToF97cTcDjaMbzyUh+pLj33e/dHo2fqoPCcU0OXG2OX+hu+WACruS2xDwj5l/UruA3ckBJmtvVgOvpo1TKbUg==}
-    engines: {node: ^18.12.0 || >=20.0.0}
+  '@suites/doubles.vitest@4.1.2':
+    resolution: {integrity: sha512-DrM8q09s0LQpjwZGsmy47feyOdTmSkN6Ri8nCZtP0NvN+mSNqcKbqVtWQAIXOoFxFnLJv7eHWiobgmv4Q1BI2Q==}
+    engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
     peerDependencies:
       '@vitest/spy': '>= 1.0'
       vitest: '>= 1.0'
@@ -2188,12 +2192,24 @@ packages:
     resolution: {integrity: sha512-4OW/FKP78HZiUjSeAq6ix/lj2s4vEU4IqFr09LLmQC77v1Rv5vEW1LZLxrRVlP2jeWsxuVka6WX2k7k3HJDu9A==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
+  '@suites/types.common@4.0.2':
+    resolution: {integrity: sha512-z4mF2AK0Daf/YCfranmJqiRGNze1vmVbJXuD5rDZnT8MdPbQ/9dDWRrcp6qchiS36BGA8+rcfYqvQKHrAOjSgg==}
+    engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
+
   '@suites/types.di@3.1.0':
     resolution: {integrity: sha512-ng/so6i2dbvSUyCAN/UhLO0N/72B08XycXBCUGmE6CK2OgzNGPjTjcIN1moljyUzZQBYHvYSdUju2aZ6Fh2tOA==}
     engines: {node: ^16.10.0 || ^18.12.0 || >=20.0.0}
 
+  '@suites/types.di@4.1.2':
+    resolution: {integrity: sha512-Gq7gAM0HPqJXTMjB2EClpqg/dpOWI6tTKNUFBMkqQBG+1UgpJkqxOpA6IhWp9o3VROaCRc5y35x6tcme/xLvYg==}
+    engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
+
   '@suites/types.doubles@3.1.0':
     resolution: {integrity: sha512-VhEtcgUPYe1L0xLie2VrqO8b+EPCdVnU30qS//nQA9UtRYA3dRqENNGI6ktmfKAvUKC9ToJdwE/B/TohZt290A==}
+
+  '@suites/types.doubles@4.0.2':
+    resolution: {integrity: sha512-/fV95V6EZojcZoTXscuMbgbwIoieNXdGD6x3omTRwpaP+sjLSwpxrQjqTB1YepML5kEmZaor+ZeVOxwkpVDufQ==}
+    engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
 
   '@suites/unit@3.1.1':
     resolution: {integrity: sha512-gHnAj4Xx5ckFjpo8jhHyriiqdpDXjFmwBTDht1T/czhTv1P3U2rZdEtwyWQISkgJFvxQjC6hfS7GftAKYgehjA==}
@@ -7409,6 +7425,12 @@ snapshots:
       '@suites/types.di': 3.1.0
       '@suites/types.doubles': 3.1.0
 
+  '@suites/core.unit@4.1.2':
+    dependencies:
+      '@suites/types.common': 4.0.2
+      '@suites/types.di': 4.1.2
+      '@suites/types.doubles': 4.0.2
+
   '@suites/di.nestjs@3.1.0(@nestjs/common@12.4.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)':
     dependencies:
       '@nestjs/common': 12.4.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
@@ -7416,24 +7438,34 @@ snapshots:
       '@suites/types.di': 3.1.0
       reflect-metadata: 0.2.2
 
-  '@suites/doubles.vitest@3.1.0(@vitest/spy@5.1.0)(vitest@5.1.0)':
+  '@suites/doubles.vitest@4.1.2(@vitest/spy@5.1.0)(vitest@5.1.0)':
     dependencies:
-      '@suites/core.unit': 3.1.0
-      '@suites/types.common': 3.1.0
-      '@suites/types.di': 3.1.0
-      '@suites/types.doubles': 3.1.0
+      '@suites/core.unit': 4.1.2
+      '@suites/types.common': 4.0.2
+      '@suites/types.di': 4.1.2
+      '@suites/types.doubles': 4.0.2
       '@vitest/spy': 5.1.0
       vitest: 5.1.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(jsdom@30.1.3(@noble/hashes@1.8.0)(canvas@3.2.3))(vite@8.3.6(@types/node@26.6.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15))
 
   '@suites/types.common@3.1.0': {}
 
+  '@suites/types.common@4.0.2': {}
+
   '@suites/types.di@3.1.0':
     dependencies:
       '@suites/types.common': 3.1.0
 
+  '@suites/types.di@4.1.2':
+    dependencies:
+      '@suites/types.common': 4.0.2
+
   '@suites/types.doubles@3.1.0':
     dependencies:
       '@suites/types.common': 3.1.0
+
+  '@suites/types.doubles@4.0.2':
+    dependencies:
+      '@suites/types.common': 4.0.2
 
   '@suites/unit@3.1.1':
     dependencies:
