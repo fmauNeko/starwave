@@ -207,6 +207,7 @@ The music subsystem — queue, provider plugins, YouTube streaming (PoToken + co
 ### Unit Tests
 
 - Use `@suites/unit` TestBed for automatic mocking
+- Suites types (`Mocked<T>`, typed `unitRef.get()`) come from the references in `test/suites.d.ts`: exactly one doubles (`@suites/doubles.vitest/unit`) and one DI (`@suites/di.nestjs/metadata`) reference
 - Place alongside source: `*.spec.ts`
 - Mock Logger to avoid console noise
 
