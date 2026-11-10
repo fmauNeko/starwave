@@ -24,7 +24,7 @@ RUN turbo prune bot --docker
 # ---
 FROM base AS prod-deps
 
-RUN apk add --no-cache curl build-base python3 pango-dev
+RUN apk add --no-cache curl build-base python3
 
 COPY --from=prepare /app/out/json/ .
 RUN pnpm --filter=./apps/bot deploy --legacy --prod /dependencies && \
@@ -37,7 +37,7 @@ RUN curl -sf https://gobinaries.com/tj/node-prune | sh && \
 # ---
 FROM base AS builder
 
-RUN apk add --no-cache build-base python3 pango-dev
+RUN apk add --no-cache build-base python3
 
 COPY --from=prepare /app/out/json/ .
 RUN pnpm ci
@@ -50,7 +50,7 @@ FROM node-base AS runner
 
 ENV NODE_ENV=production
 
-RUN apk add --no-cache ffmpeg pango
+RUN apk add --no-cache ffmpeg
 
 COPY --from=builder --chown=node:node /app/apps/bot/package.json ./
 COPY --from=builder --chown=node:node /app/apps/bot/dist ./dist
