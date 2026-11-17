@@ -24,7 +24,7 @@
   },
   "devDependencies": {
     "@playwright/test": "1.65.1",
-    "@tsconfig/node26": "26.0.0",
+    "@tsconfig/node26": "26.0.2",
     "@types/jsdom": "30.0.0",
     "@types/node": "26.6.6",
     "@vitejs/plugin-vue": "6.0.11",
