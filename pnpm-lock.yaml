@@ -324,8 +324,8 @@ importers:
         specifier: 4.1.3
         version: 4.1.3(@vitest/spy@5.1.0)(vitest@5.1.0)
       '@suites/unit':
-        specifier: 4.1.2
-        version: 4.1.2
+        specifier: 4.1.3
+        version: 4.1.3
       '@swc/cli':
         specifier: 0.8.2
         version: 0.8.2(@swc/core@1.16.22)(chokidar@5.0.0)(supports-color@8.1.1)
@@ -2218,6 +2218,10 @@ packages:
     resolution: {integrity: sha512-1/AC1/wudDfp+EM5ocKrf7UGNI41SWDqu7deVWDTW85HZFf6nvuc1CVXZcnMYmCHC4GduZM7y0pMloJv3GhYRw==}
     engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
 
+  '@suites/core.unit@4.1.3':
+    resolution: {integrity: sha512-oks3moMWRTWZ394AlBgJMyPU3SDFvdhvtFzHmAnVq5HB9y0v6PYLiXJu/WHpVHWibbgwo25F4kXFNKNEr1X6YA==}
+    engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
+
   '@suites/di.nestjs@4.0.3':
     resolution: {integrity: sha512-ria91/viZptew8TGv6hJEcO4BgKnglWkcNA4HKbZfN1ZnJVqeWPo1xh/6CDAVuYCu9vRvnb0rOSC3ZoVjkozoA==}
     engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
@@ -2244,8 +2248,8 @@ packages:
     resolution: {integrity: sha512-/fV95V6EZojcZoTXscuMbgbwIoieNXdGD6x3omTRwpaP+sjLSwpxrQjqTB1YepML5kEmZaor+ZeVOxwkpVDufQ==}
     engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
 
-  '@suites/unit@4.1.2':
-    resolution: {integrity: sha512-TLyiOXa4myRQXI0FyaX3/3c6D18ai3zepL6h3fQrEUjrL4s6S2Yn3VEjPVxC7OOPdPGMB+uqaFPqADtyr1onPQ==}
+  '@suites/unit@4.1.3':
+    resolution: {integrity: sha512-QEjx1se4/qK5wxxl17D5TaplSSljVYSeHZuvkG8c1SUb0jUjspwpfT4IHTYoF6HVOtI9JB9VR4bpV1vToQAryQ==}
     engines: {node: ^22.22.2 || ^24.15.0 || ^26.0.0}
 
   '@swc/cli@0.8.2':
@@ -7417,6 +7421,12 @@ snapshots:
       '@suites/types.di': 4.1.2
       '@suites/types.doubles': 4.0.2
 
+  '@suites/core.unit@4.1.3':
+    dependencies:
+      '@suites/types.common': 4.0.2
+      '@suites/types.di': 4.1.2
+      '@suites/types.doubles': 4.0.2
+
   '@suites/di.nestjs@4.0.3(@nestjs/common@12.5.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)':
     dependencies:
       '@nestjs/common': 12.5.0(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1)
@@ -7443,9 +7453,9 @@ snapshots:
     dependencies:
       '@suites/types.common': 4.0.2
 
-  '@suites/unit@4.1.2':
+  '@suites/unit@4.1.3':
     dependencies:
-      '@suites/core.unit': 4.1.2
+      '@suites/core.unit': 4.1.3
       '@suites/types.common': 4.0.2
       '@suites/types.di': 4.1.2
       '@suites/types.doubles': 4.0.2
