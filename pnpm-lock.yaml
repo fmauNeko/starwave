@@ -266,8 +266,8 @@ importers:
         specifier: 0.0.15
         version: 0.0.15
       arktype:
-        specifier: 2.2.9
-        version: 2.2.9
+        specifier: 2.2.10
+        version: 2.2.10
       bgutils-js:
         specifier: 4.0.3
         version: 4.0.3
@@ -520,11 +520,8 @@ packages:
     resolution: {integrity: sha512-XACkbAmAhBGDfxr8Uny2k0ErDwLpauseccNWdIFs4fiisGTqiCByzkH60/4xTmbV3FTj8bQ6cXYIhhaqe0MK1g==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
 
-  '@ark/schema@0.56.8':
-    resolution: {integrity: sha512-R05TOe85oQBGFFw2zKMuZpqkXibLKuC/aJt6VwFn5Cjc4x3NkWfhvGRpRDycNkj3ddcHnOPtIsmjVowJO9Yxdw==}
-
-  '@ark/util@0.56.8':
-    resolution: {integrity: sha512-XLiQyGfpJcws1zCtp2Cva8s1oheCdFn1Rt6JSyC4NnkDrpwCJnlaiawuuOc1Z97vMH+jEzW5vyyf0xOju5wUQA==}
+  '@ark/schema@0.56.9':
+    resolution: {integrity: sha512-3kFUweE9PagqzEC9FEOirBRrVxBj0D6o8UiZDDrCyrcaBepRFHjUezf6MuTk8mKfJ4NKzSsaUCOVK+jzcm+dPw==}
 
   '@ark/util@0.56.9':
     resolution: {integrity: sha512-/yA1me+AMmI75VaQ5owz1A1owopAJ0ZZFXy9SI1Q69kErJfxuglQBYjGeOTFyygJjZ9Rf4UjCtD5XTuEiNiGHw==}
@@ -2930,14 +2927,11 @@ packages:
     resolution: {integrity: sha512-VipTB0gXgGIFO2Rg9yEVN5wLt2AurJcZqDbgmYSwPwsykhLrQhs240/bfceev4w68lI8JshoOJIk9uW7tFzROw==}
     engines: {node: '>=22'}
 
-  arkregex@0.0.14:
-    resolution: {integrity: sha512-G3I/uCtWE0IKQiPh0qqmmAFDdtjZKZQ5mNPR6gJBeAMZ7VqYCpoaDeXnLju2Zo6ywExtmxZJELeVFb0MPDjPyA==}
-
   arkregex@0.0.15:
     resolution: {integrity: sha512-mu9vS4b8kTipqr2AfVIL1NYhGH47CZgPdYFzB762lu4/dsxm7hmNsN3ayDahcM9OhepOpTQc+W744yh4KE+mAw==}
 
-  arktype@2.2.9:
-    resolution: {integrity: sha512-Cja0IMEn19rB35on9da1i1z6QMasuS7ULffXbetCry09jvCGYT8Bi1KgYiqri5FymF4nQAXkM90yksYkgSK2EA==}
+  arktype@2.2.10:
+    resolution: {integrity: sha512-xfum3++1RGjULFBeeXph3XrejEhAfswZlpH/V5m324j8aZ/53tHUd8OPCXE1v5iU/2UEkn/ZDFUT0Exkjv96xA==}
 
   array-timsort@1.0.3:
     resolution: {integrity: sha512-/+3GRL7dDAGEfM6TseQk/U+mi18TU2Ms9I3UlLdUMhz2hbvGNTKdj9xniwXfUqgYhHxRx0+8UnKkvlNwVU+cWQ==}
@@ -5918,11 +5912,9 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@ark/schema@0.56.8':
+  '@ark/schema@0.56.9':
     dependencies:
-      '@ark/util': 0.56.8
-
-  '@ark/util@0.56.8': {}
+      '@ark/util': 0.56.9
 
   '@ark/util@0.56.9': {}
 
@@ -8262,19 +8254,15 @@ snapshots:
 
   argue-cli@3.2.0: {}
 
-  arkregex@0.0.14:
-    dependencies:
-      '@ark/util': 0.56.8
-
   arkregex@0.0.15:
     dependencies:
       '@ark/util': 0.56.9
 
-  arktype@2.2.9:
+  arktype@2.2.10:
     dependencies:
-      '@ark/schema': 0.56.8
-      '@ark/util': 0.56.8
-      arkregex: 0.0.14
+      '@ark/schema': 0.56.9
+      '@ark/util': 0.56.9
+      arkregex: 0.0.15
 
   array-timsort@1.0.3: {}
 
