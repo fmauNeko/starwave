@@ -37,6 +37,7 @@ export default defineConfig(
     rules: {
       ...vitest.configs.recommended.rules,
       '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/no-unsafe-class-instance-assignment': 'off',
       'vitest/expect-expect': [
         vitest.configs.recommended.rules['vitest/expect-expect'],
         { assertFunctionNames: ['expect', 'request.*.expect'] },
